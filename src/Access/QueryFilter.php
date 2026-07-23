@@ -30,8 +30,20 @@ final class QueryFilter {
 		}
 
 		add_action( 'pre_get_posts', array( $this, 'exclude_restricted' ) );
-		add_filter( 'rest_prepare_post', array( $this, 'filter_rest_response' ), 10, 2 );
 		add_filter( 'get_pages', array( $this, 'filter_pages' ) );
+
+		// rest_prepare_{$post_type} is per type. Registering only
+		// rest_prepare_post leaves every page and custom post type returning
+		// its full content from the REST API regardless of its access rule.
+		foreach ( $this->rules->gated_post_types() as $post_type ) {
+			add_filter( "rest_prepare_{$post_type}", array( $this, 'filter_rest_response' ), 10, 2 );
+		}
+
+		// Titles and URLs leak through these even when the body does not.
+		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'filter_sitemap_query' ), 10, 2 );
+		add_filter( 'get_previous_post_where', array( $this, 'filter_adjacent_post' ) );
+		add_filter( 'get_next_post_where', array( $this, 'filter_adjacent_post' ) );
+		add_filter( 'oembed_response_data', array( $this, 'filter_oembed' ), 10, 2 );
 	}
 
 	public function exclude_restricted( WP_Query $query ): void {
@@ -43,20 +55,7 @@ final class QueryFilter {
 			return;
 		}
 
-		$restricted = $this->restricted_ids();
-
-		if ( empty( $restricted ) ) {
-			return;
-		}
-
-		$user_id  = get_current_user_id();
-		$excluded = array();
-
-		foreach ( $restricted as $post_id ) {
-			if ( ! $this->rules->can_access( $post_id, $user_id ) ) {
-				$excluded[] = $post_id;
-			}
-		}
+		$excluded = $this->excluded_ids();
 
 		if ( empty( $excluded ) ) {
 			return;
@@ -141,6 +140,85 @@ final class QueryFilter {
 		);
 
 		return array_map( 'intval', is_array( $posts ) ? $posts : array() );
+	}
+
+	/**
+	 * Keeps restricted posts out of the core sitemap.
+	 *
+	 * @param array<string, mixed> $args
+	 * @param string               $post_type Unused; part of the filter signature.
+	 * @return array<string, mixed>
+	 */
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter
+	public function filter_sitemap_query( array $args, string $post_type ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter
+		$excluded = $this->excluded_ids();
+
+		if ( empty( $excluded ) ) {
+			return $args;
+		}
+
+		$existing = isset( $args['post__not_in'] ) && is_array( $args['post__not_in'] )
+			? $args['post__not_in']
+			: array();
+
+		// post__not_in is a known scaling cost. It is used here deliberately:
+		// a rule can be inherited from a taxonomy term and overridden by a
+		// filter, so the decision cannot be expressed in SQL without
+		// duplicating the rule engine and letting the two drift apart. The
+		// restricted set is small and cached; correctness wins over the query
+		// plan on a sitemap request.
+		// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in
+		$args['post__not_in'] = array_merge( $existing, $excluded );
+
+		return $args;
+	}
+
+	/**
+	 * Stops previous/next links pointing at content the visitor cannot open.
+	 */
+	public function filter_adjacent_post( string $where ): string {
+		$excluded = $this->excluded_ids();
+
+		if ( empty( $excluded ) ) {
+			return $where;
+		}
+
+		$list = implode( ',', array_map( 'absint', $excluded ) );
+
+		return $where . " AND p.ID NOT IN ({$list})";
+	}
+
+	/**
+	 * oEmbed exposes the title and author of any published URL.
+	 *
+	 * @param array<string, mixed> $data
+	 * @return array<string, mixed>
+	 */
+	public function filter_oembed( array $data, mixed $post ): array {
+		if ( ! $post instanceof WP_Post || $this->rules->can_access( $post->ID ) ) {
+			return $data;
+		}
+
+		return array();
+	}
+
+	/**
+	 * Restricted post IDs the current visitor cannot reach.
+	 *
+	 * @return list<int>
+	 */
+	private function excluded_ids(): array {
+		$user_id  = get_current_user_id();
+		$excluded = array();
+
+		foreach ( $this->restricted_ids() as $post_id ) {
+			if ( ! $this->rules->can_access( $post_id, $user_id ) ) {
+				$excluded[] = $post_id;
+			}
+		}
+
+		return $excluded;
 	}
 
 	/**
