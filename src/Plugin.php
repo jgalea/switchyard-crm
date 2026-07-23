@@ -385,8 +385,23 @@ final class Plugin {
 			}
 		);
 
-		// Access rules changing invalidates the restricted-post cache.
-		foreach ( array( 'save_post', 'deleted_post', 'edited_term' ) as $hook ) {
+		// Anything that can change which posts are restricted has to drop the
+		// cache. Term rules are stored as term meta, and meta writes fire
+		// their own hooks rather than edited_term, so a newly restricted
+		// category would otherwise stay readable in archives, search, feeds
+		// and the sitemap until the transient expired.
+		$invalidators = array(
+			'save_post',
+			'deleted_post',
+			'edited_term',
+			'delete_term',
+			'set_object_terms',
+			'added_term_meta',
+			'updated_term_meta',
+			'deleted_term_meta',
+		);
+
+		foreach ( $invalidators as $hook ) {
 			add_action( $hook, array( QueryFilter::class, 'flush_cache' ) );
 		}
 	}

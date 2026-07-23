@@ -101,6 +101,43 @@ final class AccessSurfaceTest extends TestCase {
 	}
 
 	/**
+	 * The restricted-post list is cached in a transient, so every write that
+	 * can change membership of that set has to drop it.
+	 *
+	 * Term rules live in term meta, and meta writes fire added_/updated_/
+	 * deleted_term_meta rather than edited_term. Missing those left a newly
+	 * restricted category readable in archives, search, feeds and the sitemap
+	 * until the transient expired.
+	 *
+	 * @dataProvider invalidationHooks
+	 */
+	public function test_every_rule_write_invalidates_the_cache( string $hook ): void {
+		$source = (string) file_get_contents( dirname( __DIR__, 2 ) . '/src/Plugin.php' );
+
+		$this->assertStringContainsString(
+			"'" . $hook . "'",
+			$source,
+			sprintf( '%s does not invalidate the restricted-post cache.', $hook )
+		);
+	}
+
+	/**
+	 * @return array<string, array{0: string}>
+	 */
+	public static function invalidationHooks(): array {
+		return array(
+			'post saved'        => array( 'save_post' ),
+			'post deleted'      => array( 'deleted_post' ),
+			'term edited'       => array( 'edited_term' ),
+			'term deleted'      => array( 'delete_term' ),
+			'terms assigned'    => array( 'set_object_terms' ),
+			'term meta added'   => array( 'added_term_meta' ),
+			'term meta updated' => array( 'updated_term_meta' ),
+			'term meta deleted' => array( 'deleted_term_meta' ),
+		);
+	}
+
+	/**
 	 * The adjacent-post filter injects into a SQL WHERE clause, so the IDs it
 	 * interpolates must be integer-cast.
 	 */

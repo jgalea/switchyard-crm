@@ -29,6 +29,32 @@ applies the rule at four points:
 
 Query filtering can be switched off under Access if you are handling it yourself.
 
+## What is not protected
+
+**Uploaded files are not gated.** Restricting a post does not restrict a PDF,
+video or image attached to it. Those files are served straight off disk by the
+web server, and WordPress is never asked, so no plugin can gate them from PHP
+alone. Anyone with the direct URL can fetch them regardless of their tags.
+
+Gating files needs either web-server rules that route uploads through PHP, or
+storing them outside the web root and streaming them through a handler. If you
+are selling downloadable content, treat that as a requirement rather than a
+detail.
+
+Attachment pages, the WordPress-rendered page for an attachment, are excluded
+from gating for the same reason: gating the page while the file stays open is
+a false sense of security.
+
+Two related limits worth knowing:
+
+- The tag cache is refreshed on login, on webhook, and on a schedule. A tag
+  removed directly in the CRM takes effect on the user's next login unless the
+  CRM sends a webhook. Call `conduit_refresh_tags()` where you need it sooner.
+- Anyone who can edit a post can always see it, even without the tags. That is
+  deliberate: without it a CRM outage would lock an author out of their own
+  drafts. If your editors should also be gated, use the `conduit_can_access`
+  filter.
+
 ## Shortcodes
 
 ```
