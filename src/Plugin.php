@@ -1,0 +1,395 @@
+<?php
+
+declare( strict_types=1 );
+
+namespace Conduit;
+
+use Conduit\Access\ContentGate;
+use Conduit\Access\MenuFilter;
+use Conduit\Access\QueryFilter;
+use Conduit\Access\Rules;
+use Conduit\Access\Shortcodes;
+use Conduit\Admin\AdminPages;
+use Conduit\Admin\PostMetaBox;
+use Conduit\Crm\Http\Client;
+use Conduit\Crm\ProviderRegistry;
+use Conduit\Integration\Ecommerce\EasyDigitalDownloads;
+use Conduit\Integration\Ecommerce\WooCommerce;
+use Conduit\Integration\Forms\ContactForm7;
+use Conduit\Integration\Forms\FluentForms;
+use Conduit\Integration\Forms\GravityForms;
+use Conduit\Integration\Forms\WPForms;
+use Conduit\Integration\Registry as IntegrationRegistry;
+use Conduit\Logger\Logger;
+use Conduit\Sync\ContactResolver;
+use Conduit\Sync\FieldMap;
+use Conduit\Sync\GuestSync;
+use Conduit\Sync\Queue;
+use Conduit\Sync\TagEngine;
+use Conduit\Sync\UserSync;
+use Conduit\Tracking\SiteTracking;
+use Conduit\Webhook\Listener;
+
+final class Plugin {
+
+	private static ?self $instance = null;
+
+	private Container $container;
+
+	private bool $booted = false;
+
+	private function __construct() {
+		$this->container = new Container();
+
+		$this->register_services();
+	}
+
+	public static function instance(): self {
+		return self::$instance ??= new self();
+	}
+
+	public function get( string $id ): object {
+		return $this->container->get( $id );
+	}
+
+	public function container(): Container {
+		return $this->container;
+	}
+
+	private function register_services(): void {
+		$c = $this->container;
+
+		$c->set( Settings::class, static fn (): Settings => new Settings() );
+
+		$c->set(
+			Logger::class,
+			static fn ( Container $c ): Logger => new Logger( $c->get( Settings::class ) )
+		);
+
+		$c->set(
+			Client::class,
+			static fn ( Container $c ): Client => new Client( $c->get( Logger::class ) )
+		);
+
+		$c->set(
+			Features::class,
+			static fn (): Features => new Features()
+		);
+
+		$c->set(
+			ProviderRegistry::class,
+			static fn ( Container $c ): ProviderRegistry => new ProviderRegistry(
+				$c->get( Client::class ),
+				$c->get( Settings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			ContactResolver::class,
+			static fn ( Container $c ): ContactResolver => new ContactResolver(
+				$c->get( ProviderRegistry::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			FieldMap::class,
+			static fn (): FieldMap => new FieldMap()
+		);
+
+		$c->set(
+			TagEngine::class,
+			static fn ( Container $c ): TagEngine => new TagEngine(
+				$c->get( ProviderRegistry::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( Settings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			Queue::class,
+			static fn ( Container $c ): Queue => new Queue(
+				$c->get( Settings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			UserSync::class,
+			static fn ( Container $c ): UserSync => new UserSync(
+				$c->get( ProviderRegistry::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( FieldMap::class ),
+				$c->get( TagEngine::class ),
+				$c->get( Queue::class ),
+				$c->get( Settings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			GuestSync::class,
+			static fn ( Container $c ): GuestSync => new GuestSync(
+				$c->get( ProviderRegistry::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( Settings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			Rules::class,
+			static fn ( Container $c ): Rules => new Rules( $c->get( TagEngine::class ) )
+		);
+
+		$c->set(
+			ContentGate::class,
+			static fn ( Container $c ): ContentGate => new ContentGate(
+				$c->get( Rules::class ),
+				$c->get( Settings::class )
+			)
+		);
+
+		$c->set(
+			QueryFilter::class,
+			static fn ( Container $c ): QueryFilter => new QueryFilter(
+				$c->get( Rules::class ),
+				$c->get( Settings::class )
+			)
+		);
+
+		$c->set(
+			MenuFilter::class,
+			static fn ( Container $c ): MenuFilter => new MenuFilter(
+				$c->get( Rules::class ),
+				$c->get( TagEngine::class )
+			)
+		);
+
+		$c->set(
+			Shortcodes::class,
+			static fn ( Container $c ): Shortcodes => new Shortcodes( $c->get( TagEngine::class ) )
+		);
+
+		$c->set(
+			Listener::class,
+			static fn ( Container $c ): Listener => new Listener(
+				$c->get( ProviderRegistry::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( TagEngine::class ),
+				$c->get( UserSync::class ),
+				$c->get( Settings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			SiteTracking::class,
+			static fn ( Container $c ): SiteTracking => new SiteTracking(
+				$c->get( ProviderRegistry::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( Settings::class )
+			)
+		);
+
+		$c->set(
+			IntegrationRegistry::class,
+			static fn ( Container $c ): IntegrationRegistry => new IntegrationRegistry(
+				$c,
+				$c->get( Logger::class )
+			)
+		);
+
+		$c->set(
+			AdminPages::class,
+			static fn ( Container $c ): AdminPages => new AdminPages(
+				$c->get( Settings::class ),
+				$c->get( ProviderRegistry::class ),
+				$c->get( FieldMap::class ),
+				$c->get( IntegrationRegistry::class )
+			)
+		);
+
+		$c->set(
+			PostMetaBox::class,
+			static fn ( Container $c ): PostMetaBox => new PostMetaBox(
+				$c->get( Rules::class ),
+				$c->get( TagEngine::class )
+			)
+		);
+	}
+
+	public function boot(): void {
+		if ( $this->booted ) {
+			return;
+		}
+
+		$this->booted = true;
+
+		Installer::maybe_upgrade();
+
+		load_plugin_textdomain( 'conduit-crm', false, dirname( plugin_basename( CONDUIT_FILE ) ) . '/languages' );
+
+		$this->boot_action_scheduler();
+
+		$this->get( UserSync::class )->register_hooks();
+		$this->get( GuestSync::class )->register_hooks();
+		$this->get( ContentGate::class )->register_hooks();
+		$this->get( QueryFilter::class )->register_hooks();
+		$this->get( MenuFilter::class )->register_hooks();
+		$this->get( Shortcodes::class )->register_hooks();
+		$this->get( Listener::class )->register_hooks();
+		$this->get( SiteTracking::class )->register_hooks();
+
+		if ( is_admin() ) {
+			$this->get( AdminPages::class )->register_hooks();
+			$this->get( PostMetaBox::class )->register_hooks();
+		}
+
+		$this->register_async_handlers();
+		$this->register_integrations();
+		$this->register_maintenance();
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::add_command( 'conduit', Cli\Command::class );
+		}
+
+		// Companion plugins register their features and integrations here.
+		do_action( 'conduit_register_features', $this->get( Features::class ) );
+		do_action( 'conduit_loaded', $this );
+	}
+
+	/**
+	 * Action Scheduler is bundled, but WooCommerce and several other plugins
+	 * ship their own copy. Loading it unconditionally would define its
+	 * functions twice, so only load ours when nothing else has.
+	 */
+	private function boot_action_scheduler(): void {
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			return;
+		}
+
+		$bundled = CONDUIT_DIR . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+
+		if ( is_readable( $bundled ) ) {
+			require_once $bundled;
+		}
+	}
+
+	private function register_async_handlers(): void {
+		$tags = $this->get( TagEngine::class );
+
+		add_action(
+			'conduit_apply_tags_async',
+			static function ( int $user_id, array $tag_list ) use ( $tags ): void {
+				/** @var list<string> $tag_list */
+				$tags->apply_tags( $user_id, $tag_list );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'conduit_remove_tags_async',
+			static function ( int $user_id, array $tag_list ) use ( $tags ): void {
+				/** @var list<string> $tag_list */
+				$tags->remove_tags( $user_id, $tag_list );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'conduit_refresh_user_tags',
+			static function ( int $user_id ) use ( $tags ): void {
+				$tags->load_tags( $user_id );
+			}
+		);
+
+		$sync = $this->get( UserSync::class );
+
+		// Batch jobs use their own hook so a bulk resync can be cancelled
+		// without also cancelling live per-user syncs sitting in the queue.
+		add_action(
+			'conduit_batch_push_user',
+			static function ( int $user_id ) use ( $sync ): void {
+				$sync->push( $user_id );
+			}
+		);
+	}
+
+	private function register_integrations(): void {
+		$registry = $this->get( IntegrationRegistry::class );
+
+		$registry->add(
+			'woocommerce',
+			fn ( Container $c ): WooCommerce => new WooCommerce(
+				$c->get( UserSync::class ),
+				$c->get( TagEngine::class ),
+				$c->get( Queue::class ),
+				$c->get( Features::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$registry->add(
+			'edd',
+			fn ( Container $c ): EasyDigitalDownloads => new EasyDigitalDownloads(
+				$c->get( UserSync::class ),
+				$c->get( TagEngine::class ),
+				$c->get( Queue::class ),
+				$c->get( Features::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		foreach (
+			array(
+				'gravity-forms'  => GravityForms::class,
+				'wpforms'        => WPForms::class,
+				'fluent-forms'   => FluentForms::class,
+				'contact-form-7' => ContactForm7::class,
+			) as $slug => $class
+		) {
+			$registry->add(
+				$slug,
+				static fn ( Container $c ): object => new $class(
+					$c->get( UserSync::class ),
+					$c->get( TagEngine::class ),
+					$c->get( Queue::class ),
+					$c->get( Features::class ),
+					$c->get( Logger::class ),
+					$c->get( GuestSync::class )
+				)
+			);
+		}
+
+		// Late, so integrations attach after their host plugin has loaded.
+		add_action( 'init', array( $registry, 'boot' ), 5 );
+	}
+
+	private function register_maintenance(): void {
+		add_action(
+			'init',
+			static function (): void {
+				if ( ! wp_next_scheduled( 'conduit_prune_logs' ) ) {
+					wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'conduit_prune_logs' );
+				}
+			}
+		);
+
+		add_action(
+			'conduit_prune_logs',
+			function (): void {
+				$this->get( Logger::class )->prune();
+			}
+		);
+
+		// Access rules changing invalidates the restricted-post cache.
+		foreach ( array( 'save_post', 'deleted_post', 'edited_term' ) as $hook ) {
+			add_action( $hook, array( QueryFilter::class, 'flush_cache' ) );
+		}
+	}
+}

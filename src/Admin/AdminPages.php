@@ -1,0 +1,714 @@
+<?php
+
+declare( strict_types=1 );
+
+namespace Conduit\Admin;
+
+use Conduit\Crm\Exception\CrmException;
+use Conduit\Crm\ProviderRegistry;
+use Conduit\Integration\Registry as IntegrationRegistry;
+use Conduit\Logger\Logger;
+use Conduit\Logger\LogTable;
+use Conduit\Settings;
+use Conduit\Sync\FieldMap;
+use Conduit\Webhook\Secret;
+
+/**
+ * Settings screens.
+ *
+ * Deliberately plain: WordPress admin markup, no build step, no upsell
+ * surfaces. Credentials are write-only in the UI, so an existing key is never
+ * rendered back into the page source.
+ */
+final class AdminPages {
+
+	private const CAPABILITY = 'manage_options';
+	private const SLUG       = 'conduit-crm';
+
+	public function __construct(
+		private Settings $settings,
+		private ProviderRegistry $registry,
+		private FieldMap $fields,
+		private IntegrationRegistry $integrations,
+	) {}
+
+	public function register_hooks(): void {
+		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_post_conduit_save', array( $this, 'handle_save' ) );
+		add_action( 'admin_post_conduit_action', array( $this, 'handle_action' ) );
+	}
+
+	public function register_menu(): void {
+		add_menu_page(
+			__( 'Conduit CRM', 'conduit-crm' ),
+			__( 'Conduit CRM', 'conduit-crm' ),
+			self::CAPABILITY,
+			self::SLUG,
+			array( $this, 'render' ),
+			'dashicons-randomize',
+			81
+		);
+	}
+
+	private function current_tab(): string {
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connection'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		return in_array( $tab, array( 'connection', 'sync', 'access', 'integrations', 'logs', 'tools' ), true )
+			? $tab
+			: 'connection';
+	}
+
+	public function render(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return;
+		}
+
+		$tab = $this->current_tab();
+
+		$tabs = array(
+			'connection'   => __( 'Connection', 'conduit-crm' ),
+			'sync'         => __( 'Sync', 'conduit-crm' ),
+			'access'       => __( 'Access', 'conduit-crm' ),
+			'integrations' => __( 'Integrations', 'conduit-crm' ),
+			'logs'         => __( 'Logs', 'conduit-crm' ),
+			'tools'        => __( 'Tools', 'conduit-crm' ),
+		);
+
+		echo '<div class="wrap"><h1>' . esc_html__( 'Conduit CRM', 'conduit-crm' ) . '</h1>';
+
+		$this->render_notices();
+
+		echo '<h2 class="nav-tab-wrapper">';
+
+		foreach ( $tabs as $slug => $label ) {
+			printf(
+				'<a href="%s" class="nav-tab %s">%s</a>',
+				esc_url( admin_url( 'admin.php?page=' . self::SLUG . '&tab=' . $slug ) ),
+				$tab === $slug ? 'nav-tab-active' : '',
+				esc_html( $label )
+			);
+		}
+
+		echo '</h2>';
+
+		match ( $tab ) {
+			'sync'         => $this->render_sync(),
+			'access'       => $this->render_access(),
+			'integrations' => $this->render_integrations(),
+			'logs'         => $this->render_logs(),
+			'tools'        => $this->render_tools(),
+			default        => $this->render_connection(),
+		};
+
+		echo '</div>';
+	}
+
+	private function render_notices(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$notice = isset( $_GET['conduit_notice'] ) ? sanitize_key( wp_unslash( $_GET['conduit_notice'] ) ) : '';
+
+		if ( '' === $notice ) {
+			return;
+		}
+
+		$messages = array(
+			'saved'       => array( 'success', __( 'Settings saved.', 'conduit-crm' ) ),
+			'connected'   => array( 'success', __( 'Connected to the CRM.', 'conduit-crm' ) ),
+			'failed'      => array( 'error', __( 'Could not connect. Check the credentials and try again.', 'conduit-crm' ) ),
+			'refreshed'   => array( 'success', __( 'Tag and field lists refreshed.', 'conduit-crm' ) ),
+			'rotated'     => array( 'success', __( 'Webhook secret rotated. Update it in your CRM.', 'conduit-crm' ) ),
+			'logscleared' => array( 'success', __( 'Logs cleared.', 'conduit-crm' ) ),
+		);
+
+		if ( ! isset( $messages[ $notice ] ) ) {
+			return;
+		}
+
+		[ $type, $message ] = $messages[ $notice ];
+
+		printf(
+			'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+			esc_attr( $type ),
+			esc_html( $message )
+		);
+	}
+
+	private function form_open( string $tab ): void {
+		printf( '<form method="post" action="%s">', esc_url( admin_url( 'admin-post.php' ) ) );
+		wp_nonce_field( 'conduit_save_' . $tab );
+		printf( '<input type="hidden" name="action" value="conduit_save">' );
+		printf( '<input type="hidden" name="tab" value="%s">', esc_attr( $tab ) );
+	}
+
+	private function render_connection(): void {
+		$this->form_open( 'connection' );
+
+		$current  = $this->settings->provider_slug();
+		$provider = $this->registry->active();
+
+		echo '<table class="form-table" role="presentation"><tbody>';
+
+		echo '<tr><th scope="row"><label for="conduit-provider">' . esc_html__( 'CRM', 'conduit-crm' ) . '</label></th><td>';
+		echo '<select name="provider" id="conduit-provider">';
+		echo '<option value="">' . esc_html__( '— Select —', 'conduit-crm' ) . '</option>';
+
+		foreach ( $this->registry->available() as $slug => $name ) {
+			printf(
+				'<option value="%s" %s>%s</option>',
+				esc_attr( $slug ),
+				selected( $current, $slug, false ),
+				esc_html( $name )
+			);
+		}
+
+		echo '</select>';
+
+		if ( null !== $provider ) {
+			echo ' <span style="color:#1a7f37;">' . esc_html__( 'Connected', 'conduit-crm' ) . '</span>';
+		} elseif ( '' !== $current ) {
+			echo ' <span style="color:#b32d2e;">' . esc_html__( 'Not connected', 'conduit-crm' ) . '</span>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'Save after changing the CRM to see its credential fields.', 'conduit-crm' ) . '</p>';
+		echo '</td></tr>';
+
+		if ( '' !== $current && $this->registry->has( $current ) ) {
+			$stored = $this->settings->credentials();
+
+			foreach ( $this->registry->make( $current )->get_credential_fields() as $key => $field ) {
+				$id = 'conduit-cred-' . $key;
+
+				echo '<tr><th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
+
+				if ( 'checkbox' === $field['type'] ) {
+					printf(
+						'<input type="checkbox" id="%s" name="credentials[%s]" value="1" %s>',
+						esc_attr( $id ),
+						esc_attr( $key ),
+						checked( ! empty( $stored[ $key ] ), true, false )
+					);
+				} elseif ( 'password' === $field['type'] ) {
+					// Never render the stored secret back to the browser.
+					printf(
+						'<input type="password" id="%s" name="credentials[%s]" value="" class="regular-text" autocomplete="new-password" placeholder="%s">',
+						esc_attr( $id ),
+						esc_attr( $key ),
+						empty( $stored[ $key ] )
+							? ''
+							: esc_attr__( 'Saved. Leave blank to keep.', 'conduit-crm' )
+					);
+				} else {
+					printf(
+						'<input type="text" id="%s" name="credentials[%s]" value="%s" class="regular-text">',
+						esc_attr( $id ),
+						esc_attr( $key ),
+						esc_attr( is_scalar( $stored[ $key ] ?? '' ) ? (string) ( $stored[ $key ] ?? '' ) : '' )
+					);
+				}
+
+				if ( ! empty( $field['help'] ) ) {
+					echo '<p class="description">' . esc_html( $field['help'] ) . '</p>';
+				}
+
+				echo '</td></tr>';
+			}
+		}
+
+		echo '</tbody></table>';
+
+		submit_button( __( 'Save and connect', 'conduit-crm' ) );
+
+		echo '</form>';
+
+		if ( null !== $provider ) {
+			$this->render_webhook_box( $provider->get_slug() );
+		}
+	}
+
+	private function render_webhook_box( string $slug ): void {
+		echo '<h2>' . esc_html__( 'Webhook', 'conduit-crm' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Point your CRM at this URL to push tag changes back into WordPress.', 'conduit-crm' ) . '</p>';
+
+		printf(
+			'<p><code style="user-select:all;">%s</code></p>',
+			esc_html( Secret::url( $slug ) )
+		);
+
+		printf(
+			'<p><a href="%s" class="button">%s</a></p>',
+			esc_url(
+				wp_nonce_url(
+					admin_url( 'admin-post.php?action=conduit_action&do=rotate_secret' ),
+					'conduit_action'
+				)
+			),
+			esc_html__( 'Rotate secret', 'conduit-crm' )
+		);
+	}
+
+	private function render_sync(): void {
+		$provider = $this->registry->active();
+
+		if ( null === $provider ) {
+			echo '<p>' . esc_html__( 'Connect a CRM first.', 'conduit-crm' ) . '</p>';
+
+			return;
+		}
+
+		$this->form_open( 'sync' );
+
+		echo '<table class="form-table" role="presentation"><tbody>';
+
+		$this->checkbox_row( 'sync_on_register', __( 'Sync on registration', 'conduit-crm' ) );
+		$this->checkbox_row( 'sync_on_profile_update', __( 'Sync on profile update', 'conduit-crm' ) );
+		$this->checkbox_row( 'import_new_contacts', __( 'Create users from webhooks', 'conduit-crm' ) );
+		$this->checkbox_row( 'async_sync', __( 'Sync in the background', 'conduit-crm' ) );
+		$this->checkbox_row( 'site_tracking', __( 'Enable site tracking', 'conduit-crm' ) );
+		$this->checkbox_row( 'staging_mode', __( 'Staging mode (block all writes)', 'conduit-crm' ) );
+
+		echo '</tbody></table>';
+
+		echo '<h2>' . esc_html__( 'Field mapping', 'conduit-crm' ) . '</h2>';
+
+		try {
+			$crm_fields = $provider->get_available_fields();
+		} catch ( CrmException $e ) {
+			$crm_fields = array();
+
+			printf( '<div class="notice notice-error"><p>%s</p></div>', esc_html( $e->getMessage() ) );
+		}
+
+		$map = $this->fields->all();
+
+		echo '<table class="widefat striped"><thead><tr>';
+		echo '<th>' . esc_html__( 'WordPress field', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'CRM field', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Sync', 'conduit-crm' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $this->fields->available_wp_fields() as $group => $group_fields ) {
+			printf( '<tr><td colspan="3"><strong>%s</strong></td></tr>', esc_html( $group ) );
+
+			foreach ( $group_fields as $key => $label ) {
+				$entry = $map[ $key ] ?? array(
+					'crm_field' => '',
+					'type'      => 'text',
+					'active'    => false,
+				);
+
+				echo '<tr>';
+				printf( '<td><label for="conduit-map-%s">%s</label></td>', esc_attr( $key ), esc_html( $label ) );
+
+				echo '<td><select id="conduit-map-' . esc_attr( $key ) . '" name="map[' . esc_attr( $key ) . '][crm_field]">';
+				echo '<option value="">' . esc_html__( '— None —', 'conduit-crm' ) . '</option>';
+
+				foreach ( $crm_fields as $crm_key => $crm_field ) {
+					printf(
+						'<option value="%s" %s>%s</option>',
+						esc_attr( $crm_key ),
+						selected( $entry['crm_field'] ?? '', $crm_key, false ),
+						esc_html( $crm_field['label'] )
+					);
+				}
+
+				echo '</select>';
+				printf(
+					'<input type="hidden" name="map[%s][type]" value="%s">',
+					esc_attr( $key ),
+					esc_attr( $crm_fields[ $entry['crm_field'] ?? '' ]['type'] ?? 'text' )
+				);
+				echo '</td>';
+
+				printf(
+					'<td><input type="checkbox" name="map[%s][active]" value="1" %s></td>',
+					esc_attr( $key ),
+					checked( ! empty( $entry['active'] ), true, false )
+				);
+
+				echo '</tr>';
+			}
+		}
+
+		echo '</tbody></table>';
+
+		submit_button();
+
+		echo '</form>';
+	}
+
+	private function render_access(): void {
+		$this->form_open( 'access' );
+
+		echo '<table class="form-table" role="presentation"><tbody>';
+
+		echo '<tr><th scope="row"><label for="conduit-message">' . esc_html__( 'Restricted message', 'conduit-crm' ) . '</label></th><td>';
+		printf(
+			'<textarea id="conduit-message" name="restricted_message" rows="3" class="large-text">%s</textarea>',
+			esc_textarea( $this->settings->string( 'restricted_message' ) )
+		);
+		echo '</td></tr>';
+
+		echo '<tr><th scope="row"><label for="conduit-redirect">' . esc_html__( 'Redirect to', 'conduit-crm' ) . '</label></th><td>';
+		// Arguments are an integer and a translated literal; the function
+		// escapes the option markup it builds from them.
+		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
+		wp_dropdown_pages(
+			array(
+				'name'              => 'restricted_redirect',
+				'id'                => 'conduit-redirect',
+				'selected'          => $this->settings->int( 'restricted_redirect' ),
+				'show_option_none'  => __( '— Show the message instead —', 'conduit-crm' ),
+				'option_none_value' => '0',
+			)
+		);
+		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</td></tr>';
+
+		$this->checkbox_row( 'filter_queries', __( 'Hide restricted content from listings, search and feeds', 'conduit-crm' ) );
+
+		echo '</tbody></table>';
+
+		submit_button();
+
+		echo '</form>';
+	}
+
+	private function render_integrations(): void {
+		echo '<p>' . esc_html__( 'Integrations load automatically when their plugin is active.', 'conduit-crm' ) . '</p>';
+
+		echo '<table class="widefat striped"><thead><tr>';
+		echo '<th>' . esc_html__( 'Integration', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Status', 'conduit-crm' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $this->integrations->status() as $status ) {
+			echo '<tr>';
+			printf( '<td>%s</td>', esc_html( $status['name'] ) );
+
+			if ( $status['loaded'] ) {
+				echo '<td><span style="color:#1a7f37;">' . esc_html__( 'Active', 'conduit-crm' ) . '</span></td>';
+			} elseif ( $status['available'] ) {
+				echo '<td>' . esc_html__( 'Available, not loaded', 'conduit-crm' ) . '</td>';
+			} else {
+				echo '<td><span style="color:#646970;">' . esc_html__( 'Plugin not active', 'conduit-crm' ) . '</span></td>';
+			}
+
+			echo '</tr>';
+		}
+
+		echo '</tbody></table>';
+	}
+
+	private function render_logs(): void {
+		global $wpdb;
+
+		$table = LogTable::name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC LIMIT 200" );
+
+		$this->form_open( 'logs' );
+
+		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row"><label for="conduit-loglevel">' . esc_html__( 'Log level', 'conduit-crm' ) . '</label></th><td>';
+		echo '<select id="conduit-loglevel" name="log_level">';
+
+		foreach ( array( 'debug', 'info', 'notice', 'warning', 'error' ) as $level ) {
+			printf(
+				'<option value="%s" %s>%s</option>',
+				esc_attr( $level ),
+				selected( $this->settings->string( 'log_level' ), $level, false ),
+				esc_html( ucfirst( $level ) )
+			);
+		}
+
+		echo '</select></td></tr>';
+		echo '</tbody></table>';
+
+		submit_button( __( 'Save', 'conduit-crm' ), 'secondary' );
+		echo '</form>';
+
+		printf(
+			'<p><a href="%s" class="button">%s</a></p>',
+			esc_url(
+				wp_nonce_url(
+					admin_url( 'admin-post.php?action=conduit_action&do=clear_logs' ),
+					'conduit_action'
+				)
+			),
+			esc_html__( 'Clear logs', 'conduit-crm' )
+		);
+
+		echo '<table class="widefat striped"><thead><tr>';
+		echo '<th>' . esc_html__( 'Time', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Level', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Source', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Message', 'conduit-crm' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		if ( empty( $rows ) ) {
+			echo '<tr><td colspan="4">' . esc_html__( 'Nothing logged yet.', 'conduit-crm' ) . '</td></tr>';
+		}
+
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			echo '<tr>';
+			printf( '<td>%s</td>', esc_html( (string) $row->created_at ) );
+			printf( '<td>%s</td>', esc_html( (string) $row->level ) );
+			printf( '<td>%s</td>', esc_html( (string) $row->source ) );
+			printf(
+				'<td>%s%s</td>',
+				esc_html( (string) $row->message ),
+				$row->context
+					? '<details><summary>' . esc_html__( 'Context', 'conduit-crm' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row->context ) . '</pre></details>'
+					: ''
+			);
+			echo '</tr>';
+		}
+
+		echo '</tbody></table>';
+	}
+
+	private function render_tools(): void {
+		$actions = array(
+			'refresh_catalogues' => __( 'Refresh tags and fields from the CRM', 'conduit-crm' ),
+			'resync_users'       => __( 'Resync all users to the CRM', 'conduit-crm' ),
+			'refresh_all_tags'   => __( 'Pull tags for all users from the CRM', 'conduit-crm' ),
+		);
+
+		echo '<table class="widefat striped"><tbody>';
+
+		foreach ( $actions as $do => $label ) {
+			echo '<tr><td>' . esc_html( $label ) . '</td><td>';
+			printf(
+				'<a href="%s" class="button">%s</a>',
+				esc_url(
+					wp_nonce_url(
+						admin_url( 'admin-post.php?action=conduit_action&do=' . $do ),
+						'conduit_action'
+					)
+				),
+				esc_html__( 'Run', 'conduit-crm' )
+			);
+			echo '</td></tr>';
+		}
+
+		echo '</tbody></table>';
+
+		echo '<p class="description">' . esc_html__( 'Batch jobs run in the background. Watch the Logs tab for progress.', 'conduit-crm' ) . '</p>';
+	}
+
+	private function checkbox_row( string $key, string $label ): void {
+		printf(
+			'<tr><th scope="row">%s</th><td><label><input type="checkbox" name="%s" value="1" %s> %s</label></td></tr>',
+			esc_html( $label ),
+			esc_attr( $key ),
+			checked( $this->settings->bool( $key ), true, false ),
+			esc_html__( 'Enabled', 'conduit-crm' )
+		);
+	}
+
+	public function handle_save(): void {
+		$tab = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : '';
+
+		if ( ! current_user_can( self::CAPABILITY ) || ! check_admin_referer( 'conduit_save_' . $tab ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'conduit-crm' ) );
+		}
+
+		$notice = 'saved';
+
+		match ( $tab ) {
+			'connection' => $notice = $this->save_connection(),
+			'sync'       => $this->save_sync(),
+			'access'     => $this->save_access(),
+			'logs'       => $this->save_logs(),
+			default      => null,
+		};
+
+		$this->redirect( $tab, $notice );
+	}
+
+	/**
+	 * The nonce is verified in handle_save() before this is reached.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Missing
+	 */
+	private function save_connection(): string {
+		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : '';
+
+		$submitted = isset( $_POST['credentials'] ) && is_array( $_POST['credentials'] )
+			? wp_unslash( $_POST['credentials'] )
+			: array();
+
+		$existing = $this->settings->credentials();
+		$clean    = array();
+
+		foreach ( $submitted as $key => $value ) {
+			$key   = sanitize_key( (string) $key );
+			$value = is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
+
+			// A blank password field means "keep what is stored", so the user
+			// does not have to re-enter a key to change an unrelated setting.
+			if ( '' === $value && isset( $existing[ $key ] ) ) {
+				$clean[ $key ] = $existing[ $key ];
+
+				continue;
+			}
+
+			$clean[ $key ] = $value;
+		}
+
+		$this->settings->merge(
+			array(
+				'provider'    => $provider,
+				'credentials' => $clean,
+			)
+		);
+
+		$this->registry->reset();
+
+		if ( '' === $provider ) {
+			return 'saved';
+		}
+
+		return null === $this->registry->active() ? 'failed' : 'connected';
+	}
+
+	/**
+	 * The nonce is verified in handle_save() before this is reached.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Missing
+	 */
+	private function save_sync(): void {
+		$this->settings->merge(
+			array(
+				'sync_on_register'       => ! empty( $_POST['sync_on_register'] ),
+				'sync_on_profile_update' => ! empty( $_POST['sync_on_profile_update'] ),
+				'import_new_contacts'    => ! empty( $_POST['import_new_contacts'] ),
+				'async_sync'             => ! empty( $_POST['async_sync'] ),
+				'site_tracking'          => ! empty( $_POST['site_tracking'] ),
+				'staging_mode'           => ! empty( $_POST['staging_mode'] ),
+			)
+		);
+
+		$submitted = isset( $_POST['map'] ) && is_array( $_POST['map'] )
+			? wp_unslash( $_POST['map'] )
+			: array();
+
+		$map = array();
+
+		foreach ( $submitted as $wp_key => $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+
+			$crm_field = sanitize_text_field( (string) ( $entry['crm_field'] ?? '' ) );
+
+			if ( '' === $crm_field ) {
+				continue;
+			}
+
+			$map[ sanitize_key( (string) $wp_key ) ] = array(
+				'crm_field' => $crm_field,
+				'type'      => sanitize_key( (string) ( $entry['type'] ?? 'text' ) ),
+				'active'    => ! empty( $entry['active'] ),
+			);
+		}
+
+		$this->fields->save( $map );
+	}
+
+	/**
+	 * The nonce is verified in handle_save() before this is reached.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Missing
+	 */
+	private function save_access(): void {
+		$this->settings->merge(
+			array(
+				'restricted_message'  => wp_kses_post( wp_unslash( $_POST['restricted_message'] ?? '' ) ),
+				'restricted_redirect' => (int) ( $_POST['restricted_redirect'] ?? 0 ),
+				'filter_queries'      => ! empty( $_POST['filter_queries'] ),
+			)
+		);
+	}
+
+	/**
+	 * The nonce is verified in handle_save() before this is reached.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Missing
+	 */
+	private function save_logs(): void {
+		$level = isset( $_POST['log_level'] ) ? sanitize_key( wp_unslash( $_POST['log_level'] ) ) : 'error';
+
+		$this->settings->set(
+			'log_level',
+			array_key_exists( $level, Logger::LEVELS ) ? $level : 'error'
+		);
+	}
+
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+	public function handle_action(): void {
+		if ( ! current_user_can( self::CAPABILITY ) || ! check_admin_referer( 'conduit_action' ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'conduit-crm' ) );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$do = isset( $_GET['do'] ) ? sanitize_key( wp_unslash( $_GET['do'] ) ) : '';
+
+		$notice = 'saved';
+		$tab    = 'tools';
+
+		switch ( $do ) {
+			case 'rotate_secret':
+				Secret::rotate();
+				$notice = 'rotated';
+				$tab    = 'connection';
+				break;
+
+			case 'clear_logs':
+				global $wpdb;
+				$table = LogTable::name();
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+				$wpdb->query( "TRUNCATE TABLE {$table}" );
+				$notice = 'logscleared';
+				$tab    = 'logs';
+				break;
+
+			case 'refresh_catalogues':
+				$provider = $this->registry->active();
+
+				if ( $provider instanceof \Conduit\Crm\Provider\AbstractProvider ) {
+					$provider->flush_cache();
+				}
+
+				$notice = 'refreshed';
+				break;
+
+			case 'resync_users':
+				Batch::queue_all( 'conduit_batch_push_user' );
+				break;
+
+			case 'refresh_all_tags':
+				Batch::queue_all( 'conduit_refresh_user_tags' );
+				break;
+		}
+
+		$this->redirect( $tab, $notice );
+	}
+
+	private function redirect( string $tab, string $notice ): void {
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'           => self::SLUG,
+					'tab'            => $tab,
+					'conduit_notice' => $notice,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+
+		exit;
+	}
+}

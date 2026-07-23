@@ -1,0 +1,150 @@
+<?php
+
+declare( strict_types=1 );
+
+namespace Conduit\Integration\Forms;
+
+use Conduit\Features;
+use Conduit\Integration\AbstractIntegration;
+use Conduit\Logger\Logger;
+use Conduit\Sync\GuestSync;
+use Conduit\Sync\Queue;
+use Conduit\Sync\TagEngine;
+use Conduit\Sync\UserSync;
+
+/**
+ * Shared behaviour for form plugins.
+ *
+ * Every form plugin does the same three things differently: name its fields,
+ * expose its forms, and fire on submission. Subclasses supply those three
+ * answers; everything after "we have an email and some values" is here.
+ *
+ * Per-form mapping is stored in Conduit's own option rather than in each form
+ * plugin's settings, so the configuration screen is identical for all of them
+ * and a site can move a mapping between form plugins.
+ */
+abstract class AbstractFormIntegration extends AbstractIntegration {
+
+	public function __construct(
+		UserSync $sync,
+		TagEngine $tags,
+		Queue $queue,
+		Features $features,
+		Logger $logger,
+		protected GuestSync $guests,
+	) {
+		parent::__construct( $sync, $tags, $queue, $features, $logger );
+	}
+
+	/**
+	 * Forms available to configure.
+	 *
+	 * @return array<string, string> Form ID => title.
+	 */
+	abstract public function get_forms(): array;
+
+	/**
+	 * Fields on one form.
+	 *
+	 * @return array<string, string> Field key => label.
+	 */
+	abstract public function get_form_fields( string $form_id ): array;
+
+	/**
+	 * Configuration for one form.
+	 *
+	 * @return array{enabled: bool, map: array<string, string>, tags: list<string>, email_field: string}
+	 */
+	protected function form_config( string $form_id ): array {
+		$all    = $this->options();
+		$config = $all['forms'][ $form_id ] ?? array();
+
+		return array(
+			'enabled'     => ! empty( $config['enabled'] ),
+			'map'         => is_array( $config['map'] ?? null ) ? $config['map'] : array(),
+			'tags'        => is_array( $config['tags'] ?? null ) ? array_map( 'strval', $config['tags'] ) : array(),
+			'email_field' => (string) ( $config['email_field'] ?? '' ),
+		);
+	}
+
+	/**
+	 * The single path every form submission takes.
+	 *
+	 * @param array<string, mixed> $values Field key => submitted value.
+	 */
+	protected function process_submission( string $form_id, array $values ): void {
+		$config = $this->form_config( $form_id );
+
+		if ( ! $config['enabled'] ) {
+			return;
+		}
+
+		$email = $this->find_email( $values, $config['email_field'] );
+
+		if ( null === $email ) {
+			$this->logger->notice(
+				'A form submission had no email address, so nothing was synced.',
+				array( 'form_id' => $form_id ),
+				$this->get_slug()
+			);
+
+			return;
+		}
+
+		$fields = array();
+
+		foreach ( $config['map'] as $form_field => $crm_field ) {
+			if ( '' === $crm_field || ! isset( $values[ $form_field ] ) ) {
+				continue;
+			}
+
+			$value = $values[ $form_field ];
+
+			if ( is_array( $value ) ) {
+				$value = implode( ', ', array_map( 'strval', $value ) );
+			}
+
+			// isset() above already ruled out null.
+			if ( '' === $value ) {
+				continue;
+			}
+
+			$fields[ $crm_field ] = $value;
+		}
+
+		/** @var array<string, mixed> $fields */
+		$fields = apply_filters( 'conduit_form_fields', $fields, $form_id, $values, $this->get_slug() );
+
+		/** @var list<string> $tags */
+		$tags = apply_filters( 'conduit_form_tags', $config['tags'], $form_id, $values, $this->get_slug() );
+
+		// Deferred, because a form plugin's submit handler is on the critical
+		// path of a user waiting for a thank-you page.
+		$this->queue->dispatch( GuestSync::HOOK, array( $email, $fields, $tags ) );
+
+		do_action( 'conduit_form_submitted', $form_id, $email, $fields, $tags, $this->get_slug() );
+	}
+
+	/**
+	 * @param array<string, mixed> $values
+	 */
+	protected function find_email( array $values, string $preferred = '' ): ?string {
+		if ( '' !== $preferred && isset( $values[ $preferred ] ) ) {
+			$candidate = $values[ $preferred ];
+
+			if ( is_string( $candidate ) && is_email( $candidate ) ) {
+				return $candidate;
+			}
+		}
+
+		// Falling back to the first email-shaped value keeps a form working
+		// when someone rebuilds it and the field key changes.
+		foreach ( $values as $value ) {
+			if ( is_string( $value ) && is_email( $value ) ) {
+				return $value;
+			}
+		}
+
+		return null;
+	}
+}

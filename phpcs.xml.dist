@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<ruleset name="Conduit CRM">
+	<description>WordPress coding standards for Conduit CRM.</description>
+
+	<file>src</file>
+	<file>conduit-crm.php</file>
+	<file>uninstall.php</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+
+	<rule ref="WordPress-Extra">
+		<!-- PSR-4 autoloading, so filenames are class names. -->
+		<exclude name="WordPress.Files.FileName"/>
+	</rule>
+
+	<!--
+		EscapeOutput treats exception messages as output. These directories
+		contain no echo or print at all: every hit is a `throw new
+		SomethingException( __( '...' ) )` whose message is caught and logged,
+		never rendered. Escaping is still enforced everywhere that does output.
+	-->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude-pattern>src/Crm/*</exclude-pattern>
+		<exclude-pattern>src/Container.php</exclude-pattern>
+		<exclude-pattern>src/Sync/*</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="conduit-crm"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Batch and admin listings intentionally page in large chunks. -->
+	<rule ref="WordPress.WP.PostsPerPage">
+		<exclude-pattern>src/Admin/*</exclude-pattern>
+		<exclude-pattern>src/Access/QueryFilter.php</exclude-pattern>
+		<exclude-pattern>src/Integration/Forms/*</exclude-pattern>
+	</rule>
+
+	<config name="minimum_wp_version" value="6.4"/>
+</ruleset>
