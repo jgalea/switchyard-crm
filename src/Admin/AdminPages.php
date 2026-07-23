@@ -227,7 +227,18 @@ final class AdminPages {
 
 	private function render_webhook_box( string $slug ): void {
 		echo '<h2>' . esc_html__( 'Webhook', 'conduit-crm' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Point your CRM at this URL to push tag changes back into WordPress.', 'conduit-crm' ) . '</p>';
+		echo '<p>' . esc_html__( 'Point your CRM at this endpoint to push tag changes back into WordPress.', 'conduit-crm' ) . '</p>';
+
+		echo '<p><strong>' . esc_html__( 'Preferred: send the secret as a header', 'conduit-crm' ) . '</strong></p>';
+
+		printf(
+			'<p><code style="user-select:all;">%s</code><br><code style="user-select:all;">%s: %s</code></p>',
+			esc_html( Secret::endpoint( $slug ) ),
+			esc_html( Secret::header_name() ),
+			esc_html( Secret::get() )
+		);
+
+		echo '<p>' . esc_html__( 'If your CRM cannot send a custom header, use this URL instead. It carries the secret in the query string, which is recorded in server access logs.', 'conduit-crm' ) . '</p>';
 
 		printf(
 			'<p><code style="user-select:all;">%s</code></p>',

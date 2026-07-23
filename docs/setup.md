@@ -41,8 +41,13 @@ from `wp-config.php`.
 
 ## Webhooks
 
-The Connection screen shows a webhook URL carrying a shared secret. Point your
-CRM's automation at it to push tag changes back into WordPress.
+The Connection screen shows the webhook endpoint and its shared secret. Point
+your CRM's automation at it to push tag changes back into WordPress.
+
+Send the secret as an `X-Conduit-Secret` header where your CRM supports it. The
+URL form works too, and some CRMs cannot send a custom header on a webhook, but
+a secret in a query string is written to the web server's access log and can
+leak through a Referer header. The header form avoids both.
 
 The listener does not trust tags in the request body. It re-reads them from the
 API, so a replayed or forged request cannot grant access.

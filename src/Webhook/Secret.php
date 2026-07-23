@@ -48,11 +48,28 @@ final class Secret {
 		return '' !== $candidate && hash_equals( $secret, $candidate );
 	}
 
+	/**
+	 * The URL form, for CRMs that cannot send a custom header.
+	 *
+	 * Prefer header_name()/get() where the CRM supports it: a secret in a URL
+	 * is recorded in access logs and can leak through Referer.
+	 */
 	public static function url( string $provider_slug ): string {
 		return add_query_arg(
 			'secret',
 			self::get(),
 			rest_url( 'conduit/v1/webhook/' . $provider_slug )
 		);
+	}
+
+	/**
+	 * The endpoint without the secret, for use with the header.
+	 */
+	public static function endpoint( string $provider_slug ): string {
+		return rest_url( 'conduit/v1/webhook/' . $provider_slug );
+	}
+
+	public static function header_name(): string {
+		return 'X-Conduit-Secret';
 	}
 }

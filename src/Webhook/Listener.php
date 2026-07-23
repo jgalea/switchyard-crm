@@ -57,7 +57,15 @@ final class Listener {
 	}
 
 	public function authorise( WP_REST_Request $request ): bool|WP_Error {
-		$secret = $request->get_param( 'secret' );
+		// A header is preferred over the query parameter: a secret in the URL
+		// lands in the web server's access log and can leak through Referer.
+		// The query parameter stays supported because several CRMs cannot send
+		// a custom header on a webhook.
+		$secret = $request->get_header( 'x_conduit_secret' );
+
+		if ( ! is_string( $secret ) || '' === $secret ) {
+			$secret = $request->get_param( 'secret' );
+		}
 
 		if ( ! is_string( $secret ) || ! Secret::matches( $secret ) ) {
 			$this->logger->warning(
