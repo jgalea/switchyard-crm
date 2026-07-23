@@ -74,13 +74,6 @@ Your field mapping and access rules are stored independently of the CRM, so swit
 
 Yes. `conduit_apply_tags()`, `conduit_remove_tags()`, `conduit_has_tag()`, `conduit_sync_user()`, `conduit_sync_contact()` and more, plus filters on every sync payload and access decision. There are WP-CLI commands for status, sync, tags and import.
 
-== Screenshots ==
-
-1. Connection screen with the CRM picker and credentials.
-2. Field mapping between WordPress and CRM fields.
-3. Per-post access rules in the editor sidebar.
-4. The log viewer, with credentials redacted.
-
 == Changelog ==
 
 = 1.0.0 =

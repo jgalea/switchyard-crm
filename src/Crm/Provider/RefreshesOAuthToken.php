@@ -63,7 +63,7 @@ trait RefreshesOAuthToken {
 
 		if ( '' === $refresh_token ) {
 			throw new ConnectionException(
-				__( 'No refresh token is stored. Reconnect the account.', 'conduit-crm' )
+				esc_html__( 'No refresh token is stored. Reconnect the account.', 'conduit-crm' )
 			);
 		}
 
@@ -85,15 +85,15 @@ trait RefreshesOAuthToken {
 				->request( 'POST', add_query_arg( $params, $this->token_url() ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Could not refresh the access token. Reconnect the account.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Could not refresh the access token. Reconnect the account.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 
 		$token = $response->path( 'access_token' );
 
 		if ( ! is_string( $token ) || '' === $token ) {
-			throw new ConnectionException( __( 'The token endpoint did not return an access token.', 'conduit-crm' ) );
+			throw new ConnectionException( esc_html__( 'The token endpoint did not return an access token.', 'conduit-crm' ) );
 		}
 
 		$expires = (int) $response->path( 'expires_in', 3600 );

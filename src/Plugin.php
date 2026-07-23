@@ -230,8 +230,6 @@ final class Plugin {
 
 		Installer::maybe_upgrade();
 
-		load_plugin_textdomain( 'conduit-crm', false, dirname( plugin_basename( CONDUIT_FILE ) ) . '/languages' );
-
 		$this->boot_action_scheduler();
 
 		$this->get( UserSync::class )->register_hooks();

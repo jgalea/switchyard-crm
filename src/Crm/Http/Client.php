@@ -159,7 +159,10 @@ final class Client {
 					$this->provider_slug
 				);
 
-				throw new ConnectionException( $raw->get_error_message(), array( 'url' => $url ) );
+				// The message is escaped; the context array is logged, never
+				// printed, so escaping it would corrupt the stored value.
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+				throw new ConnectionException( esc_html( $raw->get_error_message() ), array( 'url' => $url ) );
 			}
 
 			$response = $this->to_response( $raw );
@@ -179,6 +182,8 @@ final class Client {
 			$this->record_failure();
 			$this->log_exchange( $method, $url, $body, $response, 'error' );
 
+			// to_exception() escapes the message it builds.
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			throw $this->to_exception( $response, $url );
 		}
 	}
@@ -275,6 +280,8 @@ final class Client {
 	 * common shapes beats surfacing a raw JSON blob in a support ticket.
 	 */
 	private function extract_error_message( Response $response ): string {
+		// Escaped here rather than at each throw site: the message can reach a
+		// wp_die() or an error page, and it is built from a remote response.
 		$json = $response->json();
 
 		$candidates = array(
@@ -291,13 +298,13 @@ final class Client {
 
 		foreach ( $candidates as $candidate ) {
 			if ( is_string( $candidate ) && '' !== $candidate ) {
-				return $candidate;
+				return esc_html( $candidate );
 			}
 		}
 
 		return sprintf(
 			/* translators: %d: HTTP status code. */
-			__( 'The CRM returned an unexpected %d response.', 'conduit-crm' ),
+			esc_html__( 'The CRM returned an unexpected %d response.', 'conduit-crm' ),
 			$response->status
 		);
 	}
@@ -324,10 +331,13 @@ final class Client {
 		$state = get_transient( $this->circuit_key() );
 
 		if ( is_array( $state ) && ( $state['open'] ?? false ) ) {
+			// Message is escaped; the context array is logged, never printed.
+			// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			throw new CircuitOpenException(
-				__( 'Requests to this CRM are paused after repeated failures. They resume automatically.', 'conduit-crm' ),
+				esc_html__( 'Requests to this CRM are paused after repeated failures. They resume automatically.', 'conduit-crm' ),
 				array( 'provider' => $this->provider_slug )
 			);
+			// phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
 

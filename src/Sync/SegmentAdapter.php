@@ -131,7 +131,7 @@ final class SegmentAdapter {
 		}
 
 		throw new CrmException(
-			__( 'This CRM does not support creating segments from WordPress. Create it in the CRM first.', 'conduit-crm' )
+			esc_html__( 'This CRM does not support creating segments from WordPress. Create it in the CRM first.', 'conduit-crm' )
 		);
 	}
 

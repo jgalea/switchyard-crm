@@ -93,8 +93,8 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 			$this->http()->get( '/lists/' . rawurlencode( $this->audience() ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Mailchimp rejected these credentials, or the audience ID is wrong.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Mailchimp rejected these credentials, or the audience ID is wrong.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -128,7 +128,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 		$id = $response->path( 'id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Mailchimp did not return a member ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Mailchimp did not return a member ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -204,7 +204,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 		$email = $fields['email_address'] ?? '';
 
 		if ( ! is_string( $email ) || '' === $email ) {
-			throw new CrmException( __( 'Mailchimp needs an email address to identify a member.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Mailchimp needs an email address to identify a member.', 'conduit-crm' ) );
 		}
 
 		return $email;

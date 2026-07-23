@@ -54,7 +54,8 @@ final class Queue {
 				);
 			}
 
-			do_action_ref_array( $hook, $args );
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- caller supplies an already-prefixed hook.
+				do_action_ref_array( $hook, $args );
 
 			return;
 		}

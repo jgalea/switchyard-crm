@@ -8,19 +8,20 @@
 
 declare( strict_types=1 );
 
+defined( 'ABSPATH' ) || exit;
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 global $wpdb;
 
-$options = array(
+$conduit_options = array(
 	'conduit_settings',
 	'conduit_field_map',
 	'conduit_webhook_secret',
 	'conduit_db_version',
 );
 
-foreach ( $options as $option ) {
-	delete_option( $option );
+foreach ( $conduit_options as $conduit_option ) {
+	delete_option( $conduit_option );
 }
 
 // Per-integration settings.

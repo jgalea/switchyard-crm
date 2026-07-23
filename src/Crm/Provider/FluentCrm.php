@@ -49,7 +49,7 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 	protected function verify_credentials(): void {
 		if ( ! $this->is_available() ) {
 			throw new ConnectionException(
-				__( 'FluentCRM is not active on this site. Install and activate it first.', 'conduit-crm' )
+				esc_html__( 'FluentCRM is not active on this site. Install and activate it first.', 'conduit-crm' )
 			);
 		}
 	}
@@ -61,7 +61,7 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 	/** @throws CrmException */
 	private function guard(): void {
 		if ( ! $this->is_available() ) {
-			throw new CrmException( __( 'FluentCRM is no longer active on this site.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'FluentCRM is no longer active on this site.', 'conduit-crm' ) );
 		}
 	}
 
@@ -79,13 +79,13 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 		$data = $this->to_payload( $fields );
 
 		if ( empty( $data['email'] ) ) {
-			throw new CrmException( __( 'FluentCRM needs an email address to create a contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'FluentCRM needs an email address to create a contact.', 'conduit-crm' ) );
 		}
 
 		$contact = FluentCrmApi( 'contacts' )->createOrUpdate( $data );
 
 		if ( ! $contact || ! isset( $contact->id ) ) {
-			throw new CrmException( __( 'FluentCRM did not return a contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'FluentCRM did not return a contact.', 'conduit-crm' ) );
 		}
 
 		return (string) $contact->id;
@@ -97,7 +97,7 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 		$subscriber = Subscriber::find( (int) $contact_id );
 
 		if ( ! $subscriber ) {
-			throw new CrmException( __( 'That FluentCRM contact no longer exists.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'That FluentCRM contact no longer exists.', 'conduit-crm' ) );
 		}
 
 		$data = $this->to_payload( $fields );

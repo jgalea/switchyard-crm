@@ -94,8 +94,8 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 			$this->http()->get( '/settings/modules' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Zoho rejected these credentials. Check the client details, refresh token and data centre.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Zoho rejected these credentials. Check the client details, refresh token and data centre.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -117,7 +117,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 		$id = $response->path( 'data.0.details.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Zoho did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Zoho did not return a contact ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -290,7 +290,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 		$id = $response->path( 'tags.0.details.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Zoho did not return a tag ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Zoho did not return a tag ID.', 'conduit-crm' ) );
 		}
 
 		$this->flush_cache();

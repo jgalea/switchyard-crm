@@ -135,8 +135,8 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 			$this->http()->get( '/sobjects/' . self::OBJECT . '/describe' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Salesforce rejected these credentials. Check the connected app details and instance URL.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Salesforce rejected these credentials. Check the connected app details and instance URL.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -175,7 +175,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 		$id = $response->path( 'id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Salesforce did not return a record ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Salesforce did not return a record ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -327,7 +327,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 	 */
 	public function create_tag( string $label ): string {
 		throw new CrmException(
-			__( 'Salesforce tags are picklist values. Add the value to the tag field in Setup, then refresh the tag list.', 'conduit-crm' )
+			esc_html__( 'Salesforce tags are picklist values. Add the value to the tag field in Setup, then refresh the tag list.', 'conduit-crm' )
 		);
 	}
 

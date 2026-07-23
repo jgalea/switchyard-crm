@@ -106,6 +106,9 @@ final class ContactResolver {
 	 * identify the contact but carry a stale or missing email.
 	 */
 	public function user_for_contact( string $contact_id ): ?int {
+		// A meta lookup, and deliberately so: this is the webhook fallback for
+		// a contact whose email changed in the CRM, not a per-request path.
+		// phpcs:disable WordPress.DB.SlowDBQuery
 		$users = get_users(
 			array(
 				'meta_key'   => self::META_CONTACT_ID,
@@ -114,6 +117,8 @@ final class ContactResolver {
 				'fields'     => 'ID',
 			)
 		);
+
+		// phpcs:enable WordPress.DB.SlowDBQuery
 
 		return empty( $users ) ? null : (int) $users[0];
 	}

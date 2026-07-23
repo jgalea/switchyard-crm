@@ -95,10 +95,13 @@ final class ContentGate {
 	}
 
 	private function message( int $post_id ): string {
-		$message = $this->settings->string(
-			'restricted_message',
-			__( 'You do not have access to this content.', 'conduit-crm' )
-		);
+		$message = $this->settings->string( 'restricted_message' );
+
+		// Translated here, at render time, rather than in the settings
+		// defaults, which are read before init.
+		if ( '' === $message ) {
+			$message = __( 'You do not have access to this content.', 'conduit-crm' );
+		}
 
 		/** @var string $message */
 		$message = apply_filters( 'conduit_restricted_message', $message, $post_id );

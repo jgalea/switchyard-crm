@@ -30,6 +30,9 @@ final class Batch {
 				)
 			);
 
+			// The hook is supplied by the caller and is always one of this
+			// plugin's own conduit_-prefixed constants; it is never user input.
+			// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound
 			foreach ( $user_ids as $user_id ) {
 				if ( function_exists( 'as_enqueue_async_action' ) ) {
 					as_enqueue_async_action( $hook, array( (int) $user_id ), Queue::GROUP );
@@ -39,6 +42,7 @@ final class Batch {
 
 				++$queued;
 			}
+			// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound
 
 			++$paged;
 			$fetched = count( $user_ids );

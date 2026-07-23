@@ -404,7 +404,9 @@ final class AdminPages {
 
 		$table = LogTable::name();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// $table is $wpdb->prefix . 'conduit_log'; identifiers cannot be bound,
+		// and an admin log viewer is deliberately uncached.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC LIMIT 200" );
 
 		$this->form_open( 'logs' );
@@ -535,9 +537,13 @@ final class AdminPages {
 	private function save_connection(): string {
 		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : '';
 
+		// Unslashed here and sanitized per key and per value in the loop below,
+		// which the sniff cannot follow across an array traversal.
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$submitted = isset( $_POST['credentials'] ) && is_array( $_POST['credentials'] )
 			? wp_unslash( $_POST['credentials'] )
 			: array();
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$existing = $this->settings->credentials();
 		$clean    = array();
@@ -590,9 +596,12 @@ final class AdminPages {
 			)
 		);
 
+		// Same shape as the credentials array: sanitized per entry below.
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$submitted = isset( $_POST['map'] ) && is_array( $_POST['map'] )
 			? wp_unslash( $_POST['map'] )
 			: array();
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$map = array();
 
@@ -623,13 +632,16 @@ final class AdminPages {
 	 * phpcs:disable WordPress.Security.NonceVerification.Missing
 	 */
 	private function save_access(): void {
+		// wp_kses_post() and the int cast below are the sanitizers.
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$this->settings->merge(
 			array(
 				'restricted_message'  => wp_kses_post( wp_unslash( $_POST['restricted_message'] ?? '' ) ),
-				'restricted_redirect' => (int) ( $_POST['restricted_redirect'] ?? 0 ),
+				'restricted_redirect' => (int) wp_unslash( $_POST['restricted_redirect'] ?? 0 ),
 				'filter_queries'      => ! empty( $_POST['filter_queries'] ),
 			)
 		);
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	}
 
 	/**
@@ -669,7 +681,7 @@ final class AdminPages {
 			case 'clear_logs':
 				global $wpdb;
 				$table = LogTable::name();
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 				$wpdb->query( "TRUNCATE TABLE {$table}" );
 				$notice = 'logscleared';
 				$tab    = 'logs';

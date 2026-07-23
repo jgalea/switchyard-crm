@@ -9,6 +9,8 @@
 
 declare( strict_types=1 );
 
+defined( 'ABSPATH' ) || exit;
+
 use Conduit\Crm\Contracts\Provider;
 use Conduit\Plugin;
 use Conduit\Sync\ContactResolver;

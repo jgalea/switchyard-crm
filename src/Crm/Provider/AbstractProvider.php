@@ -55,8 +55,8 @@ abstract class AbstractProvider implements Provider {
 				throw new ConnectionException(
 					sprintf(
 						/* translators: %s: credential field label. */
-						__( '%s is required to connect.', 'conduit-crm' ),
-						$field['label']
+						esc_html__( '%s is required to connect.', 'conduit-crm' ),
+						esc_html( $field['label'] )
 					)
 				);
 			}

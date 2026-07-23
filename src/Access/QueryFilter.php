@@ -128,6 +128,7 @@ final class QueryFilter {
 				'posts_per_page' => 500,
 				'fields'         => 'ids',
 				'post_status'    => 'publish',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- result is cached in a transient.
 				'tax_query'      => array(
 					array(
 						'taxonomy'         => 'category',

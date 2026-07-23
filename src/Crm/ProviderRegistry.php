@@ -89,7 +89,7 @@ final class ProviderRegistry {
 
 	public function make( string $slug ): Provider {
 		if ( ! isset( $this->providers[ $slug ] ) ) {
-			throw new RuntimeException( sprintf( 'Unknown CRM provider "%s".', $slug ) );
+			throw new RuntimeException( esc_html( sprintf( 'Unknown CRM provider "%s".', $slug ) ) );
 		}
 
 		$class = $this->providers[ $slug ];

@@ -64,8 +64,8 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 			$this->http()->get( '/crm/v3/objects/contacts', array( 'limit' => 1 ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'HubSpot rejected this token. Check that the private app has CRM contact scopes.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'HubSpot rejected this token. Check that the private app has CRM contact scopes.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -101,7 +101,7 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 		$id = $response->path( 'id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'HubSpot did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'HubSpot did not return a contact ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -246,7 +246,7 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 		$id = $response->path( 'list.listId' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'HubSpot did not return a list ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'HubSpot did not return a list ID.', 'conduit-crm' ) );
 		}
 
 		$this->flush_cache();

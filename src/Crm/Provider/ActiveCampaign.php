@@ -82,8 +82,8 @@ final class ActiveCampaign extends AbstractProvider implements
 			$this->http()->get( '/users/me' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'ActiveCampaign rejected these credentials. Check the API URL and key.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'ActiveCampaign rejected these credentials. Check the API URL and key.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -102,7 +102,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$id = $response->path( 'contact.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'ActiveCampaign did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'ActiveCampaign did not return a contact ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -320,7 +320,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$id = $response->path( 'tag.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'ActiveCampaign did not return a tag ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'ActiveCampaign did not return a tag ID.', 'conduit-crm' ) );
 		}
 
 		$this->flush_cache();
@@ -398,7 +398,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$id = $response->path( 'ecomOrder.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'ActiveCampaign did not return an order ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'ActiveCampaign did not return an order ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -452,7 +452,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$key   = $this->credential( 'event_key' );
 
 		if ( '' === $actid || '' === $key ) {
-			throw new CrmException( __( 'Event tracking needs both a tracking account ID and an event key.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Event tracking needs both a tracking account ID and an event key.', 'conduit-crm' ) );
 		}
 
 		$email = isset( $data['email'] ) && is_string( $data['email'] ) ? $data['email'] : '';

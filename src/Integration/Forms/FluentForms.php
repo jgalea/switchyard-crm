@@ -57,7 +57,7 @@ final class FluentForms extends AbstractFormIntegration {
 		foreach ( $data as $key => $value ) {
 			$full = '' === $prefix ? (string) $key : $prefix . '.' . $key;
 
-			if ( is_array( $value ) && ! array_is_list( $value ) ) {
+			if ( is_array( $value ) && ! $this->is_list( $value ) ) {
 				$flat += $this->flatten( $value, $full );
 
 				continue;
@@ -69,12 +69,31 @@ final class FluentForms extends AbstractFormIntegration {
 		return $flat;
 	}
 
+	/**
+	 * Whether an array is a plain list.
+	 *
+	 * Hand-rolled rather than array_is_list(), which Plugin Check flags
+	 * against the declared WordPress minimum.
+	 *
+	 * @param array<mixed> $value
+	 */
+	private function is_list( array $value ): bool {
+		// An empty array is a list. Guarded explicitly because range( 0, -1 )
+		// counts downwards and returns array( 0, -1 ) rather than nothing.
+		if ( array() === $value ) {
+			return true;
+		}
+
+		return array_keys( $value ) === range( 0, count( $value ) - 1 );
+	}
+
 	public function get_forms(): array {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'fluentform_forms';
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// Table name is built from $wpdb->prefix; identifiers cannot be bound.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results( "SELECT id, title FROM {$table} WHERE status = 'published'" );
 
 		$forms = array();
@@ -91,7 +110,8 @@ final class FluentForms extends AbstractFormIntegration {
 
 		$table = $wpdb->prefix . 'fluentform_forms';
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// Table name is built from $wpdb->prefix; identifiers cannot be bound.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$json = $wpdb->get_var( $wpdb->prepare( "SELECT form_fields FROM {$table} WHERE id = %d", (int) $form_id ) );
 
 		if ( ! is_string( $json ) ) {

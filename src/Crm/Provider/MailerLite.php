@@ -55,8 +55,8 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 			$this->http()->get( '/groups', array( 'limit' => 1 ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'MailerLite rejected this API token.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'MailerLite rejected this API token.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -83,7 +83,7 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 		$id = $response->path( 'data.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'MailerLite did not return a subscriber ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'MailerLite did not return a subscriber ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;

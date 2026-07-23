@@ -11,7 +11,6 @@
  * License:           GPL-3.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:       conduit-crm
- * Domain Path:       /languages
  */
 
 declare( strict_types=1 );
@@ -41,6 +40,10 @@ if ( ! is_readable( $conduit_autoloader ) ) {
 }
 
 require_once $conduit_autoloader;
+
+// Loaded here rather than through composer's files autoload: it guards on
+// ABSPATH, so it must only ever be included from inside WordPress.
+require_once CONDUIT_DIR . 'src/api.php';
 
 register_activation_hook( __FILE__, array( Conduit\Installer::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( Conduit\Installer::class, 'deactivate' ) );

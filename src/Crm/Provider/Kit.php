@@ -55,8 +55,8 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 			$this->http()->get( '/account' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Kit rejected this API key.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Kit rejected this API key.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -75,7 +75,7 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 		$id = $response->path( 'subscriber.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Kit did not return a subscriber ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Kit did not return a subscriber ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -231,7 +231,7 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 		$id = $response->path( 'tag.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Kit did not return a tag ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Kit did not return a tag ID.', 'conduit-crm' ) );
 		}
 
 		$this->flush_cache();

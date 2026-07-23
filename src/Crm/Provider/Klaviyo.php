@@ -68,8 +68,8 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 			$this->http()->get( '/accounts/' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Klaviyo rejected this API key. Check that it has profile and list scopes.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Klaviyo rejected this API key. Check that it has profile and list scopes.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -99,7 +99,7 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 		$id = $response->path( 'data.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( __( 'Klaviyo did not return a profile ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Klaviyo did not return a profile ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;

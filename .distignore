@@ -1,0 +1,16 @@
+# Everything that must not ship in a distributable build.
+.git
+.github
+.gitattributes
+.distignore
+.wp-env.json
+.phpunit.cache
+.phpunit.result.cache
+tests
+docs
+phpcs.xml.dist
+phpstan.neon.dist
+phpunit.xml.dist
+README.md
+bin
+node_modules

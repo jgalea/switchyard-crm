@@ -55,8 +55,8 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 			$this->http()->get( '/account' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				__( 'Brevo rejected this API key.', 'conduit-crm' ),
-				array( 'error' => $e->getMessage() )
+				esc_html__( 'Brevo rejected this API key.', 'conduit-crm' ),
+				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
 	}
@@ -77,7 +77,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 		$email = $fields['email'] ?? '';
 
 		if ( ! is_string( $email ) || '' === $email ) {
-			throw new CrmException( __( 'Brevo needs an email address to create a contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Brevo needs an email address to create a contact.', 'conduit-crm' ) );
 		}
 
 		unset( $fields['email'] );
@@ -100,7 +100,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 		}
 
 		if ( null === $id || '' === $id ) {
-			throw new CrmException( __( 'Brevo did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Brevo did not return a contact ID.', 'conduit-crm' ) );
 		}
 
 		return (string) $id;
@@ -262,7 +262,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 		$email = $response->path( 'email' );
 
 		if ( ! is_string( $email ) ) {
-			throw new CrmException( __( 'Could not resolve an email address for this Brevo contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Could not resolve an email address for this Brevo contact.', 'conduit-crm' ) );
 		}
 
 		return $email;

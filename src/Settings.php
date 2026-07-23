@@ -17,7 +17,15 @@ final class Settings {
 	/** @var array<string, mixed>|null */
 	private ?array $data = null;
 
-	/** @return array<string, mixed> */
+	/**
+	 * Defaults must not call translation functions.
+	 *
+	 * Settings are read on plugins_loaded, before init, and calling __() that
+	 * early triggers WordPress 6.7's _load_textdomain_just_in_time notice on
+	 * every request. User-facing strings are translated where they are shown.
+	 *
+	 * @return array<string, mixed>
+	 */
 	public static function defaults(): array {
 		return array(
 			'provider'               => '',
@@ -26,7 +34,7 @@ final class Settings {
 			'sync_on_profile_update' => true,
 			'register_tags'          => array(),
 			'import_new_contacts'    => false,
-			'restricted_message'     => __( 'You do not have access to this content.', 'conduit-crm' ),
+			'restricted_message'     => '',
 			'restricted_redirect'    => 0,
 			'filter_queries'         => true,
 			'site_tracking'          => false,

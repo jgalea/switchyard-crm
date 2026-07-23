@@ -24,7 +24,7 @@ final class Rules {
 	public const TERM_META_TAGS  = 'conduit_tags';
 	public const TERM_META_MATCH = 'conduit_match';
 
-	/** @var array<int, bool> */
+	/** @var array<string, bool> */
 	private array $cache = array();
 
 	public function __construct( private TagEngine $tags ) {}
@@ -97,7 +97,11 @@ final class Rules {
 	public function can_access( int $post_id, ?int $user_id = null ): bool {
 		$user_id ??= get_current_user_id();
 
-		$cache_key = $post_id * 1000000 + $user_id;
+		// A composite string, never arithmetic on the two IDs. Multiplying the
+		// post ID by a fixed factor and adding the user ID collides once user
+		// IDs reach seven figures, which would hand one visitor another
+		// visitor's cached access decision.
+		$cache_key = $post_id . ':' . $user_id;
 
 		if ( isset( $this->cache[ $cache_key ] ) ) {
 			return $this->cache[ $cache_key ];

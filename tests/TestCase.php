@@ -37,6 +37,7 @@ abstract class TestCase extends BaseTestCase {
 	 */
 	protected function stub_wordpress(): void {
 		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( 'esc_html__' )->returnArg( 1 );
 		Functions\when( 'esc_js' )->returnArg( 1 );
 		Functions\when( 'esc_html' )->returnArg( 1 );
 		Functions\when( 'esc_attr' )->returnArg( 1 );
@@ -60,7 +61,8 @@ abstract class TestCase extends BaseTestCase {
 		);
 
 		Functions\when( 'wp_parse_url' )->alias(
-			static fn( string $url, int $component = -1 ) => parse_url( $url, $component )
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- this stub *is* the wrapper.
+			static fn( string $url, int $component = -1 ) => \parse_url( $url, $component )
 		);
 
 		Functions\when( 'get_transient' )->alias(
