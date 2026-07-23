@@ -148,10 +148,29 @@ class Logger {
 		return false;
 	}
 
+	/**
+	 * Strips credential-shaped substrings from a value.
+	 *
+	 * Covers every auth scheme the shipped providers actually send. Note that
+	 * Zoho-oauthtoken has no word boundary before "token", so a generic \bToken
+	 * pattern does not match it and it is listed explicitly.
+	 */
 	private static function scrub_string( string $value ): string {
+		$schemes = implode(
+			'|',
+			array(
+				'Bearer',
+				'Basic',
+				'Token',
+				'Api-Token',
+				'Klaviyo-API-Key',
+				'Zoho-oauthtoken',
+			)
+		);
+
 		$patterns = array(
-			'/\b(Bearer|Token|Basic|Klaviyo-API-Key)\s+[A-Za-z0-9\-\._~\+\/=]{8,}/i' => '$1 ' . self::REDACTED,
-			'/\b(pk_|sk_|xkeysib-|klav_)[A-Za-z0-9\-_]{8,}/i'                        => self::REDACTED,
+			'/(' . $schemes . ')[:\s]+[A-Za-z0-9\-\._~\+\/=]{8,}/i' => '$1 ' . self::REDACTED,
+			'/\b(pk_|sk_|xkeysib-|klav_|pat-)[A-Za-z0-9\-_]{8,}/i'     => self::REDACTED,
 		);
 
 		return (string) preg_replace( array_keys( $patterns ), array_values( $patterns ), $value );

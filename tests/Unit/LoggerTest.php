@@ -79,6 +79,38 @@ final class LoggerTest extends TestCase {
 		$this->assertStringNotContainsString( '9988776655443322', $clean['snippet'] );
 	}
 
+	/**
+	 * Every auth scheme the shipped providers send, checked against the value
+	 * scrubber rather than relying on key-name matching alone.
+	 *
+	 * @dataProvider authorizationValues
+	 */
+	public function test_it_scrubs_every_provider_auth_scheme( string $header, string $secret ): void {
+		// A key name the redactor does not treat as sensitive, so only the
+		// value-level scrubber can catch it.
+		$clean = Logger::redact( array( 'note' => 'sent ' . $header . ' ' . $secret ) );
+
+		$this->assertStringNotContainsString(
+			$secret,
+			$clean['note'],
+			sprintf( '%s credentials leaked through the value scrubber.', $header )
+		);
+	}
+
+	/**
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function authorizationValues(): array {
+		return array(
+			'ActiveCampaign' => array( 'Api-Token', 'abc123def456ghi789' ),
+			'HubSpot'        => array( 'Bearer', 'pat-na1-0123456789abcdef' ),
+			'Mailchimp'      => array( 'Basic', 'Y29uZHVpdDphYmMxMjNkZWY0NTY=' ),
+			'Klaviyo'        => array( 'Klaviyo-API-Key', 'pk_0123456789abcdef' ),
+			'Zoho'           => array( 'Zoho-oauthtoken', '1000.abcdef0123456789.ghijkl' ),
+			'MailerLite'     => array( 'Bearer', 'eyJ0eXAiOiJKV1QiLCJhbGc' ),
+		);
+	}
+
 	public function test_it_leaves_ordinary_prose_alone(): void {
 		$clean = Logger::redact( array( 'message' => 'Synced 4 users to the CRM.' ) );
 
