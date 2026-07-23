@@ -16,7 +16,16 @@ use Conduit\Crm\Exception\CrmException;
  */
 trait RefreshesOAuthToken {
 
-	private const TOKEN_MARGIN = 120;
+	/**
+	 * Seconds of headroom before expiry, so a token that is technically still
+	 * valid is refreshed rather than expiring mid-request.
+	 *
+	 * A method rather than a constant because constants in traits need PHP 8.2
+	 * and this plugin supports 8.1.
+	 */
+	private function token_margin(): int {
+		return 120;
+	}
 
 	/**
 	 * Token endpoint for this provider.
@@ -89,7 +98,7 @@ trait RefreshesOAuthToken {
 
 		$expires = (int) $response->path( 'expires_in', 3600 );
 
-		set_transient( $this->token_transient(), $token, max( 60, $expires - self::TOKEN_MARGIN ) );
+		set_transient( $this->token_transient(), $token, max( 60, $expires - $this->token_margin() ) );
 
 		return $token;
 	}
