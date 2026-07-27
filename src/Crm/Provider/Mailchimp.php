@@ -58,13 +58,23 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 
 	/**
 	 * Mailchimp keys carry their data centre after the final hyphen.
+	 *
+	 * The suffix is interpolated into the API hostname, so it is validated
+	 * strictly rather than trusted. A key ending in something like
+	 * "evil.example/x" would otherwise produce a base URL whose host is
+	 * evil.example, sending the Basic auth header, and therefore the key
+	 * itself, to an attacker.
 	 */
 	private function data_centre(): string {
 		$key   = $this->credential( 'api_key' );
 		$parts = explode( '-', $key );
 		$dc    = end( $parts );
 
-		return ( is_string( $dc ) && '' !== $dc && $dc !== $key ) ? $dc : 'us1';
+		if ( ! is_string( $dc ) || $dc === $key ) {
+			return 'us1';
+		}
+
+		return 1 === preg_match( '/^[a-z]{2,4}[0-9]{1,3}$/', $dc ) ? $dc : 'us1';
 	}
 
 	protected function auth_headers(): array {

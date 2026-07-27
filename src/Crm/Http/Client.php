@@ -108,6 +108,8 @@ final class Client {
 
 		$url = $this->build_url( $path, $query );
 
+		$this->guard_destination( $url );
+
 		$args = array(
 			'method'  => $method,
 			'timeout' => (int) apply_filters( 'conduit_http_timeout', self::DEFAULT_TIMEOUT, $this->provider_slug ),
@@ -186,6 +188,72 @@ final class Client {
 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			throw $this->to_exception( $response, $url );
 		}
+	}
+
+	/**
+	 * Refuses to send credentials anywhere but a public HTTPS host.
+	 *
+	 * Base URLs are built from stored credentials, and several providers
+	 * interpolate part of a credential into the hostname. That makes the
+	 * destination attacker-influenceable by anyone who can talk an
+	 * administrator into pasting a crafted key, so it is checked rather than
+	 * assumed. Blocking private and link-local addresses also stops this
+	 * being a route to cloud instance metadata on hosts where an
+	 * administrator is not the server operator.
+	 *
+	 * @throws ConnectionException
+	 */
+	private function guard_destination( string $url ): void {
+		// Messages are escaped; the context arrays are logged, never printed.
+		// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+
+		if ( ! is_string( $host ) || '' === $host ) {
+			throw new ConnectionException(
+				esc_html__( 'The CRM address is not a valid URL.', 'conduit-crm' ),
+				array( 'url' => $url )
+			);
+		}
+
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+
+		if ( 'https' !== $scheme && ! apply_filters( 'conduit_allow_insecure_transport', false, $host ) ) {
+			throw new ConnectionException(
+				esc_html__( 'Refusing to send CRM credentials over an unencrypted connection.', 'conduit-crm' ),
+				array( 'url' => $url )
+			);
+		}
+
+		if ( self::is_internal_host( $host ) && ! apply_filters( 'conduit_allow_internal_host', false, $host ) ) {
+			throw new ConnectionException(
+				esc_html__( 'Refusing to send CRM credentials to a private network address.', 'conduit-crm' ),
+				array( 'host' => $host )
+			);
+		}
+		// phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+	}
+
+	/**
+	 * Loopback, private and link-local destinations.
+	 */
+	private static function is_internal_host( string $host ): bool {
+		$host = strtolower( trim( $host, '[]' ) );
+
+		if ( 'localhost' === $host || str_ends_with( $host, '.localhost' ) || str_ends_with( $host, '.local' ) ) {
+			return true;
+		}
+
+		if ( ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
+
+		// A public IP is one that survives both the private and reserved
+		// range filters.
+		return ! filter_var(
+			$host,
+			FILTER_VALIDATE_IP,
+			FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+		);
 	}
 
 	/** @param array<string, scalar|null> $query */
