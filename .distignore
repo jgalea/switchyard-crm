@@ -14,3 +14,4 @@ phpunit.xml.dist
 README.md
 bin
 node_modules
+.wordpress-org

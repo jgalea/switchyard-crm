@@ -4,7 +4,7 @@
 
 [![Docs](https://img.shields.io/badge/DOCS-read%20the%20guide-F5A623?style=for-the-badge)](docs/README.md)
 [![License](https://img.shields.io/badge/LICENSE-GPLv3-5C9E31?style=for-the-badge)](LICENSE)
-[![Built by](https://img.shields.io/badge/BUILT%20BY-JGALEA-8A2BE2?style=for-the-badge)](https://github.com/jgalea)
+[![Built by](https://img.shields.io/badge/BUILT%20BY-JEAN%20GALEA-8A2BE2?style=for-the-badge)](https://jeangalea.com)
 
 **Connect WordPress to your CRM. Sync users, purchases and form entries, and gate content with CRM tags.**
 

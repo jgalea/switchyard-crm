@@ -7,7 +7,7 @@
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Jean Galea
- * Author URI:        https://github.com/jgalea
+ * Author URI:        https://jeangalea.com
  * License:           GPL-3.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:       conduit-crm
