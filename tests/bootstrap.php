@@ -17,6 +17,41 @@ define( 'DAY_IN_SECONDS', 86400 );
 define( 'WEEK_IN_SECONDS', 604800 );
 define( 'MINUTE_IN_SECONDS', 60 );
 
+// On PHP 7.4 these come from wp-includes/compat.php, which the plugin gets for
+// free because it requires WordPress 6.4. Copied verbatim from core so the
+// tests see the same semantics, including the empty-needle cases.
+if ( ! function_exists( 'str_contains' ) ) {
+	function str_contains( $haystack, $needle ) {
+		if ( '' === $needle ) {
+			return true;
+		}
+
+		return false !== strpos( $haystack, $needle );
+	}
+}
+
+if ( ! function_exists( 'str_starts_with' ) ) {
+	function str_starts_with( $haystack, $needle ) {
+		if ( '' === $needle ) {
+			return true;
+		}
+
+		return 0 === strpos( $haystack, $needle );
+	}
+}
+
+if ( ! function_exists( 'str_ends_with' ) ) {
+	function str_ends_with( $haystack, $needle ) {
+		if ( '' === $haystack ) {
+			return '' === $needle;
+		}
+
+		$len = strlen( $needle );
+
+		return substr( $haystack, -$len, $len ) === $needle;
+	}
+}
+
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 // The plugin bootstrap normally does this; api.php is not in the composer

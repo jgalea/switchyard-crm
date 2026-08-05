@@ -7,16 +7,33 @@ namespace Conduit\Crm\Http;
 final class Response {
 
 	/**
+ * @readonly
+ */
+	public int $status;
+	/**
+	 * @readonly
+	 */
+	public string $body;
+	/**
+	 * @var array<string, string>
+	 * @readonly
+	 */
+	public array $headers = array();
+	/**
+	 * @var array<mixed>|null
+	 * @readonly
+	 */
+	private ?array $json = null;
+	/**
 	 * @param array<string, string> $headers
 	 * @param array<mixed>|null     $json
 	 */
-	public function __construct(
-		public readonly int $status,
-		public readonly string $body,
-		public readonly array $headers = array(),
-		private readonly ?array $json = null,
-	) {}
-
+	public function __construct( int $status, string $body, array $headers = array(), ?array $json = null ) {
+		$this->status  = $status;
+		$this->body    = $body;
+		$this->headers = $headers;
+		$this->json    = $json;
+	}
 	/** @return array<mixed> */
 	public function json(): array {
 		if ( null !== $this->json ) {
@@ -29,9 +46,11 @@ final class Response {
 	}
 
 	/**
-	 * Reads a value from the decoded body using dot notation.
-	 */
-	public function path( string $path, mixed $fallback = null ): mixed {
+ * Reads a value from the decoded body using dot notation.
+ * @param mixed $fallback
+ * @return mixed
+ */
+	public function path( string $path, $fallback = null ) {
 		$value = $this->json();
 
 		foreach ( explode( '.', $path ) as $segment ) {

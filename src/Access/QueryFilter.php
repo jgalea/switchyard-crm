@@ -19,11 +19,12 @@ use WP_REST_Response;
  */
 final class QueryFilter {
 
-	public function __construct(
-		private Rules $rules,
-		private Settings $settings,
-	) {}
-
+	private Rules $rules;
+	private Settings $settings;
+	public function __construct( Rules $rules, Settings $settings ) {
+		$this->rules    = $rules;
+		$this->settings = $settings;
+	}
 	public function register_hooks(): void {
 		if ( ! $this->settings->bool( 'filter_queries' ) ) {
 			return;
@@ -190,12 +191,13 @@ final class QueryFilter {
 	}
 
 	/**
-	 * oEmbed exposes the title and author of any published URL.
-	 *
-	 * @param array<string, mixed> $data
-	 * @return array<string, mixed>
-	 */
-	public function filter_oembed( array $data, mixed $post ): array {
+ * oEmbed exposes the title and author of any published URL.
+ *
+ * @param array<string, mixed> $data
+ * @return array<string, mixed>
+ * @param mixed $post
+ */
+	public function filter_oembed( array $data, $post ): array {
 		if ( ! $post instanceof WP_Post || $this->rules->can_access( $post->ID ) ) {
 			return $data;
 		}
@@ -222,9 +224,9 @@ final class QueryFilter {
 	}
 
 	/**
-	 * @param WP_Post $post
-	 */
-	public function filter_rest_response( WP_REST_Response $response, mixed $post ): WP_REST_Response {
+ * @param mixed $post
+ */
+	public function filter_rest_response( WP_REST_Response $response, $post ): WP_REST_Response {
 		if ( ! $post instanceof WP_Post || $this->rules->can_access( $post->ID ) ) {
 			return $response;
 		}

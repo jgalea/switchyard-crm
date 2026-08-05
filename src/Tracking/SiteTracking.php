@@ -19,12 +19,14 @@ use Conduit\Sync\ContactResolver;
  */
 final class SiteTracking {
 
-	public function __construct(
-		private ProviderRegistry $registry,
-		private ContactResolver $resolver,
-		private Settings $settings,
-	) {}
-
+	private ProviderRegistry $registry;
+	private ContactResolver $resolver;
+	private Settings $settings;
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, Settings $settings ) {
+		$this->registry = $registry;
+		$this->resolver = $resolver;
+		$this->settings = $settings;
+	}
 	public function register_hooks(): void {
 		if ( ! $this->settings->bool( 'site_tracking' ) ) {
 			return;

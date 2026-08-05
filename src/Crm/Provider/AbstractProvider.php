@@ -15,6 +15,7 @@ use Conduit\Crm\Http\Client;
  */
 abstract class AbstractProvider implements Provider {
 
+	protected Client $client_factory;
 	protected const CATALOGUE_TTL = HOUR_IN_SECONDS * 6;
 
 	/** @var array<string, mixed> */
@@ -22,7 +23,9 @@ abstract class AbstractProvider implements Provider {
 
 	protected ?Client $http = null;
 
-	public function __construct( protected Client $client_factory ) {}
+	public function __construct( Client $client_factory ) {
+		$this->client_factory = $client_factory;
+	}
 
 	/**
 	 * Base URL for this provider's API. Providers that derive it from an
@@ -90,7 +93,7 @@ abstract class AbstractProvider implements Provider {
 	 * @param callable(): T $loader
 	 * @return T
 	 */
-	protected function cached( string $key, callable $loader ): mixed {
+	protected function cached( string $key, callable $loader ) {
 		$transient = 'conduit_cat_' . $this->get_slug() . '_' . $key;
 		$cached    = get_transient( $transient );
 

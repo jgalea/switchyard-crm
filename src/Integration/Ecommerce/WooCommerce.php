@@ -99,7 +99,10 @@ final class WooCommerce extends AbstractIntegration {
 		);
 	}
 
-	public function on_status_changed( int $order_id, string $from, string $to, mixed $order = null ): void {
+	/**
+ * @param mixed $order
+ */
+	public function on_status_changed( int $order_id, string $from, string $to, $order = null ): void {
 		$this->guard(
 			function () use ( $order_id, $to, $order ): void {
 				if ( ! $order instanceof WC_Order ) {
@@ -311,9 +314,11 @@ final class WooCommerce extends AbstractIntegration {
 	private function store_customer_stats( int $user_id, WC_Order $order ): void {
 		$customer = new \WC_Customer( $user_id );
 
+		$created = $order->get_date_created();
+
 		update_user_meta( $user_id, 'conduit_wc_order_count', $customer->get_order_count() );
 		update_user_meta( $user_id, 'conduit_wc_total_spent', $customer->get_total_spent() );
-		update_user_meta( $user_id, 'conduit_wc_last_order', $order->get_date_created()?->getTimestamp() ?? time() );
+		update_user_meta( $user_id, 'conduit_wc_last_order', null !== $created ? $created->getTimestamp() : time() );
 	}
 
 	/**
@@ -341,13 +346,15 @@ final class WooCommerce extends AbstractIntegration {
 			);
 		}
 
+		$created = $order->get_date_created();
+
 		return new Order(
 			'woocommerce',
 			(string) $order->get_id(),
 			$order->get_billing_email(),
 			(float) $order->get_total(),
 			$order->get_currency(),
-			$order->get_date_created()?->getTimestamp() ?? time(),
+			null !== $created ? $created->getTimestamp() : time(),
 			$lines,
 			(float) $order->get_discount_total(),
 			(float) $order->get_total_tax(),

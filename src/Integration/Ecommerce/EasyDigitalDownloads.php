@@ -83,7 +83,10 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 		);
 	}
 
-	public function on_refund( mixed $payment ): void {
+	/**
+ * @param mixed $payment
+ */
+	public function on_refund( $payment ): void {
 		$this->guard(
 			function () use ( $payment ): void {
 				$payment_id = is_object( $payment ) && isset( $payment->ID ) ? (int) $payment->ID : (int) $payment;

@@ -205,7 +205,7 @@ if ( ! function_exists( 'conduit_available_tags' ) ) {
 
 		try {
 			return $adapter->available();
-		} catch ( Conduit\Crm\Exception\CrmException ) {
+		} catch ( Conduit\Crm\Exception\CrmException $exception ) {
 			return array();
 		}
 	}

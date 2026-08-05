@@ -57,7 +57,11 @@ final class Settings {
 		return $this->data;
 	}
 
-	public function get( string $key, mixed $fallback = null ): mixed {
+	/**
+ * @param mixed $fallback
+ * @return mixed
+ */
+	public function get( string $key, $fallback = null ) {
 		return $this->data()[ $key ] ?? $fallback;
 	}
 
@@ -82,7 +86,10 @@ final class Settings {
 		return is_array( $value ) ? $value : array();
 	}
 
-	public function set( string $key, mixed $value ): void {
+	/**
+ * @param mixed $value
+ */
+	public function set( string $key, $value ): void {
 		$data         = $this->data();
 		$data[ $key ] = $value;
 		$this->data   = $data;

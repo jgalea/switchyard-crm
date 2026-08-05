@@ -21,7 +21,7 @@ trait RefreshesOAuthToken {
 	 * valid is refreshed rather than expiring mid-request.
 	 *
 	 * A method rather than a constant because constants in traits need PHP 8.2
-	 * and this plugin supports 8.1.
+	 * and this plugin supports 7.4.
 	 */
 	private function token_margin(): int {
 		return 120;

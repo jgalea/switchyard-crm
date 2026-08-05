@@ -18,14 +18,18 @@ use Conduit\Settings;
  */
 final class GuestSync {
 
+	private ProviderRegistry $registry;
+	private ContactResolver $resolver;
+	private Settings $settings;
+	private Logger $logger;
 	public const HOOK = 'conduit_push_guest';
 
-	public function __construct(
-		private ProviderRegistry $registry,
-		private ContactResolver $resolver,
-		private Settings $settings,
-		private Logger $logger,
-	) {}
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, Settings $settings, Logger $logger ) {
+		$this->registry = $registry;
+		$this->resolver = $resolver;
+		$this->settings = $settings;
+		$this->logger   = $logger;
+	}
 
 	public function register_hooks(): void {
 		add_action(

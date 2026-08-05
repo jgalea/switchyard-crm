@@ -16,6 +16,9 @@ use RuntimeException;
  */
 final class ProviderRegistry {
 
+	private Client $client;
+	private Settings $settings;
+	private Logger $logger;
 	/** @var array<string, class-string<Provider>> */
 	private array $providers = array();
 
@@ -23,11 +26,10 @@ final class ProviderRegistry {
 
 	private bool $connection_failed = false;
 
-	public function __construct(
-		private Client $client,
-		private Settings $settings,
-		private Logger $logger,
-	) {
+	public function __construct( Client $client, Settings $settings, Logger $logger ) {
+		$this->client   = $client;
+		$this->settings = $settings;
+		$this->logger   = $logger;
 		$this->register_defaults();
 	}
 

@@ -18,12 +18,14 @@ use WP_User;
  */
 final class ContactResolver {
 
+	private ProviderRegistry $registry;
+	private Logger $logger;
 	public const META_CONTACT_ID = 'conduit_contact_id';
 
-	public function __construct(
-		private ProviderRegistry $registry,
-		private Logger $logger,
-	) {}
+	public function __construct( ProviderRegistry $registry, Logger $logger ) {
+		$this->registry = $registry;
+		$this->logger   = $logger;
+	}
 
 	public function cached_id( int $user_id ): ?string {
 		$id = get_user_meta( $user_id, self::META_CONTACT_ID, true );

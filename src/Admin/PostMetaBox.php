@@ -15,11 +15,12 @@ use WP_Post;
  */
 final class PostMetaBox {
 
-	public function __construct(
-		private Rules $rules,
-		private TagEngine $tags,
-	) {}
-
+	private Rules $rules;
+	private TagEngine $tags;
+	public function __construct( Rules $rules, TagEngine $tags ) {
+		$this->rules = $rules;
+		$this->tags  = $tags;
+	}
 	public function register_hooks(): void {
 		add_action( 'add_meta_boxes', array( $this, 'add' ) );
 		add_action( 'save_post', array( $this, 'save' ), 10, 2 );
@@ -60,7 +61,7 @@ final class PostMetaBox {
 
 		try {
 			$available = $adapter->available();
-		} catch ( CrmException ) {
+		} catch ( CrmException $exception ) {
 			$available = array();
 		}
 

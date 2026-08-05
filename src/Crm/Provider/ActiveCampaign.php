@@ -187,13 +187,21 @@ final class ActiveCampaign extends AbstractProvider implements
 	}
 
 	private function map_field_type( string $type ): string {
-		return match ( $type ) {
-			'date', 'datetime' => 'date',
-			'dropdown', 'listbox', 'radio' => 'select',
-			'checkbox' => 'multiselect',
-			'textarea' => 'textarea',
-			default => 'text',
-		};
+		switch ( $type ) {
+			case 'date':
+			case 'datetime':
+				return 'date';
+			case 'dropdown':
+			case 'listbox':
+			case 'radio':
+				return 'select';
+			case 'checkbox':
+				return 'multiselect';
+			case 'textarea':
+				return 'textarea';
+			default:
+				return 'text';
+		}
 	}
 
 	/**

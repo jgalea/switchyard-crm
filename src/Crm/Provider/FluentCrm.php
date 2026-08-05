@@ -193,14 +193,25 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 
 					$fields[ 'custom_' . $field['slug'] ] = array(
 						'label' => (string) ( $field['label'] ?? $field['slug'] ),
-						'type'  => match ( (string) ( $field['type'] ?? 'text' ) ) {
-							'date', 'date_time' => 'date',
-							'number' => 'number',
-							'select-one', 'radio' => 'select',
-							'select-multi', 'checkbox' => 'multiselect',
-							'textarea' => 'textarea',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $field ) {
+							switch ( (string) ( $field['type'] ?? 'text' ) ) {
+								case 'date':
+								case 'date_time':
+									return 'date';
+								case 'number':
+									return 'number';
+								case 'select-one':
+								case 'radio':
+									return 'select';
+								case 'select-multi':
+								case 'checkbox':
+									return 'multiselect';
+								case 'textarea':
+									return 'textarea';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 			}

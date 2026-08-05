@@ -11,28 +11,81 @@ namespace Conduit\Crm;
 final class Order {
 
 	/**
+ * @readonly
+ */
+	public string $source;
+	/**
+	 * @readonly
+	 */
+	public string $source_id;
+	/**
+	 * @readonly
+	 */
+	public string $email;
+	/**
+	 * @readonly
+	 */
+	public float $total;
+	/**
+	 * @readonly
+	 */
+	public string $currency;
+	/**
+	 * @readonly
+	 */
+	public int $placed_at;
+	/**
+	 * @var list<OrderLine>
+	 * @readonly
+	 */
+	public array $lines = array();
+	/**
+	 * @readonly
+	 */
+	public float $discount = 0.0;
+	/**
+	 * @readonly
+	 */
+	public float $tax = 0.0;
+	/**
+	 * @readonly
+	 */
+	public float $shipping = 0.0;
+	/**
+	 * @readonly
+	 */
+	public string $status = '';
+	/**
+	 * @readonly
+	 */
+	public ?string $order_url = null;
+	/**
+	 * @var array<string, mixed>
+	 * @readonly
+	 */
+	public array $meta = array();
+	/**
 	 * @param list<OrderLine>      $lines
 	 * @param array<string, mixed> $meta
 	 */
-	public function __construct(
-		public readonly string $source,
-		public readonly string $source_id,
-		public readonly string $email,
-		public readonly float $total,
-		public readonly string $currency,
-		public readonly int $placed_at,
-		public readonly array $lines = array(),
-		public readonly float $discount = 0.0,
-		public readonly float $tax = 0.0,
-		public readonly float $shipping = 0.0,
-		public readonly string $status = '',
-		public readonly ?string $order_url = null,
-		public readonly array $meta = array(),
-	) {}
-
+	public function __construct( string $source, string $source_id, string $email, float $total, string $currency, int $placed_at, array $lines = array(), float $discount = 0.0, float $tax = 0.0, float $shipping = 0.0, string $status = '', ?string $order_url = null, array $meta = array() ) {
+		$this->source    = $source;
+		$this->source_id = $source_id;
+		$this->email     = $email;
+		$this->total     = $total;
+		$this->currency  = $currency;
+		$this->placed_at = $placed_at;
+		$this->lines     = $lines;
+		$this->discount  = $discount;
+		$this->tax       = $tax;
+		$this->shipping  = $shipping;
+		$this->status    = $status;
+		$this->order_url = $order_url;
+		$this->meta      = $meta;
+	}
 	/**
-	 * Stable identifier used to correlate this order with its CRM-side record.
-	 */
+		* Stable identifier used to correlate this order with its CRM-side record.
+		*/
 	public function reference(): string {
 		return $this->source . ':' . $this->source_id;
 	}

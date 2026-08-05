@@ -99,7 +99,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 			$version = is_array( $latest ) && isset( $latest['version'] )
 				? 'v' . $latest['version']
 				: self::FALLBACK_VERSION;
-		} catch ( CrmException ) {
+		} catch ( CrmException $exception ) {
 			$version = self::FALLBACK_VERSION;
 		}
 
@@ -231,16 +231,30 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 
 					$fields[ (string) $field['name'] ] = array(
 						'label' => (string) ( $field['label'] ?? $field['name'] ),
-						'type'  => match ( (string) ( $field['type'] ?? 'string' ) ) {
-							'date', 'datetime' => 'date',
-							'int', 'double', 'currency', 'percent' => 'number',
-							'picklist' => 'select',
-							'multipicklist' => 'multiselect',
-							'boolean' => 'checkbox',
-							'textarea' => 'textarea',
-							'email' => 'email',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $field ) {
+							switch ( (string) ( $field['type'] ?? 'string' ) ) {
+								case 'date':
+								case 'datetime':
+									return 'date';
+								case 'int':
+								case 'double':
+								case 'currency':
+								case 'percent':
+									return 'number';
+								case 'picklist':
+									return 'select';
+								case 'multipicklist':
+									return 'multiselect';
+								case 'boolean':
+									return 'checkbox';
+								case 'textarea':
+									return 'textarea';
+								case 'email':
+									return 'email';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 
@@ -289,7 +303,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 
 		try {
 			$response = $this->http()->get( '/query', array( 'q' => $soql ) );
-		} catch ( CrmException ) {
+		} catch ( CrmException $exception ) {
 			// The org has not created the tag field yet.
 			return array();
 		}

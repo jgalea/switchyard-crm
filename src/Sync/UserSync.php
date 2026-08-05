@@ -21,6 +21,13 @@ use WP_User;
  */
 final class UserSync {
 
+	private ProviderRegistry $registry;
+	private ContactResolver $resolver;
+	private FieldMap $fields;
+	private TagEngine $tags;
+	private Queue $queue;
+	private Settings $settings;
+	private Logger $logger;
 	public const HOOK_PUSH = 'conduit_push_user';
 	public const HOOK_PULL = 'conduit_pull_user';
 
@@ -29,15 +36,15 @@ final class UserSync {
 	/** @var array<int, bool> */
 	private array $in_flight = array();
 
-	public function __construct(
-		private ProviderRegistry $registry,
-		private ContactResolver $resolver,
-		private FieldMap $fields,
-		private TagEngine $tags,
-		private Queue $queue,
-		private Settings $settings,
-		private Logger $logger,
-	) {}
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, FieldMap $fields, TagEngine $tags, Queue $queue, Settings $settings, Logger $logger ) {
+		$this->registry = $registry;
+		$this->resolver = $resolver;
+		$this->fields   = $fields;
+		$this->tags     = $tags;
+		$this->queue    = $queue;
+		$this->settings = $settings;
+		$this->logger   = $logger;
+	}
 
 	public function register_hooks(): void {
 		add_action( 'user_register', array( $this, 'on_register' ), 20 );
@@ -72,9 +79,9 @@ final class UserSync {
 	}
 
 	/**
-	 * @param array<string, mixed>|WP_User $old_data
-	 */
-	public function on_profile_update( int $user_id, mixed $old_data = null ): void {
+ * @param mixed $old_data
+ */
+	public function on_profile_update( int $user_id, $old_data = null ): void {
 		if ( ! $this->settings->bool( 'sync_on_profile_update' ) ) {
 			return;
 		}
@@ -96,7 +103,10 @@ final class UserSync {
 		$this->queue->dispatch( self::HOOK_PUSH, array( $user_id, array() ) );
 	}
 
-	public function on_login( string $user_login, mixed $user = null ): void {
+	/**
+ * @param mixed $user
+ */
+	public function on_login( string $user_login, $user = null ): void {
 		if ( ! $user instanceof WP_User ) {
 			$user = get_user_by( 'login', $user_login );
 		}
@@ -190,7 +200,7 @@ final class UserSync {
 			);
 
 			return null;
-		} catch ( CircuitOpenException ) {
+		} catch ( CircuitOpenException $exception ) {
 			// Already logged when the breaker tripped.
 			return null;
 		} catch ( CrmException $e ) {

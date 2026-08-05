@@ -178,15 +178,27 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 
 					$fields[ (string) $field['api_name'] ] = array(
 						'label' => (string) ( $field['field_label'] ?? $field['api_name'] ),
-						'type'  => match ( (string) ( $field['data_type'] ?? 'text' ) ) {
-							'date', 'datetime' => 'date',
-							'integer', 'double', 'currency' => 'number',
-							'picklist' => 'select',
-							'multiselectpicklist' => 'multiselect',
-							'boolean' => 'checkbox',
-							'textarea' => 'textarea',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $field ) {
+							switch ( (string) ( $field['data_type'] ?? 'text' ) ) {
+								case 'date':
+								case 'datetime':
+									return 'date';
+								case 'integer':
+								case 'double':
+								case 'currency':
+									return 'number';
+								case 'picklist':
+									return 'select';
+								case 'multiselectpicklist':
+									return 'multiselect';
+								case 'boolean':
+									return 'checkbox';
+								case 'textarea':
+									return 'textarea';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 

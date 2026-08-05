@@ -64,7 +64,7 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 	public function get_contact_id( string $email ): ?string {
 		try {
 			$response = $this->http()->get( '/subscribers/' . rawurlencode( $email ) );
-		} catch ( NotFoundException ) {
+		} catch ( NotFoundException $exception ) {
 			return null;
 		}
 
@@ -135,11 +135,16 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 
 					$fields[ 'field_' . $field['key'] ] = array(
 						'label' => (string) ( $field['name'] ?? $field['key'] ),
-						'type'  => match ( (string) ( $field['type'] ?? 'text' ) ) {
-							'date' => 'date',
-							'number' => 'number',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $field ) {
+							switch ( (string) ( $field['type'] ?? 'text' ) ) {
+								case 'date':
+									return 'date';
+								case 'number':
+									return 'number';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 

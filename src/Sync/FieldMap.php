@@ -118,39 +118,60 @@ final class FieldMap {
 		return $payload;
 	}
 
-	private function read( WP_User $user, string $key ): mixed {
-		return match ( $key ) {
-			'user_email'      => $user->user_email,
-			'user_login'      => $user->user_login,
-			'user_url'        => $user->user_url,
-			'display_name'    => $user->display_name,
-			'user_registered' => $user->user_registered,
-			'user_role'       => $user->roles[0] ?? '',
-			'user_id'         => $user->ID,
-			default           => get_user_meta( $user->ID, $key, true ),
-		};
+	/**
+ * @return mixed
+ */
+	private function read( WP_User $user, string $key ) {
+		switch ( $key ) {
+			case 'user_email':
+				return $user->user_email;
+			case 'user_login':
+				return $user->user_login;
+			case 'user_url':
+				return $user->user_url;
+			case 'display_name':
+				return $user->display_name;
+			case 'user_registered':
+				return $user->user_registered;
+			case 'user_role':
+				return $user->roles[0] ?? '';
+			case 'user_id':
+				return $user->ID;
+			default:
+				return get_user_meta( $user->ID, $key, true );
+		}
 	}
 
 	/**
-	 * CRMs are strict about types in ways WordPress is not: a checkbox stored
-	 * as "1" has to become a boolean, and a date has to be ISO-8601 or the
-	 * write is rejected outright.
-	 */
-	private function coerce( mixed $value, string $type ): mixed {
+ * CRMs are strict about types in ways WordPress is not: a checkbox stored
+ * as "1" has to become a boolean, and a date has to be ISO-8601 or the
+ * write is rejected outright.
+ * @param mixed $value
+ * @return mixed
+ */
+	private function coerce( $value, string $type ) {
 		if ( is_array( $value ) && 'multiselect' !== $type ) {
 			$value = implode( ', ', array_map( 'strval', $value ) );
 		}
 
-		return match ( $type ) {
-			'date'        => $this->to_date( $value ),
-			'number'      => is_numeric( $value ) ? $value + 0 : 0,
-			'checkbox'    => (bool) $value,
-			'multiselect' => is_array( $value ) ? array_values( $value ) : array( (string) $value ),
-			default       => is_scalar( $value ) ? (string) $value : '',
-		};
+		switch ( $type ) {
+			case 'date':
+				return $this->to_date( $value );
+			case 'number':
+				return is_numeric( $value ) ? $value + 0 : 0;
+			case 'checkbox':
+				return (bool) $value;
+			case 'multiselect':
+				return is_array( $value ) ? array_values( $value ) : array( (string) $value );
+			default:
+				return is_scalar( $value ) ? (string) $value : '';
+		}
 	}
 
-	private function to_date( mixed $value ): string {
+	/**
+ * @param mixed $value
+ */
+	private function to_date( $value ): string {
 		if ( is_numeric( $value ) ) {
 			return gmdate( 'c', (int) $value );
 		}

@@ -21,6 +21,7 @@ use WP_Error;
  */
 final class Client {
 
+	private Logger $logger;
 	private const MAX_ATTEMPTS      = 3;
 	private const BASE_BACKOFF      = 1;
 	private const MAX_BACKOFF       = 30;
@@ -35,7 +36,9 @@ final class Client {
 
 	private string $provider_slug = 'unknown';
 
-	public function __construct( private Logger $logger ) {}
+	public function __construct( Logger $logger ) {
+		$this->logger = $logger;
+	}
 
 	/**
 	 * Configuration returns a clone rather than mutating.

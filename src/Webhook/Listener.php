@@ -25,15 +25,20 @@ use WP_REST_Server;
  */
 final class Listener {
 
-	public function __construct(
-		private ProviderRegistry $registry,
-		private ContactResolver $resolver,
-		private TagEngine $tags,
-		private UserSync $sync,
-		private Settings $settings,
-		private Logger $logger,
-	) {}
-
+	private ProviderRegistry $registry;
+	private ContactResolver $resolver;
+	private TagEngine $tags;
+	private UserSync $sync;
+	private Settings $settings;
+	private Logger $logger;
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, TagEngine $tags, UserSync $sync, Settings $settings, Logger $logger ) {
+		$this->registry = $registry;
+		$this->resolver = $resolver;
+		$this->tags     = $tags;
+		$this->sync     = $sync;
+		$this->settings = $settings;
+		$this->logger   = $logger;
+	}
 	public function register_hooks(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
@@ -56,7 +61,10 @@ final class Listener {
 		);
 	}
 
-	public function authorise( WP_REST_Request $request ): bool|WP_Error {
+	/**
+ * @return bool|\WP_Error
+ */
+	public function authorise( WP_REST_Request $request ) {
 		// A header is preferred over the query parameter: a secret in the URL
 		// lands in the web server's access log and can leak through Referer.
 		// The query parameter stays supported because several CRMs cannot send

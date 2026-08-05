@@ -23,11 +23,12 @@ final class WPForms extends AbstractFormIntegration {
 	}
 
 	/**
-	 * @param array<int, array<string, mixed>> $fields
-	 * @param array<string, mixed>             $entry
-	 * @param array<string, mixed>             $form_data
-	 */
-	public function on_submission( array $fields, array $entry, array $form_data, mixed $entry_id = 0 ): void {
+ * @param array<int, array<string, mixed>> $fields
+ * @param array<string, mixed>             $entry
+ * @param array<string, mixed>             $form_data
+ * @param mixed $entry_id
+ */
+	public function on_submission( array $fields, array $entry, array $form_data, $entry_id = 0 ): void {
 		$this->guard(
 			function () use ( $fields, $form_data ): void {
 				$form_id = (string) ( $form_data['id'] ?? '' );

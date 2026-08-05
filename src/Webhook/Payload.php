@@ -13,15 +13,26 @@ namespace Conduit\Webhook;
  */
 final class Payload {
 
-	public function __construct(
-		public readonly string $email,
-		public readonly ?string $contact_id = null,
-		public readonly string $type = 'update',
-	) {}
-
 	/**
-	 * Whether this event should create a WordPress user when none exists.
+ * @readonly
+ */
+	public string $email;
+	/**
+	 * @readonly
 	 */
+	public ?string $contact_id = null;
+	/**
+	 * @readonly
+	 */
+	public string $type = 'update';
+	public function __construct( string $email, ?string $contact_id = null, string $type = 'update' ) {
+		$this->email      = $email;
+		$this->contact_id = $contact_id;
+		$this->type       = $type;
+	}
+	/**
+		* Whether this event should create a WordPress user when none exists.
+		*/
 	public function creates_user(): bool {
 		return in_array( $this->type, array( 'subscribe', 'add', 'contact_add' ), true );
 	}

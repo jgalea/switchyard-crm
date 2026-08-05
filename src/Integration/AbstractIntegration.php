@@ -19,22 +19,26 @@ use Conduit\Sync\UserSync;
  */
 abstract class AbstractIntegration implements Integration {
 
-	public function __construct(
-		protected UserSync $sync,
-		protected TagEngine $tags,
-		protected Queue $queue,
-		protected Features $features,
-		protected Logger $logger,
-	) {}
-
+	protected UserSync $sync;
+	protected TagEngine $tags;
+	protected Queue $queue;
+	protected Features $features;
+	protected Logger $logger;
+	public function __construct( UserSync $sync, TagEngine $tags, Queue $queue, Features $features, Logger $logger ) {
+		$this->sync     = $sync;
+		$this->tags     = $tags;
+		$this->queue    = $queue;
+		$this->features = $features;
+		$this->logger   = $logger;
+	}
 	/**
-	 * Runs a callback, logging and swallowing anything it throws.
-	 *
-	 * @template T
-	 * @param callable(): T $callback
-	 * @return T|null
-	 */
-	protected function guard( callable $callback ): mixed {
+		* Runs a callback, logging and swallowing anything it throws.
+		*
+		* @template T
+		* @param callable(): T $callback
+		* @return T|null
+		*/
+	protected function guard( callable $callback ) {
 		try {
 			return $callback();
 		} catch ( \Throwable $e ) {

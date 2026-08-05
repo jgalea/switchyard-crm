@@ -27,6 +27,7 @@ final class DestinationGuardTest extends TestCase {
 		$client = new Client( $this->createMock( Logger::class ) );
 
 		$method = ( new ReflectionClass( Client::class ) )->getMethod( 'guard_destination' );
+		$method->setAccessible( true );
 		$method->invoke( $client, $url );
 	}
 
@@ -36,9 +37,11 @@ final class DestinationGuardTest extends TestCase {
 		$reflection = new ReflectionClass( Mailchimp::class );
 
 		$credentials = $reflection->getProperty( 'credentials' );
+		$credentials->setAccessible( true );
 		$credentials->setValue( $provider, array( 'api_key' => $key ) );
 
 		$method = $reflection->getMethod( 'data_centre' );
+		$method->setAccessible( true );
 
 		return (string) $method->invoke( $provider );
 	}

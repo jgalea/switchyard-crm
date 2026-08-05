@@ -117,7 +117,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 	public function get_contact_id( string $email ): ?string {
 		try {
 			$response = $this->http()->get( $this->member_path( $email ) );
-		} catch ( NotFoundException ) {
+		} catch ( NotFoundException $exception ) {
 			return null;
 		}
 
@@ -195,12 +195,20 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 
 					$fields[ 'merge_' . $field['tag'] ] = array(
 						'label' => (string) ( $field['name'] ?? $field['tag'] ),
-						'type'  => match ( (string) ( $field['type'] ?? 'text' ) ) {
-							'date', 'birthday' => 'date',
-							'number' => 'number',
-							'dropdown', 'radio' => 'select',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $field ) {
+							switch ( (string) ( $field['type'] ?? 'text' ) ) {
+								case 'date':
+								case 'birthday':
+									return 'date';
+								case 'number':
+									return 'number';
+								case 'dropdown':
+								case 'radio':
+									return 'select';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 

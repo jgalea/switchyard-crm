@@ -11,7 +11,10 @@ use Conduit\Sync\TagEngine;
  */
 final class Shortcodes {
 
-	public function __construct( private TagEngine $tags ) {}
+	private TagEngine $tags;
+	public function __construct( TagEngine $tags ) {
+		$this->tags = $tags;
+	}
 
 	public function register_hooks(): void {
 		add_shortcode( 'conduit_if', array( $this, 'render_if' ) );
@@ -21,11 +24,11 @@ final class Shortcodes {
 	}
 
 	/**
-	 * [conduit_if tag="VIP" match="any" not="false"]…[/conduit_if]
-	 *
-	 * @param array<string, string>|string $atts
-	 */
-	public function render_if( mixed $atts, ?string $content = null ): string {
+ * [conduit_if tag="VIP" match="any" not="false"]…[/conduit_if]
+ *
+ * @param mixed $atts
+ */
+	public function render_if( $atts, ?string $content = null ): string {
 		$atts = shortcode_atts(
 			array(
 				'tag'   => '',
@@ -61,22 +64,22 @@ final class Shortcodes {
 		return $matches ? do_shortcode( $content ) : '';
 	}
 
-	/** @param array<string, string>|string $atts */
-	public function render_logged_in( mixed $atts, ?string $content = null ): string {
+	/** @param mixed $atts */
+	public function render_logged_in( $atts, ?string $content = null ): string {
 		return ( is_user_logged_in() && null !== $content ) ? do_shortcode( $content ) : '';
 	}
 
-	/** @param array<string, string>|string $atts */
-	public function render_logged_out( mixed $atts, ?string $content = null ): string {
+	/** @param mixed $atts */
+	public function render_logged_out( $atts, ?string $content = null ): string {
 		return ( ! is_user_logged_in() && null !== $content ) ? do_shortcode( $content ) : '';
 	}
 
 	/**
-	 * [conduit_field key="first_name" default="there"]
-	 *
-	 * @param array<string, string>|string $atts
-	 */
-	public function render_field( mixed $atts ): string {
+ * [conduit_field key="first_name" default="there"]
+ *
+ * @param mixed $atts
+ */
+	public function render_field( $atts ): string {
 		$atts = shortcode_atts(
 			array(
 				'key'     => '',
@@ -94,12 +97,20 @@ final class Shortcodes {
 
 		$user = get_userdata( $user_id );
 
-		$value = match ( $atts['key'] ) {
-			'user_email'   => $user ? $user->user_email : '',
-			'display_name' => $user ? $user->display_name : '',
-			'user_login'   => $user ? $user->user_login : '',
-			default        => get_user_meta( $user_id, $atts['key'], true ),
-		};
+		switch ( $atts['key'] ) {
+			case 'user_email':
+				$value = $user ? $user->user_email : '';
+				break;
+			case 'display_name':
+				$value = $user ? $user->display_name : '';
+				break;
+			case 'user_login':
+				$value = $user ? $user->user_login : '';
+				break;
+			default:
+				$value = get_user_meta( $user_id, $atts['key'], true );
+				break;
+		}
 
 		$value = is_scalar( $value ) ? (string) $value : '';
 

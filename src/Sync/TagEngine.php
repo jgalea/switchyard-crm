@@ -18,16 +18,20 @@ use Conduit\Settings;
  */
 final class TagEngine {
 
+	private ProviderRegistry $registry;
+	private ContactResolver $resolver;
+	private Settings $settings;
+	private Logger $logger;
 	public const META_TAGS = 'conduit_tags';
 
 	private ?SegmentAdapter $adapter = null;
 
-	public function __construct(
-		private ProviderRegistry $registry,
-		private ContactResolver $resolver,
-		private Settings $settings,
-		private Logger $logger,
-	) {}
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, Settings $settings, Logger $logger ) {
+		$this->registry = $registry;
+		$this->resolver = $resolver;
+		$this->settings = $settings;
+		$this->logger   = $logger;
+	}
 
 	public function adapter(): ?SegmentAdapter {
 		if ( null !== $this->adapter ) {
@@ -271,7 +275,7 @@ final class TagEngine {
 
 		try {
 			$available = $adapter->available();
-		} catch ( CrmException ) {
+		} catch ( CrmException $exception ) {
 			return array();
 		}
 
