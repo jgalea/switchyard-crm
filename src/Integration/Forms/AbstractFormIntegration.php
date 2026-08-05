@@ -25,22 +25,16 @@ use Conduit\Sync\UserSync;
  */
 abstract class AbstractFormIntegration extends AbstractIntegration {
 
-	public function __construct(
-		UserSync $sync,
-		TagEngine $tags,
-		Queue $queue,
-		Features $features,
-		Logger $logger,
-		protected GuestSync $guests,
-	) {
+	protected GuestSync $guests;
+	public function __construct( UserSync $sync, TagEngine $tags, Queue $queue, Features $features, Logger $logger, GuestSync $guests ) {
+		$this->guests = $guests;
 		parent::__construct( $sync, $tags, $queue, $features, $logger );
 	}
-
 	/**
-	 * Forms available to configure.
-	 *
-	 * @return array<string, string> Form ID => title.
-	 */
+		* Forms available to configure.
+		*
+		* @return array<string, string> Form ID => title.
+		*/
 	abstract public function get_forms(): array;
 
 	/**

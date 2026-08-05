@@ -16,6 +16,7 @@ use WP_Post;
  */
 final class Rules {
 
+	private TagEngine $tags;
 	public const META_ENABLED  = '_conduit_restrict';
 	public const META_TAGS     = '_conduit_tags';
 	public const META_MATCH    = '_conduit_match';
@@ -27,7 +28,9 @@ final class Rules {
 	/** @var array<string, bool> */
 	private array $cache = array();
 
-	public function __construct( private TagEngine $tags ) {}
+	public function __construct( TagEngine $tags ) {
+		$this->tags = $tags;
+	}
 
 	/**
 	 * Whether the post is gated at all.
@@ -146,9 +149,10 @@ final class Rules {
 	}
 
 	/**
-	 * Normalises a stored match mode, defaulting to "any".
-	 */
-	private function match_mode( mixed $stored ): string {
+ * Normalises a stored match mode, defaulting to "any".
+ * @param mixed $stored
+ */
+	private function match_mode( $stored ): string {
 		return 'all' === $stored ? 'all' : 'any';
 	}
 

@@ -15,6 +15,7 @@ use Conduit\Settings;
  */
 class Logger {
 
+	private Settings $settings;
 	public const LEVELS = array(
 		'debug'   => 10,
 		'info'    => 20,
@@ -44,7 +45,9 @@ class Logger {
 		'x-api-key',
 	);
 
-	public function __construct( private Settings $settings ) {}
+	public function __construct( Settings $settings ) {
+		$this->settings = $settings;
+	}
 
 	/** @param array<string, mixed> $context */
 	public function debug( string $message, array $context = array(), string $source = '' ): void {

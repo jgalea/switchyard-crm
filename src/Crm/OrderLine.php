@@ -6,16 +6,43 @@ namespace Conduit\Crm;
 
 final class OrderLine {
 
-	public function __construct(
-		public readonly string $product_id,
-		public readonly string $name,
-		public readonly int $quantity,
-		public readonly float $price,
-		public readonly ?string $sku = null,
-		public readonly ?string $product_url = null,
-		public readonly ?string $image_url = null,
-	) {}
-
+	/**
+ * @readonly
+ */
+	public string $product_id;
+	/**
+	 * @readonly
+	 */
+	public string $name;
+	/**
+	 * @readonly
+	 */
+	public int $quantity;
+	/**
+	 * @readonly
+	 */
+	public float $price;
+	/**
+	 * @readonly
+	 */
+	public ?string $sku = null;
+	/**
+	 * @readonly
+	 */
+	public ?string $product_url = null;
+	/**
+	 * @readonly
+	 */
+	public ?string $image_url = null;
+	public function __construct( string $product_id, string $name, int $quantity, float $price, ?string $sku = null, ?string $product_url = null, ?string $image_url = null ) {
+		$this->product_id  = $product_id;
+		$this->name        = $name;
+		$this->quantity    = $quantity;
+		$this->price       = $price;
+		$this->sku         = $sku;
+		$this->product_url = $product_url;
+		$this->image_url   = $image_url;
+	}
 	public function subtotal(): float {
 		return $this->price * $this->quantity;
 	}

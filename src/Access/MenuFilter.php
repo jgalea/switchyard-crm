@@ -16,24 +16,26 @@ use WP_Post;
  */
 final class MenuFilter {
 
+	private Rules $rules;
+	private TagEngine $tags;
 	public const META_TAGS  = '_conduit_menu_tags';
 	public const META_MATCH = '_conduit_menu_match';
 	public const META_STATE = '_conduit_menu_state';
 
-	public function __construct(
-		private Rules $rules,
-		private TagEngine $tags,
-	) {}
+	public function __construct( Rules $rules, TagEngine $tags ) {
+		$this->rules = $rules;
+		$this->tags  = $tags;
+	}
 
 	public function register_hooks(): void {
 		add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_items' ), 20 );
 	}
 
 	/**
-	 * @param array<int, WP_Post>|false $items
-	 * @return array<int, WP_Post>|false
-	 */
-	public function filter_items( mixed $items ): mixed {
+ * @param mixed $items
+ * @return array<int, WP_Post>|false
+ */
+	public function filter_items( $items ) {
 		if ( ! is_array( $items ) || is_admin() ) {
 			return $items;
 		}

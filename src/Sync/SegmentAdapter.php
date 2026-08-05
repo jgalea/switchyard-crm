@@ -19,11 +19,14 @@ use Conduit\Crm\Exception\CrmException;
  */
 final class SegmentAdapter {
 
+	private Provider $provider;
 	private const MODE_TAGS  = 'tags';
 	private const MODE_LISTS = 'lists';
 	private const MODE_NONE  = 'none';
 
-	public function __construct( private Provider $provider ) {}
+	public function __construct( Provider $provider ) {
+		$this->provider = $provider;
+	}
 
 	private function mode(): string {
 		if ( $this->provider instanceof SupportsTags ) {
@@ -45,11 +48,14 @@ final class SegmentAdapter {
 	 * What the CRM calls its segmentation unit, for use in the admin UI.
 	 */
 	public function label(): string {
-		return match ( $this->mode() ) {
-			self::MODE_TAGS  => __( 'Tags', 'conduit-crm' ),
-			self::MODE_LISTS => __( 'Lists', 'conduit-crm' ),
-			default          => __( 'Segments', 'conduit-crm' ),
-		};
+		switch ( $this->mode() ) {
+			case self::MODE_TAGS:
+				return __( 'Tags', 'conduit-crm' );
+			case self::MODE_LISTS:
+				return __( 'Lists', 'conduit-crm' );
+			default:
+				return __( 'Segments', 'conduit-crm' );
+		}
 	}
 
 	/**
@@ -58,11 +64,14 @@ final class SegmentAdapter {
 	 * @throws CrmException
 	 */
 	public function available(): array {
-		return match ( $this->mode() ) {
-			self::MODE_TAGS  => $this->tags()->get_available_tags(),
-			self::MODE_LISTS => $this->lists()->get_available_lists(),
-			default          => array(),
-		};
+		switch ( $this->mode() ) {
+			case self::MODE_TAGS:
+				return $this->tags()->get_available_tags();
+			case self::MODE_LISTS:
+				return $this->lists()->get_available_lists();
+			default:
+				return array();
+		}
 	}
 
 	/**
@@ -71,13 +80,12 @@ final class SegmentAdapter {
 	 * @throws CrmException
 	 */
 	public function get( string $contact_id ): array {
-		return match ( $this->mode() ) {
-			self::MODE_TAGS => $this->tags()->get_tags( $contact_id ),
-			// List providers have no per-contact membership read that is
-			// cheap enough to call on every page load, so membership is
-			// tracked from the writes this site makes.
-			default         => array(),
-		};
+		switch ( $this->mode() ) {
+			case self::MODE_TAGS:
+				return $this->tags()->get_tags( $contact_id );
+			default:
+				return array();
+		}
 	}
 
 	/**
@@ -98,11 +106,14 @@ final class SegmentAdapter {
 			return;
 		}
 
-		match ( $this->mode() ) {
-			self::MODE_TAGS  => $this->tags()->apply_tags( $contact_id, $ids ),
-			self::MODE_LISTS => $this->lists()->add_to_lists( $contact_id, $ids ),
-			default          => null,
-		};
+		switch ( $this->mode() ) {
+			case self::MODE_TAGS:
+				$this->tags()->apply_tags( $contact_id, $ids );
+				break;
+			case self::MODE_LISTS:
+				$this->lists()->add_to_lists( $contact_id, $ids );
+				break;
+		}
 	}
 
 	/**
@@ -115,11 +126,14 @@ final class SegmentAdapter {
 			return;
 		}
 
-		match ( $this->mode() ) {
-			self::MODE_TAGS  => $this->tags()->remove_tags( $contact_id, $ids ),
-			self::MODE_LISTS => $this->lists()->remove_from_lists( $contact_id, $ids ),
-			default          => null,
-		};
+		switch ( $this->mode() ) {
+			case self::MODE_TAGS:
+				$this->tags()->remove_tags( $contact_id, $ids );
+				break;
+			case self::MODE_LISTS:
+				$this->lists()->remove_from_lists( $contact_id, $ids );
+				break;
+		}
 	}
 
 	/**
@@ -157,7 +171,7 @@ final class SegmentAdapter {
 
 		try {
 			$available = $this->available();
-		} catch ( CrmException ) {
+		} catch ( CrmException $exception ) {
 			return array();
 		}
 
@@ -193,7 +207,7 @@ final class SegmentAdapter {
 			if ( $create_missing && $this->can_create() ) {
 				try {
 					$resolved[] = $this->create( $value );
-				} catch ( CrmException ) {
+				} catch ( CrmException $exception ) {
 					continue;
 				}
 			}

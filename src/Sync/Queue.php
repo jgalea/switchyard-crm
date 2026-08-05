@@ -17,12 +17,14 @@ use Conduit\Settings;
  */
 final class Queue {
 
+	private Settings $settings;
+	private Logger $logger;
 	public const GROUP = 'conduit';
 
-	public function __construct(
-		private Settings $settings,
-		private Logger $logger,
-	) {}
+	public function __construct( Settings $settings, Logger $logger ) {
+		$this->settings = $settings;
+		$this->logger   = $logger;
+	}
 
 	public function available(): bool {
 		return function_exists( 'as_enqueue_async_action' );

@@ -22,15 +22,19 @@ use Conduit\Webhook\Secret;
  */
 final class AdminPages {
 
+	private Settings $settings;
+	private ProviderRegistry $registry;
+	private FieldMap $fields;
+	private IntegrationRegistry $integrations;
 	private const CAPABILITY = 'manage_options';
 	private const SLUG       = 'conduit-crm';
 
-	public function __construct(
-		private Settings $settings,
-		private ProviderRegistry $registry,
-		private FieldMap $fields,
-		private IntegrationRegistry $integrations,
-	) {}
+	public function __construct( Settings $settings, ProviderRegistry $registry, FieldMap $fields, IntegrationRegistry $integrations ) {
+		$this->settings     = $settings;
+		$this->registry     = $registry;
+		$this->fields       = $fields;
+		$this->integrations = $integrations;
+	}
 
 	public function register_hooks(): void {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
@@ -91,14 +95,26 @@ final class AdminPages {
 
 		echo '</h2>';
 
-		match ( $tab ) {
-			'sync'         => $this->render_sync(),
-			'access'       => $this->render_access(),
-			'integrations' => $this->render_integrations(),
-			'logs'         => $this->render_logs(),
-			'tools'        => $this->render_tools(),
-			default        => $this->render_connection(),
-		};
+		switch ( $tab ) {
+			case 'sync':
+				$this->render_sync();
+				break;
+			case 'access':
+				$this->render_access();
+				break;
+			case 'integrations':
+				$this->render_integrations();
+				break;
+			case 'logs':
+				$this->render_logs();
+				break;
+			case 'tools':
+				$this->render_tools();
+				break;
+			default:
+				$this->render_connection();
+				break;
+		}
 
 		echo '</div>';
 	}
@@ -529,13 +545,20 @@ final class AdminPages {
 
 		$notice = 'saved';
 
-		match ( $tab ) {
-			'connection' => $notice = $this->save_connection(),
-			'sync'       => $this->save_sync(),
-			'access'     => $this->save_access(),
-			'logs'       => $this->save_logs(),
-			default      => null,
-		};
+		switch ( $tab ) {
+			case 'connection':
+				$notice = $this->save_connection();
+				break;
+			case 'sync':
+				$this->save_sync();
+				break;
+			case 'access':
+				$this->save_access();
+				break;
+			case 'logs':
+				$this->save_logs();
+				break;
+		}
 
 		$this->redirect( $tab, $notice );
 	}

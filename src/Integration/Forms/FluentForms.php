@@ -23,9 +23,10 @@ final class FluentForms extends AbstractFormIntegration {
 	}
 
 	/**
-	 * @param array<string, mixed> $form_data
-	 */
-	public function on_submission( int $entry_id, array $form_data, mixed $form = null ): void {
+ * @param array<string, mixed> $form_data
+ * @param mixed $form
+ */
+	public function on_submission( int $entry_id, array $form_data, $form = null ): void {
 		$this->guard(
 			function () use ( $form_data, $form ): void {
 				$form_id = '';

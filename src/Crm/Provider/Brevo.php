@@ -64,7 +64,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 	public function get_contact_id( string $email ): ?string {
 		try {
 			$response = $this->http()->get( '/contacts/' . rawurlencode( $email ) );
-		} catch ( NotFoundException ) {
+		} catch ( NotFoundException $exception ) {
 			return null;
 		}
 
@@ -164,12 +164,19 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 
 					$fields[ 'attr_' . $attribute['name'] ] = array(
 						'label' => (string) $attribute['name'],
-						'type'  => match ( strtolower( (string) ( $attribute['type'] ?? 'text' ) ) ) {
-							'date' => 'date',
-							'float', 'number' => 'number',
-							'boolean' => 'checkbox',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $attribute ) {
+							switch ( strtolower( (string) ( $attribute['type'] ?? 'text' ) ) ) {
+								case 'date':
+									return 'date';
+								case 'float':
+								case 'number':
+									return 'number';
+								case 'boolean':
+									return 'checkbox';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 

@@ -25,7 +25,10 @@ final class ContactForm7 extends AbstractFormIntegration {
 		add_action( 'wpcf7_mail_sent', array( $this, 'on_submission' ), 20 );
 	}
 
-	public function on_submission( mixed $contact_form ): void {
+	/**
+ * @param mixed $contact_form
+ */
+	public function on_submission( $contact_form ): void {
 		$this->guard(
 			function () use ( $contact_form ): void {
 				if ( ! $contact_form instanceof WPCF7_ContactForm ) {

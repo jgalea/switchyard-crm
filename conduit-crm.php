@@ -5,7 +5,7 @@
  * Description:       Connect WordPress to your CRM. Sync users, purchases and form entries, and gate content with CRM tags.
  * Version:           1.0.0
  * Requires at least: 6.4
- * Requires PHP:      8.1
+ * Requires PHP:      7.4
  * Author:            Jean Galea
  * Author URI:        https://jeangalea.com
  * License:           GPL-3.0-or-later

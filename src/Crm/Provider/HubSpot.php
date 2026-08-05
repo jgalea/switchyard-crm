@@ -142,14 +142,24 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 
 					$fields[ (string) $property['name'] ] = array(
 						'label' => (string) ( $property['label'] ?? $property['name'] ),
-						'type'  => match ( (string) ( $property['fieldType'] ?? 'text' ) ) {
-							'date' => 'date',
-							'number' => 'number',
-							'select', 'radio' => 'select',
-							'checkbox', 'booleancheckbox' => 'checkbox',
-							'textarea' => 'textarea',
-							default => 'text',
-						},
+						'type'  => ( function () use ( $property ) {
+							switch ( (string) ( $property['fieldType'] ?? 'text' ) ) {
+								case 'date':
+									return 'date';
+								case 'number':
+									return 'number';
+								case 'select':
+								case 'radio':
+									return 'select';
+								case 'checkbox':
+								case 'booleancheckbox':
+									return 'checkbox';
+								case 'textarea':
+									return 'textarea';
+								default:
+									return 'text';
+							}
+						} )(),
 					);
 				}
 
@@ -199,7 +209,7 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 					sprintf( '/crm/v3/lists/%s/memberships', rawurlencode( $list_id ) ),
 					array( 'limit' => self::PAGE_SIZE )
 				);
-			} catch ( CrmException ) {
+			} catch ( CrmException $exception ) {
 				continue;
 			}
 

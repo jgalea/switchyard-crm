@@ -16,11 +16,12 @@ use WP_Post;
  */
 final class ContentGate {
 
-	public function __construct(
-		private Rules $rules,
-		private Settings $settings,
-	) {}
-
+	private Rules $rules;
+	private Settings $settings;
+	public function __construct( Rules $rules, Settings $settings ) {
+		$this->rules    = $rules;
+		$this->settings = $settings;
+	}
 	public function register_hooks(): void {
 		add_action( 'template_redirect', array( $this, 'guard_singular' ), 5 );
 		add_filter( 'the_content', array( $this, 'filter_content' ), 20 );
@@ -82,9 +83,9 @@ final class ContentGate {
 	}
 
 	/**
-	 * @param WP_Post|int|null $post
-	 */
-	public function filter_excerpt( string $excerpt, mixed $post = null ): string {
+ * @param mixed $post
+ */
+	public function filter_excerpt( string $excerpt, $post = null ): string {
 		$post_id = $post instanceof WP_Post ? $post->ID : (int) $post;
 
 		if ( $post_id <= 0 || $this->rules->can_access( $post_id ) ) {

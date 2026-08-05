@@ -18,7 +18,10 @@ use Conduit\Tests\TestCase;
  */
 final class SegmentAdapterTest extends TestCase {
 
-	private function tag_provider(): Provider&SupportsTags {
+	/**
+  * @return (\Conduit\Crm\Contracts\Provider & \Conduit\Crm\Contracts\SupportsTags)
+  */
+ private function tag_provider() {
 		return new class() implements Provider, SupportsTags {
 
 			/** @var array<string, list<string>> */
@@ -73,7 +76,10 @@ final class SegmentAdapterTest extends TestCase {
 		};
 	}
 
-	private function list_provider(): Provider&SupportsLists {
+	/**
+  * @return (\Conduit\Crm\Contracts\Provider & \Conduit\Crm\Contracts\SupportsLists)
+  */
+ private function list_provider() {
 		return new class() implements Provider, SupportsLists {
 
 			/** @var array<string, list<string>> */

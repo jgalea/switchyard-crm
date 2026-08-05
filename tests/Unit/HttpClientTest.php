@@ -197,7 +197,7 @@ final class HttpClientTest extends TestCase {
 		for ( $i = 0; $i < 5; $i++ ) {
 			try {
 				$client->get( '/contacts' );
-			} catch ( \Throwable ) {
+			} catch ( \Throwable $exception ) {
 				continue;
 			}
 		}

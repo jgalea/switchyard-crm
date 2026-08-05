@@ -16,16 +16,18 @@ use Conduit\Logger\Logger;
  */
 final class Registry {
 
+	private Container $container;
+	private Logger $logger;
 	/** @var array<string, callable(Container): Integration> */
 	private array $factories = array();
 
 	/** @var array<string, Integration> */
 	private array $loaded = array();
 
-	public function __construct(
-		private Container $container,
-		private Logger $logger,
-	) {}
+	public function __construct( Container $container, Logger $logger ) {
+		$this->container = $container;
+		$this->logger    = $logger;
+	}
 
 	/**
 	 * @param callable(Container): Integration $factory
@@ -101,7 +103,7 @@ final class Registry {
 		foreach ( $this->factories as $slug => $factory ) {
 			try {
 				$integration = $this->loaded[ $slug ] ?? $factory( $this->container );
-			} catch ( \Throwable ) {
+			} catch ( \Throwable $exception ) {
 				continue;
 			}
 
