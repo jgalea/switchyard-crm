@@ -11,6 +11,8 @@ docs
 phpcs.xml.dist
 phpstan.neon.dist
 phpunit.xml.dist
+rector.php
+.secret-scan-allow
 README.md
 bin
 node_modules

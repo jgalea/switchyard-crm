@@ -1,6 +1,6 @@
 === Conduit CRM ===
 Contributors: jeangalea
-Tags: crm, marketing automation, activecampaign, hubspot, mailchimp
+Tags: crm, marketing automation, integration, sync, content restriction
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
@@ -44,6 +44,24 @@ CRMs that have tags use tags. CRMs that only have lists, audiences or groups use
 A CRM outage never breaks checkout or registration. Requests retry with backoff, a circuit breaker suspends calls to a CRM that stops responding, and sync runs in the background. Everything is logged with credentials redacted, so a support conversation can start from evidence.
 
 No nag screens, no upsell banners, no review prompts.
+
+== External services ==
+
+Conduit CRM talks to the one CRM you connect it to, and to nothing else. No service is contacted until you pick a CRM under Conduit CRM → Connection and enter its credentials. Clearing those credentials stops all traffic to it.
+
+What is sent: the contact data in your field map. That is always the email address, and then whatever user profile fields, order fields and form fields you have mapped. It is sent when someone registers or updates their profile, when a WooCommerce or Easy Digital Downloads order is placed or refunded, and when a mapped form is submitted. The plugin reads back tags, list membership and mapped fields, on demand or on the schedule you set, and can import contacts as WordPress users.
+
+FluentCRM runs inside your own WordPress installation, so selecting it sends nothing off-site. The other providers are third-party services, each governed by its own terms and privacy policy:
+
+* ActiveCampaign. Terms: https://www.activecampaign.com/legal/terms-of-service Privacy: https://www.activecampaign.com/legal/privacy-policy
+* HubSpot. Terms: https://legal.hubspot.com/terms-of-service Privacy: https://legal.hubspot.com/privacy-policy
+* Mailchimp. Terms: https://mailchimp.com/legal/terms/ Privacy: https://www.intuit.com/privacy/statement/
+* Klaviyo. Terms: https://www.klaviyo.com/legal/terms-of-service Privacy: https://privacy.klaviyo.com/policies/?name=klaviyo-privacy-policy
+* Kit. Terms: https://kit.com/terms Privacy: https://kit.com/privacy
+* Brevo. Terms: https://www.brevo.com/legal/termsofuse/ Privacy: https://www.brevo.com/legal/privacypolicy/
+* MailerLite. Terms: https://www.mailerlite.com/legal/terms-of-service Privacy: https://www.mailerlite.com/legal/privacy-policy
+* Zoho CRM. Terms: https://www.zoho.com/terms.html Privacy: https://www.zoho.com/privacy.html
+* Salesforce. Terms: https://www.salesforce.com/company/legal/ Privacy: https://www.salesforce.com/company/legal/privacy/
 
 == Installation ==
 
