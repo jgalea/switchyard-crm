@@ -84,8 +84,7 @@ if ( $provider instanceof Conduit\Crm\Contracts\SupportsEvents ) {
 ```
 
 Capability interfaces: `SupportsTags`, `SupportsLists`, `SupportsTracking`,
-`SupportsEcommerce`, `SupportsEvents`, `SupportsWebhooks`,
-`SupportsContactImport`.
+`SupportsEvents`, `SupportsWebhooks`, `SupportsContactImport`.
 
 Provider methods throw `Conduit\Crm\Exception\CrmException` subclasses. Catch
 them; do not let one reach a checkout hook.
