@@ -304,35 +304,28 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 		);
 	}
 
-	/**
-	 * Returns markup for the caller to print. It is not enqueued because the
-	 * vendor snippet must load inline in the head, before any other script.
-	 *
-	 * phpcs:disable WordPress.WP.EnqueuedResources.NonEnqueuedScript
-	 */
-	public function get_tracking_script(): string {
+	public function get_tracking_src(): string {
 		$public = $this->credential( 'public_key' );
 
 		if ( '' === $public ) {
 			return '';
 		}
 
-		return sprintf(
-			'<script async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=%s"></script>',
-			rawurlencode( $public )
-		);
+		return 'https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=' . rawurlencode( $public );
 	}
 
-	public function get_identify_script( string $email, ?string $contact_id ): string {
+	public function get_tracking_inline(): string {
+		return '';
+	}
+
+	public function get_identify_inline( string $email, ?string $contact_id ): string {
 		if ( '' === $this->credential( 'public_key' ) || '' === $email ) {
 			return '';
 		}
 
 		return sprintf(
-			'<script>var _learnq=_learnq||[];_learnq.push(["identify",{"$email":"%s"}]);</script>',
-			esc_js( $email )
+			'var _learnq=window._learnq=window._learnq||[];_learnq.push(["identify",{"$email":%s}]);',
+			(string) wp_json_encode( $email )
 		);
 	}
-
-	// phpcs:enable WordPress.WP.EnqueuedResources.NonEnqueuedScript
 }

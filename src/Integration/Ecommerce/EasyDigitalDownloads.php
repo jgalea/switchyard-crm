@@ -78,6 +78,12 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 					);
 				}
 
+				/**
+				 * Fires once an EDD order has been synced to the CRM.
+				 *
+				 * @param \Conduit\Crm\Order $order   Normalised order, with line items.
+				 * @param int                $user_id Customer user ID, 0 for a guest.
+				 */
 				do_action( 'conduit_order_synced', $this->to_order( $payment_id, $email ), $user_id );
 			}
 		);

@@ -11,7 +11,7 @@ use Conduit\Logger\Logger;
  * Loads the integrations whose host plugin is actually active.
  *
  * Integrations are registered as factories so an integration for an inactive
- * plugin is never instantiated, and so the pro plugin can add its own through
+ * plugin is never instantiated, and so another plugin can add its own through
  * the same path.
  */
 final class Registry {

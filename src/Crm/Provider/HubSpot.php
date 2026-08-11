@@ -264,33 +264,28 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 		return (string) $id;
 	}
 
-	/**
-	 * Returns markup for the caller to print. It is not enqueued because the
-	 * vendor snippet must load inline in the head, before any other script.
-	 *
-	 * phpcs:disable WordPress.WP.EnqueuedResources.NonEnqueuedScript
-	 */
-	public function get_tracking_script(): string {
+	public function get_tracking_src(): string {
 		$portal = $this->credential( 'portal_id' );
 
 		if ( '' === $portal ) {
 			return '';
 		}
 
-		return sprintf(
-			'<script type="text/javascript" id="hs-script-loader" async defer src="https://js.hs-scripts.com/%s.js"></script>',
-			rawurlencode( $portal )
-		);
+		return sprintf( 'https://js.hs-scripts.com/%s.js', rawurlencode( $portal ) );
 	}
 
-	public function get_identify_script( string $email, ?string $contact_id ): string {
+	public function get_tracking_inline(): string {
+		return '';
+	}
+
+	public function get_identify_inline( string $email, ?string $contact_id ): string {
 		if ( '' === $this->credential( 'portal_id' ) || '' === $email ) {
 			return '';
 		}
 
 		return sprintf(
-			'<script>var _hsq=window._hsq=window._hsq||[];_hsq.push(["identify",{email:"%s"}]);_hsq.push(["trackPageView"]);</script>',
-			esc_js( $email )
+			'var _hsq=window._hsq=window._hsq||[];_hsq.push(["identify",{email:%s}]);_hsq.push(["trackPageView"]);',
+			(string) wp_json_encode( $email )
 		);
 	}
 

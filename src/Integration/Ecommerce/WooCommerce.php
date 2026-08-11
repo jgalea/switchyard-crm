@@ -15,10 +15,10 @@ use WC_Order_Item_Product;
 /**
  * WooCommerce.
  *
- * Free scope: customer sync, per-product and per-status tagging, guest
- * checkout, refund handling. Full order objects with line items go to the CRM
- * through the enhanced ecommerce feature, which the pro plugin registers; the
- * Order value object is built here either way so both paths share one shape.
+ * Covers customer sync, per-product and per-status tagging, guest checkout and
+ * refund handling. Each synced order is also published as an Order value
+ * object on the conduit_order_synced hook, which is the documented way to do
+ * something else with the order.
  */
 final class WooCommerce extends AbstractIntegration {
 
@@ -174,8 +174,12 @@ final class WooCommerce extends AbstractIntegration {
 		$order->update_meta_data( self::META_SYNCED, time() );
 		$order->save();
 
-		// The enhanced ecommerce feature listens here. Nothing in the free
-		// plugin consumes it, and nothing breaks when no listener exists.
+		/**
+		 * Fires once a WooCommerce order has been synced to the CRM.
+		 *
+		 * @param \Conduit\Crm\Order $order   Normalised order, with line items.
+		 * @param int                $user_id Customer user ID, 0 for a guest.
+		 */
 		do_action( 'conduit_order_synced', $this->to_order( $order ), $user_id );
 	}
 

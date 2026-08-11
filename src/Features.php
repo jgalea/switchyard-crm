@@ -7,9 +7,9 @@ namespace Conduit;
 /**
  * Registry that companion plugins register capabilities into.
  *
- * The free plugin never reads this to decide whether to show an upsell. It
- * exists so an add-on can announce that it handles a capability, and so
- * integrations can ask whether something downstream will consume their data.
+ * It exists so a companion plugin can announce that it handles a capability,
+ * and so integrations can ask whether something downstream will consume their
+ * data.
  */
 final class Features {
 

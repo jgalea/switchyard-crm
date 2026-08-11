@@ -10,14 +10,19 @@ use Conduit\Settings;
 use Conduit\Sync\ContactResolver;
 
 /**
- * Prints the CRM's visitor tracking script, and identifies the visitor when
+ * Enqueues the CRM's visitor tracking script, and identifies the visitor when
  * they are logged in.
  *
- * Output is escaped by the provider, which owns the shape of its own snippet.
- * Nothing prints at all unless site tracking is explicitly enabled, because
- * loading a third-party tracker without being asked is a consent problem.
+ * The vendor file is enqueued and its inline JavaScript is attached to a
+ * dependency handle, so the queue the vendor snippet expects exists before the
+ * file loads and the file itself stays async. Nothing is enqueued at all unless
+ * site tracking is explicitly enabled, because loading a third-party tracker
+ * without being asked is a consent problem.
  */
 final class SiteTracking {
+
+	private const HANDLE      = 'conduit-tracking';
+	private const HANDLE_BOOT = 'conduit-tracking-boot';
 
 	private ProviderRegistry $registry;
 	private ContactResolver $resolver;
@@ -32,14 +37,10 @@ final class SiteTracking {
 			return;
 		}
 
-		add_action( 'wp_head', array( $this, 'print_scripts' ), 20 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
-	public function print_scripts(): void {
-		if ( is_admin() ) {
-			return;
-		}
-
+	public function enqueue_scripts(): void {
 		if ( ! apply_filters( 'conduit_print_tracking', true ) ) {
 			return;
 		}
@@ -50,34 +51,55 @@ final class SiteTracking {
 			return;
 		}
 
-		$script = $provider->get_tracking_script();
+		$src    = $provider->get_tracking_src();
+		$inline = $provider->get_tracking_inline();
 
-		if ( '' === $script ) {
+		if ( '' === $src && '' === $inline ) {
 			return;
 		}
 
-		// Provider snippets are vendor-defined markup, not user input.
-		echo $script; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$inline .= $this->identify_script( $provider );
 
+		if ( '' !== $inline ) {
+			wp_register_script( self::HANDLE_BOOT, false, array(), CONDUIT_VERSION, false );
+			wp_enqueue_script( self::HANDLE_BOOT );
+			wp_add_inline_script( self::HANDLE_BOOT, $inline );
+		}
+
+		if ( '' === $src ) {
+			return;
+		}
+
+		// No version argument: the URL belongs to the CRM's own CDN, which
+		// handles its cache busting, and appending ours would fragment it.
+		wp_enqueue_script(
+			self::HANDLE,
+			$src,
+			'' !== $inline ? array( self::HANDLE_BOOT ) : array(),
+			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+			array(
+				'in_footer' => false,
+				'strategy'  => 'async',
+			)
+		);
+	}
+
+	private function identify_script( SupportsTracking $provider ): string {
 		$user_id = get_current_user_id();
 
 		if ( 0 === $user_id ) {
-			return;
+			return '';
 		}
 
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return;
+			return '';
 		}
 
-		$identify = $provider->get_identify_script(
+		return $provider->get_identify_inline(
 			$user->user_email,
 			$this->resolver->cached_id( $user_id )
 		);
-
-		if ( '' !== $identify ) {
-			echo $identify; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		}
 	}
 }

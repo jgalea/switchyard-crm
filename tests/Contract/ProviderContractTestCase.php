@@ -251,8 +251,11 @@ abstract class ProviderContractTestCase extends TestCase {
 			$this->markTestSkipped( 'This CRM has no tracking script.' );
 		}
 
-		$this->assertIsString( $provider->get_tracking_script() );
-		$this->assertIsString( $provider->get_identify_script( 'person@example.com', '1' ) );
+		$this->assertIsString( $provider->get_tracking_src() );
+		$this->assertIsString( $provider->get_tracking_inline() );
+		$this->assertIsString( $provider->get_identify_inline( 'person@example.com', '1' ) );
+		$this->assertStringNotContainsString( '<script', $provider->get_tracking_inline() );
+		$this->assertStringNotContainsString( '<script', $provider->get_identify_inline( 'person@example.com', '1' ) );
 	}
 
 	public function test_contact_import_returns_the_documented_shape(): void {

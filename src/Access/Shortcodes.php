@@ -8,6 +8,13 @@ use Conduit\Sync\TagEngine;
 
 /**
  * Shortcodes for conditional content inside a post.
+ *
+ * The wrapping shortcodes return their own enclosed content, which is post
+ * content the author wrote in the editor and WordPress already ran through
+ * kses on save for anyone without unfiltered_html. Running it through kses a
+ * second time on output would strip embeds and the markup produced by nested
+ * shortcodes, so the content is returned as authored. Values read from user
+ * meta are escaped, in render_field.
  */
 final class Shortcodes {
 

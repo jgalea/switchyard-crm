@@ -5,7 +5,6 @@ declare( strict_types=1 );
 namespace Conduit\Crm\Provider;
 
 use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsEcommerce;
 use Conduit\Crm\Contracts\SupportsEvents;
 use Conduit\Crm\Contracts\SupportsLists;
 use Conduit\Crm\Contracts\SupportsTags;
@@ -13,7 +12,6 @@ use Conduit\Crm\Contracts\SupportsTracking;
 use Conduit\Crm\Contracts\SupportsWebhooks;
 use Conduit\Crm\Exception\ConnectionException;
 use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Order;
 use Conduit\Webhook\Payload;
 use WP_REST_Request;
 
@@ -27,7 +25,6 @@ final class ActiveCampaign extends AbstractProvider implements
 	SupportsTags,
 	SupportsLists,
 	SupportsTracking,
-	SupportsEcommerce,
 	SupportsEvents,
 	SupportsWebhooks,
 	SupportsContactImport {
@@ -379,80 +376,35 @@ final class ActiveCampaign extends AbstractProvider implements
 		}
 	}
 
-	public function get_tracking_script(): string {
+	public function get_tracking_src(): string {
+		if ( '' === $this->credential( 'tracking_id' ) ) {
+			return '';
+		}
+
+		return 'https://diffuser-cdn.app-us1.com/diffuser/diffuser.js';
+	}
+
+	public function get_tracking_inline(): string {
 		$account = $this->credential( 'tracking_id' );
 
 		if ( '' === $account ) {
 			return '';
 		}
 
+		// The vendor snippet creates the vgo queue before diffuser.js loads and
+		// reads it back on load, so this has to print ahead of the file.
 		return sprintf(
-			'<script>(function(e,t,o,n,p,r,i){e.visitorGlobalObjectAlias=n;e[e.visitorGlobalObjectAlias]=e[e.visitorGlobalObjectAlias]||function(){(e[e.visitorGlobalObjectAlias].q=e[e.visitorGlobalObjectAlias].q||[]).push(arguments)};e[e.visitorGlobalObjectAlias].l=(new Date).getTime();r=t.createElement("script");r.src=o;r.async=true;i=t.getElementsByTagName("script")[0];i.parentNode.insertBefore(r,i)})(window,document,"https://diffuser-cdn.app-us1.com/diffuser/diffuser.js","vgo");vgo("setAccount","%s");vgo("setTrackByDefault",true);vgo("process");</script>',
-			esc_js( $account )
+			'window.visitorGlobalObjectAlias="vgo";window.vgo=window.vgo||function(){(window.vgo.q=window.vgo.q||[]).push(arguments)};window.vgo.l=(new Date).getTime();vgo("setAccount",%s);vgo("setTrackByDefault",true);vgo("process");',
+			(string) wp_json_encode( $account )
 		);
 	}
 
-	public function get_identify_script( string $email, ?string $contact_id ): string {
+	public function get_identify_inline( string $email, ?string $contact_id ): string {
 		if ( '' === $this->credential( 'tracking_id' ) || '' === $email ) {
 			return '';
 		}
 
-		return sprintf( '<script>vgo("setEmail","%s");vgo("process");</script>', esc_js( $email ) );
-	}
-
-	public function add_order( Order $order ): string {
-		$response = $this->http()->post( '/ecomOrders', array( 'ecomOrder' => $this->to_order_payload( $order ) ) );
-
-		$id = $response->path( 'ecomOrder.id' );
-
-		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'ActiveCampaign did not return an order ID.', 'conduit-crm' ) );
-		}
-
-		return (string) $id;
-	}
-
-	public function update_order( string $remote_id, Order $order ): void {
-		$this->http()->put(
-			'/ecomOrders/' . rawurlencode( $remote_id ),
-			array( 'ecomOrder' => $this->to_order_payload( $order ) )
-		);
-	}
-
-	public function delete_order( string $remote_id ): void {
-		$this->http()->delete( '/ecomOrders/' . rawurlencode( $remote_id ) );
-	}
-
-	/** @return array<string, mixed> */
-	private function to_order_payload( Order $order ): array {
-		$lines = array();
-
-		foreach ( $order->lines as $line ) {
-			$lines[] = array(
-				'externalid' => $line->product_id,
-				'name'       => $line->name,
-				'price'      => $line->price_cents(),
-				'quantity'   => $line->quantity,
-				'category'   => '',
-			);
-		}
-
-		return array(
-			'externalid'     => $order->source_id,
-			'source'         => 1,
-			'email'          => $order->email,
-			'orderNumber'    => $order->source_id,
-			'orderProducts'  => $lines,
-			'orderDate'      => gmdate( 'c', $order->placed_at ),
-			'totalPrice'     => $order->total_cents(),
-			'shippingAmount' => (int) round( $order->shipping * 100 ),
-			'taxAmount'      => (int) round( $order->tax * 100 ),
-			'discountAmount' => (int) round( $order->discount * 100 ),
-			'currency'       => strtoupper( $order->currency ),
-			'orderUrl'       => $order->order_url ?? '',
-			'connectionid'   => 1,
-			'customerid'     => 0,
-		);
+		return sprintf( 'vgo("setEmail",%s);vgo("process");', (string) wp_json_encode( $email ) );
 	}
 
 	public function track_event( string $contact_id, string $event, array $data = array() ): void {

@@ -4,7 +4,7 @@
  * Plugin URI:        https://github.com/jgalea/conduit-crm
  * Description:       Connect WordPress to your CRM. Sync users, purchases and form entries, and gate content with CRM tags.
  * Version:           1.0.0
- * Requires at least: 6.4
+ * Requires at least: 6.8
  * Requires PHP:      7.4
  * Author:            Jean Galea
  * Author URI:        https://jeangalea.com
