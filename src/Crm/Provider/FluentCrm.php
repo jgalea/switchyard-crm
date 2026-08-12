@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
 use FluentCrm\App\Models\Lists;
 use FluentCrm\App\Models\Subscriber;
 use FluentCrm\App\Models\Tag;
@@ -49,7 +49,7 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 	protected function verify_credentials(): void {
 		if ( ! $this->is_available() ) {
 			throw new ConnectionException(
-				esc_html__( 'FluentCRM is not active on this site. Install and activate it first.', 'conduit-crm' )
+				esc_html__( 'FluentCRM is not active on this site. Install and activate it first.', 'switchyard-crm' )
 			);
 		}
 	}
@@ -61,7 +61,7 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 	/** @throws CrmException */
 	private function guard(): void {
 		if ( ! $this->is_available() ) {
-			throw new CrmException( esc_html__( 'FluentCRM is no longer active on this site.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'FluentCRM is no longer active on this site.', 'switchyard-crm' ) );
 		}
 	}
 
@@ -79,13 +79,13 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 		$data = $this->to_payload( $fields );
 
 		if ( empty( $data['email'] ) ) {
-			throw new CrmException( esc_html__( 'FluentCRM needs an email address to create a contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'FluentCRM needs an email address to create a contact.', 'switchyard-crm' ) );
 		}
 
 		$contact = FluentCrmApi( 'contacts' )->createOrUpdate( $data );
 
 		if ( ! $contact || ! isset( $contact->id ) ) {
-			throw new CrmException( esc_html__( 'FluentCRM did not return a contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'FluentCRM did not return a contact.', 'switchyard-crm' ) );
 		}
 
 		return (string) $contact->id;
@@ -97,7 +97,7 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 		$subscriber = Subscriber::find( (int) $contact_id );
 
 		if ( ! $subscriber ) {
-			throw new CrmException( esc_html__( 'That FluentCRM contact no longer exists.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'That FluentCRM contact no longer exists.', 'switchyard-crm' ) );
 		}
 
 		$data = $this->to_payload( $fields );
@@ -145,35 +145,35 @@ final class FluentCrm extends AbstractProvider implements SupportsTags, Supports
 
 		$fields = array(
 			'email'       => array(
-				'label' => __( 'Email', 'conduit-crm' ),
+				'label' => __( 'Email', 'switchyard-crm' ),
 				'type'  => 'email',
 			),
 			'first_name'  => array(
-				'label' => __( 'First Name', 'conduit-crm' ),
+				'label' => __( 'First Name', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'last_name'   => array(
-				'label' => __( 'Last Name', 'conduit-crm' ),
+				'label' => __( 'Last Name', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'phone'       => array(
-				'label' => __( 'Phone', 'conduit-crm' ),
+				'label' => __( 'Phone', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'city'        => array(
-				'label' => __( 'City', 'conduit-crm' ),
+				'label' => __( 'City', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'state'       => array(
-				'label' => __( 'State', 'conduit-crm' ),
+				'label' => __( 'State', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'postal_code' => array(
-				'label' => __( 'Postal Code', 'conduit-crm' ),
+				'label' => __( 'Postal Code', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'country'     => array(
-				'label' => __( 'Country', 'conduit-crm' ),
+				'label' => __( 'Country', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 		);

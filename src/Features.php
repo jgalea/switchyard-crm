@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit;
+namespace Switchyard;
 
 /**
  * Registry that companion plugins register capabilities into.

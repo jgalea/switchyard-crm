@@ -6,11 +6,11 @@ declare( strict_types=1 );
 // WordPress here.
 define( 'ABSPATH', __DIR__ . '/' );
 
-define( 'CONDUIT_TESTING', true );
-define( 'CONDUIT_VERSION', '1.0.0' );
-define( 'CONDUIT_DIR', dirname( __DIR__ ) . '/' );
-define( 'CONDUIT_URL', 'https://example.test/wp-content/plugins/conduit-crm/' );
-define( 'CONDUIT_FILE', dirname( __DIR__ ) . '/conduit-crm.php' );
+define( 'SWITCHYARD_TESTING', true );
+define( 'SWITCHYARD_VERSION', '1.0.0' );
+define( 'SWITCHYARD_DIR', dirname( __DIR__ ) . '/' );
+define( 'SWITCHYARD_URL', 'https://example.test/wp-content/plugins/switchyard-crm/' );
+define( 'SWITCHYARD_FILE', dirname( __DIR__ ) . '/switchyard-crm.php' );
 
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );

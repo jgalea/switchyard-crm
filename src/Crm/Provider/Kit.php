@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Contracts\SupportsWebhooks;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Webhook\Payload;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Contracts\SupportsWebhooks;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Webhook\Payload;
 use WP_REST_Request;
 
 /**
@@ -34,9 +34,9 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 	public function get_credential_fields(): array {
 		return array(
 			'api_key' => array(
-				'label'    => __( 'API Key', 'conduit-crm' ),
+				'label'    => __( 'API Key', 'switchyard-crm' ),
 				'type'     => 'password',
-				'help'     => __( 'Kit → Settings → Developer → API Key (v4).', 'conduit-crm' ),
+				'help'     => __( 'Kit → Settings → Developer → API Key (v4).', 'switchyard-crm' ),
 				'required' => true,
 			),
 		);
@@ -55,7 +55,7 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 			$this->http()->get( '/account' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Kit rejected this API key.', 'conduit-crm' ),
+				esc_html__( 'Kit rejected this API key.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -75,7 +75,7 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 		$id = $response->path( 'subscriber.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Kit did not return a subscriber ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Kit did not return a subscriber ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -112,11 +112,11 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 			function (): array {
 				$fields = array(
 					'email_address' => array(
-						'label' => __( 'Email', 'conduit-crm' ),
+						'label' => __( 'Email', 'switchyard-crm' ),
 						'type'  => 'email',
 					),
 					'first_name'    => array(
-						'label' => __( 'First Name', 'conduit-crm' ),
+						'label' => __( 'First Name', 'switchyard-crm' ),
 						'type'  => 'text',
 					),
 				);
@@ -231,7 +231,7 @@ final class Kit extends AbstractProvider implements SupportsTags, SupportsWebhoo
 		$id = $response->path( 'tag.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Kit did not return a tag ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Kit did not return a tag ID.', 'switchyard-crm' ) );
 		}
 
 		$this->flush_cache();

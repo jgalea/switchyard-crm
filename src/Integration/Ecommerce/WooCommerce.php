@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration\Ecommerce;
+namespace Switchyard\Integration\Ecommerce;
 
-use Conduit\Crm\Order;
-use Conduit\Crm\OrderLine;
-use Conduit\Integration\AbstractIntegration;
-use Conduit\Sync\GuestSync;
-use Conduit\Sync\UserSync;
+use Switchyard\Crm\Order;
+use Switchyard\Crm\OrderLine;
+use Switchyard\Integration\AbstractIntegration;
+use Switchyard\Sync\GuestSync;
+use Switchyard\Sync\UserSync;
 use WC_Order;
 use WC_Order_Item_Product;
 
@@ -17,12 +17,12 @@ use WC_Order_Item_Product;
  *
  * Covers customer sync, per-product and per-status tagging, guest checkout and
  * refund handling. Each synced order is also published as an Order value
- * object on the conduit_order_synced hook, which is the documented way to do
+ * object on the switchyard_order_synced hook, which is the documented way to do
  * something else with the order.
  */
 final class WooCommerce extends AbstractIntegration {
 
-	private const META_SYNCED = '_conduit_synced';
+	private const META_SYNCED = '_switchyard_synced';
 
 
 	public function get_slug(): string {
@@ -43,7 +43,7 @@ final class WooCommerce extends AbstractIntegration {
 		add_action( 'woocommerce_order_refunded', array( $this, 'on_refund' ), 20, 2 );
 		add_action( 'woocommerce_customer_save_address', array( $this, 'on_address_saved' ), 20 );
 
-		add_filter( 'conduit_wp_fields', array( $this, 'add_billing_fields' ) );
+		add_filter( 'switchyard_wp_fields', array( $this, 'add_billing_fields' ) );
 	}
 
 	/**
@@ -54,32 +54,32 @@ final class WooCommerce extends AbstractIntegration {
 	 * @return array<string, array<string, string>>
 	 */
 	public function add_billing_fields( array $fields ): array {
-		$fields[ __( 'WooCommerce Billing', 'conduit-crm' ) ] = array(
-			'billing_first_name' => __( 'Billing First Name', 'conduit-crm' ),
-			'billing_last_name'  => __( 'Billing Last Name', 'conduit-crm' ),
-			'billing_company'    => __( 'Billing Company', 'conduit-crm' ),
-			'billing_address_1'  => __( 'Billing Address 1', 'conduit-crm' ),
-			'billing_address_2'  => __( 'Billing Address 2', 'conduit-crm' ),
-			'billing_city'       => __( 'Billing City', 'conduit-crm' ),
-			'billing_state'      => __( 'Billing State', 'conduit-crm' ),
-			'billing_postcode'   => __( 'Billing Postcode', 'conduit-crm' ),
-			'billing_country'    => __( 'Billing Country', 'conduit-crm' ),
-			'billing_phone'      => __( 'Billing Phone', 'conduit-crm' ),
+		$fields[ __( 'WooCommerce Billing', 'switchyard-crm' ) ] = array(
+			'billing_first_name' => __( 'Billing First Name', 'switchyard-crm' ),
+			'billing_last_name'  => __( 'Billing Last Name', 'switchyard-crm' ),
+			'billing_company'    => __( 'Billing Company', 'switchyard-crm' ),
+			'billing_address_1'  => __( 'Billing Address 1', 'switchyard-crm' ),
+			'billing_address_2'  => __( 'Billing Address 2', 'switchyard-crm' ),
+			'billing_city'       => __( 'Billing City', 'switchyard-crm' ),
+			'billing_state'      => __( 'Billing State', 'switchyard-crm' ),
+			'billing_postcode'   => __( 'Billing Postcode', 'switchyard-crm' ),
+			'billing_country'    => __( 'Billing Country', 'switchyard-crm' ),
+			'billing_phone'      => __( 'Billing Phone', 'switchyard-crm' ),
 		);
 
-		$fields[ __( 'WooCommerce Shipping', 'conduit-crm' ) ] = array(
-			'shipping_first_name' => __( 'Shipping First Name', 'conduit-crm' ),
-			'shipping_last_name'  => __( 'Shipping Last Name', 'conduit-crm' ),
-			'shipping_address_1'  => __( 'Shipping Address 1', 'conduit-crm' ),
-			'shipping_city'       => __( 'Shipping City', 'conduit-crm' ),
-			'shipping_postcode'   => __( 'Shipping Postcode', 'conduit-crm' ),
-			'shipping_country'    => __( 'Shipping Country', 'conduit-crm' ),
+		$fields[ __( 'WooCommerce Shipping', 'switchyard-crm' ) ] = array(
+			'shipping_first_name' => __( 'Shipping First Name', 'switchyard-crm' ),
+			'shipping_last_name'  => __( 'Shipping Last Name', 'switchyard-crm' ),
+			'shipping_address_1'  => __( 'Shipping Address 1', 'switchyard-crm' ),
+			'shipping_city'       => __( 'Shipping City', 'switchyard-crm' ),
+			'shipping_postcode'   => __( 'Shipping Postcode', 'switchyard-crm' ),
+			'shipping_country'    => __( 'Shipping Country', 'switchyard-crm' ),
 		);
 
-		$fields[ __( 'WooCommerce Customer', 'conduit-crm' ) ] = array(
-			'conduit_wc_order_count' => __( 'Order Count', 'conduit-crm' ),
-			'conduit_wc_total_spent' => __( 'Lifetime Value', 'conduit-crm' ),
-			'conduit_wc_last_order'  => __( 'Last Order Date', 'conduit-crm' ),
+		$fields[ __( 'WooCommerce Customer', 'switchyard-crm' ) ] = array(
+			'switchyard_wc_order_count' => __( 'Order Count', 'switchyard-crm' ),
+			'switchyard_wc_total_spent' => __( 'Lifetime Value', 'switchyard-crm' ),
+			'switchyard_wc_last_order'  => __( 'Last Order Date', 'switchyard-crm' ),
 		);
 
 		return $fields;
@@ -136,7 +136,7 @@ final class WooCommerce extends AbstractIntegration {
 					}
 				}
 
-				do_action( 'conduit_woocommerce_status_changed', $this->to_order( $order ), $to, $user_id );
+				do_action( 'switchyard_woocommerce_status_changed', $this->to_order( $order ), $to, $user_id );
 			}
 		);
 	}
@@ -177,10 +177,10 @@ final class WooCommerce extends AbstractIntegration {
 		/**
 		 * Fires once a WooCommerce order has been synced to the CRM.
 		 *
-		 * @param \Conduit\Crm\Order $order   Normalised order, with line items.
+		 * @param \Switchyard\Crm\Order $order   Normalised order, with line items.
 		 * @param int                $user_id Customer user ID, 0 for a guest.
 		 */
-		do_action( 'conduit_order_synced', $this->to_order( $order ), $user_id );
+		do_action( 'switchyard_order_synced', $this->to_order( $order ), $user_id );
 	}
 
 	public function on_refund( int $order_id, int $refund_id ): void {
@@ -206,12 +206,12 @@ final class WooCommerce extends AbstractIntegration {
 				// customer keeps the access their purchase granted.
 				if ( ! empty( $options['remove_tags_on_refund'] ) && $user_id > 0 ) {
 					$this->queue->dispatch(
-						'conduit_remove_tags_async',
+						'switchyard_remove_tags_async',
 						array( $user_id, $this->tags_for_order( $order ) )
 					);
 				}
 
-				do_action( 'conduit_order_refunded', $this->to_order( $order ), $user_id );
+				do_action( 'switchyard_order_refunded', $this->to_order( $order ), $user_id );
 			}
 		);
 	}
@@ -240,7 +240,7 @@ final class WooCommerce extends AbstractIntegration {
 					continue;
 				}
 
-				$product_tags = get_post_meta( $product_id, '_conduit_tags', true );
+				$product_tags = get_post_meta( $product_id, '_switchyard_tags', true );
 
 				if ( is_array( $product_tags ) ) {
 					$tags = array_merge( $tags, array_map( 'strval', $product_tags ) );
@@ -252,7 +252,7 @@ final class WooCommerce extends AbstractIntegration {
 
 		/** @var list<string> $result */
 		$result = apply_filters(
-			'conduit_woocommerce_order_tags',
+			'switchyard_woocommerce_order_tags',
 			array_values( array_unique( array_merge( $tags, $global ) ) ),
 			$order
 		);
@@ -285,7 +285,7 @@ final class WooCommerce extends AbstractIntegration {
 	 * @return array<string, mixed>
 	 */
 	private function guest_fields( WC_Order $order ): array {
-		$map = get_option( 'conduit_field_map', array() );
+		$map = get_option( 'switchyard_field_map', array() );
 
 		if ( ! is_array( $map ) ) {
 			return array();
@@ -320,9 +320,9 @@ final class WooCommerce extends AbstractIntegration {
 
 		$created = $order->get_date_created();
 
-		update_user_meta( $user_id, 'conduit_wc_order_count', $customer->get_order_count() );
-		update_user_meta( $user_id, 'conduit_wc_total_spent', $customer->get_total_spent() );
-		update_user_meta( $user_id, 'conduit_wc_last_order', null !== $created ? $created->getTimestamp() : time() );
+		update_user_meta( $user_id, 'switchyard_wc_order_count', $customer->get_order_count() );
+		update_user_meta( $user_id, 'switchyard_wc_total_spent', $customer->get_total_spent() );
+		update_user_meta( $user_id, 'switchyard_wc_last_order', null !== $created ? $created->getTimestamp() : time() );
 	}
 
 	/**

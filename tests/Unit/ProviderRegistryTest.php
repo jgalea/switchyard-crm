@@ -2,15 +2,15 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
 use Brain\Monkey\Functions;
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Http\Client;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Settings;
-use Conduit\Tests\TestCase;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
+use Switchyard\Tests\TestCase;
 
 /**
  * Regression cover for the registry.
@@ -103,7 +103,7 @@ final class ProviderRegistryTest extends TestCase {
 		$before   = count( $registry->available() );
 
 		/** @phpstan-ignore-next-line Deliberately invalid. */
-		$registry->register( 'Conduit\\Crm\\Provider\\DoesNotExist' );
+		$registry->register( 'Switchyard\\Crm\\Provider\\DoesNotExist' );
 
 		$this->assertCount( $before, $registry->available() );
 	}

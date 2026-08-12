@@ -2,7 +2,7 @@
 
 ## Connecting
 
-Conduit CRM → Connection. Pick your CRM, save, then fill in the credential
+Switchyard CRM → Connection. Pick your CRM, save, then fill in the credential
 fields that appear. Each provider asks for what it actually needs.
 
 Stored API keys are never rendered back into the page. Leaving a password field
@@ -24,7 +24,7 @@ re-entering a key.
 
 ## Field mapping
 
-Conduit CRM → Sync. The left column is every WordPress field available,
+Switchyard CRM → Sync. The left column is every WordPress field available,
 including fields contributed by active integrations such as WooCommerce billing
 details. Pick the CRM field to send it to and tick Sync.
 
@@ -36,7 +36,7 @@ rejects a malformed date will otherwise fail the whole write.
 
 Turn on staging mode under Sync when you clone a production site. Every outbound
 write is blocked and logged instead, so a staging copy cannot mutate live CRM
-records. There is also a `conduit_staging_mode` filter if you would rather set it
+records. There is also a `switchyard_staging_mode` filter if you would rather set it
 from `wp-config.php`.
 
 ## Webhooks
@@ -44,7 +44,7 @@ from `wp-config.php`.
 The Connection screen shows the webhook endpoint and its shared secret. Point
 your CRM's automation at it to push tag changes back into WordPress.
 
-Send the secret as an `X-Conduit-Secret` header where your CRM supports it. The
+Send the secret as an `X-Switchyard-Secret` header where your CRM supports it. The
 URL form works too, and some CRMs cannot send a custom header on a webhook, but
 a secret in a query string is written to the web server's access log and can
 leak through a Referer header. The header form avoids both.
@@ -56,7 +56,7 @@ Rotate the secret from the same screen if it leaks; remember to update the CRM.
 
 ## Batch operations
 
-Conduit CRM → Tools.
+Switchyard CRM → Tools.
 
 - Refresh tags and fields from the CRM — clears the cached catalogues.
 - Resync all users — queues one job per user.

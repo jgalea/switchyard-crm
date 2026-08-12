@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration;
+namespace Switchyard\Integration;
 
-use Conduit\Container;
-use Conduit\Logger\Logger;
+use Switchyard\Container;
+use Switchyard\Logger\Logger;
 
 /**
  * Loads the integrations whose host plugin is actually active.
@@ -37,7 +37,7 @@ final class Registry {
 	}
 
 	public function boot(): void {
-		do_action( 'conduit_register_integrations', $this );
+		do_action( 'switchyard_register_integrations', $this );
 
 		foreach ( $this->factories as $slug => $factory ) {
 			try {
@@ -58,7 +58,7 @@ final class Registry {
 				continue;
 			}
 
-			if ( ! apply_filters( 'conduit_enable_integration', true, $slug ) ) {
+			if ( ! apply_filters( 'switchyard_enable_integration', true, $slug ) ) {
 				continue;
 			}
 

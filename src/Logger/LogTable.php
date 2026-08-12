@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Logger;
+namespace Switchyard\Logger;
 
 final class LogTable {
 
 	public static function name(): string {
 		global $wpdb;
 
-		return $wpdb->prefix . 'conduit_log';
+		return $wpdb->prefix . 'switchyard_log';
 	}
 
 	public static function create(): void {

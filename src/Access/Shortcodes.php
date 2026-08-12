@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Access;
+namespace Switchyard\Access;
 
-use Conduit\Sync\TagEngine;
+use Switchyard\Sync\TagEngine;
 
 /**
  * Shortcodes for conditional content inside a post.
@@ -24,14 +24,14 @@ final class Shortcodes {
 	}
 
 	public function register_hooks(): void {
-		add_shortcode( 'conduit_if', array( $this, 'render_if' ) );
-		add_shortcode( 'conduit_logged_in', array( $this, 'render_logged_in' ) );
-		add_shortcode( 'conduit_logged_out', array( $this, 'render_logged_out' ) );
-		add_shortcode( 'conduit_field', array( $this, 'render_field' ) );
+		add_shortcode( 'switchyard_if', array( $this, 'render_if' ) );
+		add_shortcode( 'switchyard_logged_in', array( $this, 'render_logged_in' ) );
+		add_shortcode( 'switchyard_logged_out', array( $this, 'render_logged_out' ) );
+		add_shortcode( 'switchyard_field', array( $this, 'render_field' ) );
 	}
 
 	/**
- * [conduit_if tag="VIP" match="any" not="false"]…[/conduit_if]
+ * [switchyard_if tag="VIP" match="any" not="false"]…[/switchyard_if]
  *
  * @param mixed $atts
  */
@@ -43,7 +43,7 @@ final class Shortcodes {
 				'not'   => 'false',
 			),
 			is_array( $atts ) ? $atts : array(),
-			'conduit_if'
+			'switchyard_if'
 		);
 
 		if ( null === $content ) {
@@ -82,7 +82,7 @@ final class Shortcodes {
 	}
 
 	/**
- * [conduit_field key="first_name" default="there"]
+ * [switchyard_field key="first_name" default="there"]
  *
  * @param mixed $atts
  */
@@ -93,7 +93,7 @@ final class Shortcodes {
 				'default' => '',
 			),
 			is_array( $atts ) ? $atts : array(),
-			'conduit_field'
+			'switchyard_field'
 		);
 
 		$user_id = get_current_user_id();

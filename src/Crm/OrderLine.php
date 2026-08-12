@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm;
+namespace Switchyard\Crm;
 
 final class OrderLine {
 

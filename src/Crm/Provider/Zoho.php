@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * Zoho CRM v8.
@@ -34,24 +34,24 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 	public function get_credential_fields(): array {
 		return array(
 			'client_id'     => array(
-				'label'    => __( 'Client ID', 'conduit-crm' ),
+				'label'    => __( 'Client ID', 'switchyard-crm' ),
 				'type'     => 'text',
 				'required' => true,
 			),
 			'client_secret' => array(
-				'label'    => __( 'Client Secret', 'conduit-crm' ),
+				'label'    => __( 'Client Secret', 'switchyard-crm' ),
 				'type'     => 'password',
 				'required' => true,
 			),
 			'refresh_token' => array(
-				'label'    => __( 'Refresh Token', 'conduit-crm' ),
+				'label'    => __( 'Refresh Token', 'switchyard-crm' ),
 				'type'     => 'password',
 				'required' => true,
 			),
 			'data_centre'   => array(
-				'label'    => __( 'Data Centre', 'conduit-crm' ),
+				'label'    => __( 'Data Centre', 'switchyard-crm' ),
 				'type'     => 'select',
-				'help'     => __( 'The domain suffix your Zoho account uses: com, eu, in, com.au, jp.', 'conduit-crm' ),
+				'help'     => __( 'The domain suffix your Zoho account uses: com, eu, in, com.au, jp.', 'switchyard-crm' ),
 				'required' => true,
 			),
 		);
@@ -82,7 +82,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 	 * Headers carry a token that expires, so the cached client has to be
 	 * rebuilt rather than reused across a refresh.
 	 */
-	protected function http(): \Conduit\Crm\Http\Client {
+	protected function http(): \Switchyard\Crm\Http\Client {
 		$this->http = null;
 
 		return parent::http();
@@ -94,7 +94,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 			$this->http()->get( '/settings/modules' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Zoho rejected these credentials. Check the client details, refresh token and data centre.', 'conduit-crm' ),
+				esc_html__( 'Zoho rejected these credentials. Check the client details, refresh token and data centre.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -117,7 +117,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 		$id = $response->path( 'data.0.details.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Zoho did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Zoho did not return a contact ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -144,7 +144,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 
 		$email = isset( $fields['Email'] ) && is_string( $fields['Email'] ) ? $fields['Email'] : '';
 
-		$fields['Last_Name'] = '' !== $email ? (string) strstr( $email, '@', true ) : __( 'Unknown', 'conduit-crm' );
+		$fields['Last_Name'] = '' !== $email ? (string) strstr( $email, '@', true ) : __( 'Unknown', 'switchyard-crm' );
 
 		return $fields;
 	}
@@ -302,7 +302,7 @@ final class Zoho extends AbstractProvider implements SupportsTags, SupportsConta
 		$id = $response->path( 'tags.0.details.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Zoho did not return a tag ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Zoho did not return a tag ID.', 'switchyard-crm' ) );
 		}
 
 		$this->flush_cache();

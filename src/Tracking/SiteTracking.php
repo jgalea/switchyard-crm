@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tracking;
+namespace Switchyard\Tracking;
 
-use Conduit\Crm\Contracts\SupportsTracking;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Settings;
-use Conduit\Sync\ContactResolver;
+use Switchyard\Crm\Contracts\SupportsTracking;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Settings;
+use Switchyard\Sync\ContactResolver;
 
 /**
  * Enqueues the CRM's visitor tracking script, and identifies the visitor when
@@ -21,8 +21,8 @@ use Conduit\Sync\ContactResolver;
  */
 final class SiteTracking {
 
-	private const HANDLE      = 'conduit-tracking';
-	private const HANDLE_BOOT = 'conduit-tracking-boot';
+	private const HANDLE      = 'switchyard-tracking';
+	private const HANDLE_BOOT = 'switchyard-tracking-boot';
 
 	private ProviderRegistry $registry;
 	private ContactResolver $resolver;
@@ -41,7 +41,7 @@ final class SiteTracking {
 	}
 
 	public function enqueue_scripts(): void {
-		if ( ! apply_filters( 'conduit_print_tracking', true ) ) {
+		if ( ! apply_filters( 'switchyard_print_tracking', true ) ) {
 			return;
 		}
 
@@ -61,7 +61,7 @@ final class SiteTracking {
 		$inline .= $this->identify_script( $provider );
 
 		if ( '' !== $inline ) {
-			wp_register_script( self::HANDLE_BOOT, false, array(), CONDUIT_VERSION, false );
+			wp_register_script( self::HANDLE_BOOT, false, array(), SWITCHYARD_VERSION, false );
 			wp_enqueue_script( self::HANDLE_BOOT );
 			wp_add_inline_script( self::HANDLE_BOOT, $inline );
 		}

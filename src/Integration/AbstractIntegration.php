@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration;
+namespace Switchyard\Integration;
 
-use Conduit\Features;
-use Conduit\Logger\Logger;
-use Conduit\Sync\Queue;
-use Conduit\Sync\TagEngine;
-use Conduit\Sync\UserSync;
+use Switchyard\Features;
+use Switchyard\Logger\Logger;
+use Switchyard\Sync\Queue;
+use Switchyard\Sync\TagEngine;
+use Switchyard\Sync\UserSync;
 
 /**
  * Shared behaviour for integrations.
@@ -63,7 +63,7 @@ abstract class AbstractIntegration implements Integration {
 	 * @return array<string, mixed>
 	 */
 	protected function options(): array {
-		$stored = get_option( 'conduit_integration_' . $this->get_slug(), array() );
+		$stored = get_option( 'switchyard_integration_' . $this->get_slug(), array() );
 
 		return is_array( $stored ) ? $stored : array();
 	}
@@ -90,6 +90,6 @@ abstract class AbstractIntegration implements Integration {
 			return;
 		}
 
-		$this->queue->dispatch( 'conduit_apply_tags_async', array( $user_id, $tags ) );
+		$this->queue->dispatch( 'switchyard_apply_tags_async', array( $user_id, $tags ) );
 	}
 }

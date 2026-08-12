@@ -2,15 +2,15 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Webhook;
+namespace Switchyard\Webhook;
 
-use Conduit\Crm\Contracts\SupportsWebhooks;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Settings;
-use Conduit\Sync\ContactResolver;
-use Conduit\Sync\TagEngine;
-use Conduit\Sync\UserSync;
+use Switchyard\Crm\Contracts\SupportsWebhooks;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
+use Switchyard\Sync\ContactResolver;
+use Switchyard\Sync\TagEngine;
+use Switchyard\Sync\UserSync;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -45,7 +45,7 @@ final class Listener {
 
 	public function register_routes(): void {
 		register_rest_route(
-			'conduit/v1',
+			'switchyard/v1',
 			'/webhook/(?P<provider>[a-z0-9\-]+)',
 			array(
 				'methods'             => array( WP_REST_Server::CREATABLE, WP_REST_Server::READABLE ),
@@ -69,7 +69,7 @@ final class Listener {
 		// lands in the web server's access log and can leak through Referer.
 		// The query parameter stays supported because several CRMs cannot send
 		// a custom header on a webhook.
-		$secret = $request->get_header( 'x_conduit_secret' );
+		$secret = $request->get_header( 'x_switchyard_secret' );
 
 		if ( ! is_string( $secret ) || '' === $secret ) {
 			$secret = $request->get_param( 'secret' );
@@ -82,8 +82,8 @@ final class Listener {
 			);
 
 			return new WP_Error(
-				'conduit_forbidden',
-				__( 'Invalid webhook secret.', 'conduit-crm' ),
+				'switchyard_forbidden',
+				__( 'Invalid webhook secret.', 'switchyard-crm' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -97,14 +97,14 @@ final class Listener {
 
 		if ( null === $provider || $provider->get_slug() !== $slug ) {
 			return new WP_REST_Response(
-				array( 'message' => __( 'That CRM is not the one connected to this site.', 'conduit-crm' ) ),
+				array( 'message' => __( 'That CRM is not the one connected to this site.', 'switchyard-crm' ) ),
 				400
 			);
 		}
 
 		if ( ! $provider instanceof SupportsWebhooks ) {
 			return new WP_REST_Response(
-				array( 'message' => __( 'This CRM does not support webhooks.', 'conduit-crm' ) ),
+				array( 'message' => __( 'This CRM does not support webhooks.', 'switchyard-crm' ) ),
 				400
 			);
 		}
@@ -112,7 +112,7 @@ final class Listener {
 		if ( ! $provider->verify_webhook( $request ) ) {
 			$this->logger->warning( 'A webhook failed provider verification.', array(), $slug );
 
-			return new WP_REST_Response( array( 'message' => __( 'Verification failed.', 'conduit-crm' ) ), 403 );
+			return new WP_REST_Response( array( 'message' => __( 'Verification failed.', 'switchyard-crm' ) ), 403 );
 		}
 
 		$payload = $provider->parse_webhook( $request );
@@ -145,7 +145,7 @@ final class Listener {
 		// Authoritative read, rather than trusting the request body.
 		$this->tags->load_tags( $user_id );
 
-		do_action( 'conduit_webhook_received', $payload, $user_id );
+		do_action( 'switchyard_webhook_received', $payload, $user_id );
 
 		$this->logger->info(
 			'Processed a webhook.',

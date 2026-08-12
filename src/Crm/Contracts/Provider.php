@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Contracts;
+namespace Switchyard\Crm\Contracts;
 
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * The minimum every CRM provider implements.

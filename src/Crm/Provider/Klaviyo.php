@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsEvents;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTracking;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Contracts\SupportsEvents;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTracking;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * Klaviyo API.
@@ -37,15 +37,15 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 	public function get_credential_fields(): array {
 		return array(
 			'api_key'    => array(
-				'label'    => __( 'Private API Key', 'conduit-crm' ),
+				'label'    => __( 'Private API Key', 'switchyard-crm' ),
 				'type'     => 'password',
-				'help'     => __( 'Settings → API keys. Needs read and write scopes for profiles and lists.', 'conduit-crm' ),
+				'help'     => __( 'Settings → API keys. Needs read and write scopes for profiles and lists.', 'switchyard-crm' ),
 				'required' => true,
 			),
 			'public_key' => array(
-				'label'    => __( 'Public API Key (Site ID)', 'conduit-crm' ),
+				'label'    => __( 'Public API Key (Site ID)', 'switchyard-crm' ),
 				'type'     => 'text',
-				'help'     => __( 'Optional. Needed for on-site tracking.', 'conduit-crm' ),
+				'help'     => __( 'Optional. Needed for on-site tracking.', 'switchyard-crm' ),
 				'required' => false,
 			),
 		);
@@ -58,7 +58,7 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 	protected function auth_headers(): array {
 		return array(
 			'Authorization' => 'Klaviyo-API-Key ' . $this->credential( 'api_key' ),
-			'revision'      => (string) apply_filters( 'conduit_klaviyo_revision', self::REVISION ),
+			'revision'      => (string) apply_filters( 'switchyard_klaviyo_revision', self::REVISION ),
 			'Content-Type'  => 'application/json',
 		);
 	}
@@ -68,7 +68,7 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 			$this->http()->get( '/accounts/' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Klaviyo rejected this API key. Check that it has profile and list scopes.', 'conduit-crm' ),
+				esc_html__( 'Klaviyo rejected this API key. Check that it has profile and list scopes.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -99,7 +99,7 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 		$id = $response->path( 'data.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Klaviyo did not return a profile ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Klaviyo did not return a profile ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -150,27 +150,27 @@ final class Klaviyo extends AbstractProvider implements SupportsLists, SupportsE
 	public function get_available_fields(): array {
 		return array(
 			'email'        => array(
-				'label' => __( 'Email', 'conduit-crm' ),
+				'label' => __( 'Email', 'switchyard-crm' ),
 				'type'  => 'email',
 			),
 			'first_name'   => array(
-				'label' => __( 'First Name', 'conduit-crm' ),
+				'label' => __( 'First Name', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'last_name'    => array(
-				'label' => __( 'Last Name', 'conduit-crm' ),
+				'label' => __( 'Last Name', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'phone_number' => array(
-				'label' => __( 'Phone Number', 'conduit-crm' ),
+				'label' => __( 'Phone Number', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'organization' => array(
-				'label' => __( 'Organization', 'conduit-crm' ),
+				'label' => __( 'Organization', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 			'title'        => array(
-				'label' => __( 'Title', 'conduit-crm' ),
+				'label' => __( 'Title', 'switchyard-crm' ),
 				'type'  => 'text',
 			),
 		);

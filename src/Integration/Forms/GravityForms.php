@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration\Forms;
+namespace Switchyard\Integration\Forms;
 
 use GFAPI;
 use GFFormsModel;

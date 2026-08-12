@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Cli;
+namespace Switchyard\Cli;
 
-use Conduit\Admin\Batch;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Plugin;
-use Conduit\Sync\TagEngine;
-use Conduit\Sync\UserSync;
+use Switchyard\Admin\Batch;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Plugin;
+use Switchyard\Sync\TagEngine;
+use Switchyard\Sync\UserSync;
 use WP_CLI;
 
 /**
@@ -24,7 +24,7 @@ final class Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp conduit status
+	 *     wp switchyard status
 	 */
 	public function status(): void {
 		/** @var ProviderRegistry $registry */
@@ -63,14 +63,14 @@ final class Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp conduit sync 42
-	 *     wp conduit sync
+	 *     wp switchyard sync 42
+	 *     wp switchyard sync
 	 *
 	 * @param array<int, string> $args
 	 */
 	public function sync( array $args ): void {
 		if ( empty( $args ) ) {
-			$queued = Batch::queue_all( 'conduit_batch_push_user' );
+			$queued = Batch::queue_all( 'switchyard_batch_push_user' );
 
 			WP_CLI::success( sprintf( 'Queued %d users.', $queued ) );
 
@@ -104,7 +104,7 @@ final class Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp conduit tags 42 --refresh
+	 *     wp switchyard tags 42 --refresh
 	 *
 	 * @param array<int, string>    $args
 	 * @param array<string, string> $assoc
@@ -141,7 +141,7 @@ final class Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp conduit import --tag=12 --role=subscriber
+	 *     wp switchyard import --tag=12 --role=subscriber
 	 *
 	 * @param array<int, string>    $args
 	 * @param array<string, string> $assoc
@@ -152,7 +152,7 @@ final class Command {
 
 		$provider = $registry->active();
 
-		if ( ! $provider instanceof \Conduit\Crm\Contracts\SupportsContactImport ) {
+		if ( ! $provider instanceof \Switchyard\Crm\Contracts\SupportsContactImport ) {
 			WP_CLI::error( 'This CRM cannot enumerate contacts.' );
 
 			return;

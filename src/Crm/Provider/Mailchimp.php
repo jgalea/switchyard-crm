@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Exception\NotFoundException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\NotFoundException;
 
 /**
  * Mailchimp Marketing API v3.
@@ -33,19 +33,19 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 	public function get_credential_fields(): array {
 		return array(
 			'api_key'      => array(
-				'label'    => __( 'API Key', 'conduit-crm' ),
+				'label'    => __( 'API Key', 'switchyard-crm' ),
 				'type'     => 'password',
-				'help'     => __( 'Account → Extras → API keys. The data centre is read from the key suffix.', 'conduit-crm' ),
+				'help'     => __( 'Account → Extras → API keys. The data centre is read from the key suffix.', 'switchyard-crm' ),
 				'required' => true,
 			),
 			'audience_id'  => array(
-				'label'    => __( 'Audience ID', 'conduit-crm' ),
+				'label'    => __( 'Audience ID', 'switchyard-crm' ),
 				'type'     => 'text',
-				'help'     => __( 'Audience → Settings → Audience name and defaults.', 'conduit-crm' ),
+				'help'     => __( 'Audience → Settings → Audience name and defaults.', 'switchyard-crm' ),
 				'required' => true,
 			),
 			'double_optin' => array(
-				'label'    => __( 'Require double opt-in', 'conduit-crm' ),
+				'label'    => __( 'Require double opt-in', 'switchyard-crm' ),
 				'type'     => 'checkbox',
 				'required' => false,
 			),
@@ -82,7 +82,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 			// Mailchimp uses HTTP Basic auth, so this encoding is the wire
 			// format the API requires, not obfuscation.
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-			'Authorization' => 'Basic ' . base64_encode( 'conduit:' . $this->credential( 'api_key' ) ),
+			'Authorization' => 'Basic ' . base64_encode( 'switchyard:' . $this->credential( 'api_key' ) ),
 		);
 	}
 
@@ -103,7 +103,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 			$this->http()->get( '/lists/' . rawurlencode( $this->audience() ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Mailchimp rejected these credentials, or the audience ID is wrong.', 'conduit-crm' ),
+				esc_html__( 'Mailchimp rejected these credentials, or the audience ID is wrong.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -138,7 +138,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 		$id = $response->path( 'id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Mailchimp did not return a member ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Mailchimp did not return a member ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -178,7 +178,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 			function (): array {
 				$fields = array(
 					'email_address' => array(
-						'label' => __( 'Email', 'conduit-crm' ),
+						'label' => __( 'Email', 'switchyard-crm' ),
 						'type'  => 'email',
 					),
 				);
@@ -222,7 +222,7 @@ final class Mailchimp extends AbstractProvider implements SupportsTags, Supports
 		$email = $fields['email_address'] ?? '';
 
 		if ( ! is_string( $email ) || '' === $email ) {
-			throw new CrmException( esc_html__( 'Mailchimp needs an email address to identify a member.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Mailchimp needs an email address to identify a member.', 'switchyard-crm' ) );
 		}
 
 		return $email;

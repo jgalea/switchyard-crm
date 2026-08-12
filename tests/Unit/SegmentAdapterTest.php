@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Sync\SegmentAdapter;
-use Conduit\Tests\TestCase;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Sync\SegmentAdapter;
+use Switchyard\Tests\TestCase;
 
 /**
  * The adapter is what lets one access-control model work across CRMs that
@@ -19,7 +19,7 @@ use Conduit\Tests\TestCase;
 final class SegmentAdapterTest extends TestCase {
 
 	/**
-  * @return (\Conduit\Crm\Contracts\Provider & \Conduit\Crm\Contracts\SupportsTags)
+  * @return (\Switchyard\Crm\Contracts\Provider & \Switchyard\Crm\Contracts\SupportsTags)
   */
  private function tag_provider() {
 		return new class() implements Provider, SupportsTags {
@@ -77,7 +77,7 @@ final class SegmentAdapterTest extends TestCase {
 	}
 
 	/**
-  * @return (\Conduit\Crm\Contracts\Provider & \Conduit\Crm\Contracts\SupportsLists)
+  * @return (\Switchyard\Crm\Contracts\Provider & \Switchyard\Crm\Contracts\SupportsLists)
   */
  private function list_provider() {
 		return new class() implements Provider, SupportsLists {

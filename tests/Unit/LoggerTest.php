@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
-use Conduit\Logger\Logger;
-use Conduit\Tests\TestCase;
+use Switchyard\Logger\Logger;
+use Switchyard\Tests\TestCase;
 
 /**
  * Redaction is the one thing in the logger that must never regress: support

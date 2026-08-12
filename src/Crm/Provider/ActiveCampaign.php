@@ -2,17 +2,17 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsEvents;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Contracts\SupportsTracking;
-use Conduit\Crm\Contracts\SupportsWebhooks;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Webhook\Payload;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsEvents;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Contracts\SupportsTracking;
+use Switchyard\Crm\Contracts\SupportsWebhooks;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Webhook\Payload;
 use WP_REST_Request;
 
 /**
@@ -42,24 +42,24 @@ final class ActiveCampaign extends AbstractProvider implements
 	public function get_credential_fields(): array {
 		return array(
 			'api_url'     => array(
-				'label'    => __( 'API URL', 'conduit-crm' ),
+				'label'    => __( 'API URL', 'switchyard-crm' ),
 				'type'     => 'url',
-				'help'     => __( 'Settings → Developer in ActiveCampaign. Looks like https://youraccount.api-us1.com', 'conduit-crm' ),
+				'help'     => __( 'Settings → Developer in ActiveCampaign. Looks like https://youraccount.api-us1.com', 'switchyard-crm' ),
 				'required' => true,
 			),
 			'api_key'     => array(
-				'label'    => __( 'API Key', 'conduit-crm' ),
+				'label'    => __( 'API Key', 'switchyard-crm' ),
 				'type'     => 'password',
 				'required' => true,
 			),
 			'tracking_id' => array(
-				'label'    => __( 'Tracking Account ID', 'conduit-crm' ),
+				'label'    => __( 'Tracking Account ID', 'switchyard-crm' ),
 				'type'     => 'text',
-				'help'     => __( 'Optional. Needed for site tracking and event tracking.', 'conduit-crm' ),
+				'help'     => __( 'Optional. Needed for site tracking and event tracking.', 'switchyard-crm' ),
 				'required' => false,
 			),
 			'event_key'   => array(
-				'label'    => __( 'Event Tracking Key', 'conduit-crm' ),
+				'label'    => __( 'Event Tracking Key', 'switchyard-crm' ),
 				'type'     => 'password',
 				'required' => false,
 			),
@@ -79,7 +79,7 @@ final class ActiveCampaign extends AbstractProvider implements
 			$this->http()->get( '/users/me' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'ActiveCampaign rejected these credentials. Check the API URL and key.', 'conduit-crm' ),
+				esc_html__( 'ActiveCampaign rejected these credentials. Check the API URL and key.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -99,7 +99,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$id = $response->path( 'contact.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'ActiveCampaign did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'ActiveCampaign did not return a contact ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -148,19 +148,19 @@ final class ActiveCampaign extends AbstractProvider implements
 			function (): array {
 				$fields = array(
 					'email'     => array(
-						'label' => __( 'Email', 'conduit-crm' ),
+						'label' => __( 'Email', 'switchyard-crm' ),
 						'type'  => 'email',
 					),
 					'firstName' => array(
-						'label' => __( 'First Name', 'conduit-crm' ),
+						'label' => __( 'First Name', 'switchyard-crm' ),
 						'type'  => 'text',
 					),
 					'lastName'  => array(
-						'label' => __( 'Last Name', 'conduit-crm' ),
+						'label' => __( 'Last Name', 'switchyard-crm' ),
 						'type'  => 'text',
 					),
 					'phone'     => array(
-						'label' => __( 'Phone', 'conduit-crm' ),
+						'label' => __( 'Phone', 'switchyard-crm' ),
 						'type'  => 'text',
 					),
 				);
@@ -325,7 +325,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$id = $response->path( 'tag.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'ActiveCampaign did not return a tag ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'ActiveCampaign did not return a tag ID.', 'switchyard-crm' ) );
 		}
 
 		$this->flush_cache();
@@ -412,7 +412,7 @@ final class ActiveCampaign extends AbstractProvider implements
 		$key   = $this->credential( 'event_key' );
 
 		if ( '' === $actid || '' === $key ) {
-			throw new CrmException( esc_html__( 'Event tracking needs both a tracking account ID and an event key.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Event tracking needs both a tracking account ID and an event key.', 'switchyard-crm' ) );
 		}
 
 		$email = isset( $data['email'] ) && is_string( $data['email'] ) ? $data['email'] : '';

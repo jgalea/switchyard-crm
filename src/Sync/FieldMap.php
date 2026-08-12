@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
 use WP_User;
 
@@ -15,7 +15,7 @@ use WP_User;
  */
 final class FieldMap {
 
-	public const OPTION = 'conduit_field_map';
+	public const OPTION = 'switchyard_field_map';
 
 	/** @var array<string, array{crm_field: string, type: string, active: bool}>|null */
 	private ?array $map = null;
@@ -58,22 +58,22 @@ final class FieldMap {
 	 */
 	public function available_wp_fields(): array {
 		$fields = array(
-			__( 'User', 'conduit-crm' ) => array(
-				'user_email'      => __( 'Email', 'conduit-crm' ),
-				'first_name'      => __( 'First Name', 'conduit-crm' ),
-				'last_name'       => __( 'Last Name', 'conduit-crm' ),
-				'display_name'    => __( 'Display Name', 'conduit-crm' ),
-				'user_login'      => __( 'Username', 'conduit-crm' ),
-				'user_url'        => __( 'Website', 'conduit-crm' ),
-				'description'     => __( 'Biography', 'conduit-crm' ),
-				'user_registered' => __( 'Registered Date', 'conduit-crm' ),
-				'user_role'       => __( 'Role', 'conduit-crm' ),
-				'user_id'         => __( 'User ID', 'conduit-crm' ),
+			__( 'User', 'switchyard-crm' ) => array(
+				'user_email'      => __( 'Email', 'switchyard-crm' ),
+				'first_name'      => __( 'First Name', 'switchyard-crm' ),
+				'last_name'       => __( 'Last Name', 'switchyard-crm' ),
+				'display_name'    => __( 'Display Name', 'switchyard-crm' ),
+				'user_login'      => __( 'Username', 'switchyard-crm' ),
+				'user_url'        => __( 'Website', 'switchyard-crm' ),
+				'description'     => __( 'Biography', 'switchyard-crm' ),
+				'user_registered' => __( 'Registered Date', 'switchyard-crm' ),
+				'user_role'       => __( 'Role', 'switchyard-crm' ),
+				'user_id'         => __( 'User ID', 'switchyard-crm' ),
 			),
 		);
 
 		/** @var array<string, array<string, string>> $fields */
-		$fields = apply_filters( 'conduit_wp_fields', $fields );
+		$fields = apply_filters( 'switchyard_wp_fields', $fields );
 
 		return $fields;
 	}
@@ -113,7 +113,7 @@ final class FieldMap {
 		}
 
 		/** @var array<string, mixed> $payload */
-		$payload = apply_filters( 'conduit_sync_fields', $payload, $user_id, $overrides );
+		$payload = apply_filters( 'switchyard_sync_fields', $payload, $user_id, $overrides );
 
 		return $payload;
 	}

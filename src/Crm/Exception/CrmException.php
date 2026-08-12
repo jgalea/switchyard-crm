@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Exception;
+namespace Switchyard\Crm\Exception;
 
 use RuntimeException;
 

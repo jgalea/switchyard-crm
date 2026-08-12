@@ -2,11 +2,11 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Contract;
+namespace Switchyard\Tests\Contract;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Provider\Salesforce;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\Provider\Salesforce;
 
 final class SalesforceTest extends ProviderContractTestCase {
 
@@ -27,7 +27,7 @@ final class SalesforceTest extends ProviderContractTestCase {
 			'client_secret' => 'sf-secret',
 			'refresh_token' => 'sf-refresh',
 			'instance_url'  => 'https://acme.my.salesforce.com',
-			'tag_field'     => 'Conduit_Tags__c',
+			'tag_field'     => 'Switchyard_Tags__c',
 		);
 	}
 
@@ -46,8 +46,8 @@ final class SalesforceTest extends ProviderContractTestCase {
 	protected function fixtures(): array {
 		return array(
 			'login.salesforce.com/services/oauth2/token' => array( 'body' => '{"access_token":"sf-token","expires_in":7200}' ),
-			'/sobjects/Contact/describe'                 => array( 'body' => '{"fields":[{"name":"Email","label":"Email","type":"email","updateable":true},{"name":"LastName","label":"Last Name","type":"string","updateable":true},{"name":"Conduit_Tags__c","label":"Tags","type":"multipicklist","updateable":true,"picklistValues":[{"value":"VIP","label":"VIP","active":true},{"value":"Customer","label":"Customer","active":true}]}]}' ),
-			'/query'                                     => array( 'body' => '{"records":[{"Id":"003xx000004TmiQ","Conduit_Tags__c":"VIP;Customer"}],"nextRecordsUrl":null}' ),
+			'/sobjects/Contact/describe'                 => array( 'body' => '{"fields":[{"name":"Email","label":"Email","type":"email","updateable":true},{"name":"LastName","label":"Last Name","type":"string","updateable":true},{"name":"Switchyard_Tags__c","label":"Tags","type":"multipicklist","updateable":true,"picklistValues":[{"value":"VIP","label":"VIP","active":true},{"value":"Customer","label":"Customer","active":true}]}]}' ),
+			'/query'                                     => array( 'body' => '{"records":[{"Id":"003xx000004TmiQ","Switchyard_Tags__c":"VIP;Customer"}],"nextRecordsUrl":null}' ),
 			'GET https://acme.my.salesforce.com/services/data/' => array( 'body' => '[{"version":"62.0","label":"Winter 26"}]' ),
 			'/sobjects/Contact/003xx000004TmiQ'          => array( 'body' => '{"Id":"003xx000004TmiQ","Email":"person@example.com","attributes":{"type":"Contact"}}' ),
 			'POST https://acme.my.salesforce.com/services/data/v62.0/sobjects/Contact' => array( 'body' => '{"id":"003xx000004TmiQ","success":true}' ),
@@ -140,7 +140,7 @@ final class SalesforceTest extends ProviderContractTestCase {
 		}
 
 		$this->assertNotNull( $patch );
-		$this->assertSame( 'VIP;Customer;Partner', $patch['Conduit_Tags__c'] );
+		$this->assertSame( 'VIP;Customer;Partner', $patch['Switchyard_Tags__c'] );
 	}
 
 	public function test_removing_a_tag_keeps_the_rest(): void {
@@ -159,7 +159,7 @@ final class SalesforceTest extends ProviderContractTestCase {
 		}
 
 		$this->assertNotNull( $patch );
-		$this->assertSame( 'Customer', $patch['Conduit_Tags__c'] );
+		$this->assertSame( 'Customer', $patch['Switchyard_Tags__c'] );
 	}
 
 	/**

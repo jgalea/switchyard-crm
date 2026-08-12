@@ -1,4 +1,4 @@
-# Conduit CRM documentation
+# Switchyard CRM documentation
 
 - [Setup](setup.md) — connecting a CRM, mapping fields, first sync
 - [Access control](access-control.md) — gating content with tags

@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Access;
+namespace Switchyard\Access;
 
-use Conduit\Sync\TagEngine;
+use Switchyard\Sync\TagEngine;
 use WP_Post;
 
 /**
@@ -17,13 +17,13 @@ use WP_Post;
 final class Rules {
 
 	private TagEngine $tags;
-	public const META_ENABLED  = '_conduit_restrict';
-	public const META_TAGS     = '_conduit_tags';
-	public const META_MATCH    = '_conduit_match';
-	public const META_REDIRECT = '_conduit_redirect';
+	public const META_ENABLED  = '_switchyard_restrict';
+	public const META_TAGS     = '_switchyard_tags';
+	public const META_MATCH    = '_switchyard_match';
+	public const META_REDIRECT = '_switchyard_redirect';
 
-	public const TERM_META_TAGS  = 'conduit_tags';
-	public const TERM_META_MATCH = 'conduit_match';
+	public const TERM_META_TAGS  = 'switchyard_tags';
+	public const TERM_META_MATCH = 'switchyard_match';
 
 	/** @var array<string, bool> */
 	private array $cache = array();
@@ -113,7 +113,7 @@ final class Rules {
 		$allowed = $this->evaluate( $post_id, $user_id );
 
 		/** @var bool $allowed */
-		$allowed = apply_filters( 'conduit_can_access', $allowed, $post_id, $user_id );
+		$allowed = apply_filters( 'switchyard_can_access', $allowed, $post_id, $user_id );
 
 		$this->cache[ $cache_key ] = $allowed;
 
@@ -173,7 +173,7 @@ final class Rules {
 		unset( $types['attachment'] );
 
 		/** @var list<string> $types */
-		$types = apply_filters( 'conduit_gated_post_types', array_values( $types ) );
+		$types = apply_filters( 'switchyard_gated_post_types', array_values( $types ) );
 
 		return $types;
 	}

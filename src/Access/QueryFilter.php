@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Access;
+namespace Switchyard\Access;
 
-use Conduit\Settings;
+use Switchyard\Settings;
 use WP_Post;
 use WP_Query;
 use WP_REST_Response;
@@ -52,7 +52,7 @@ final class QueryFilter {
 			return;
 		}
 
-		if ( ! apply_filters( 'conduit_filter_query', true, $query ) ) {
+		if ( ! apply_filters( 'switchyard_filter_query', true, $query ) ) {
 			return;
 		}
 
@@ -77,7 +77,7 @@ final class QueryFilter {
 	 * @return list<int>
 	 */
 	private function restricted_ids(): array {
-		$cached = get_transient( 'conduit_restricted_ids' );
+		$cached = get_transient( 'switchyard_restricted_ids' );
 
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -99,7 +99,7 @@ final class QueryFilter {
 		$ids = array_merge( $ids, $this->posts_in_restricted_terms() );
 		$ids = array_values( array_unique( $ids ) );
 
-		set_transient( 'conduit_restricted_ids', $ids, HOUR_IN_SECONDS );
+		set_transient( 'switchyard_restricted_ids', $ids, HOUR_IN_SECONDS );
 
 		return $ids;
 	}
@@ -243,7 +243,7 @@ final class QueryFilter {
 			}
 		}
 
-		$data['conduit_restricted'] = true;
+		$data['switchyard_restricted'] = true;
 
 		$response->set_data( $data );
 
@@ -268,6 +268,6 @@ final class QueryFilter {
 	}
 
 	public static function flush_cache(): void {
-		delete_transient( 'conduit_restricted_ids' );
+		delete_transient( 'switchyard_restricted_ids' );
 	}
 }

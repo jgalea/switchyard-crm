@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Contract;
+namespace Switchyard\Tests\Contract;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Provider\HubSpot;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Provider\HubSpot;
 
 final class HubSpotTest extends ProviderContractTestCase {
 

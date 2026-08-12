@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Http;
+namespace Switchyard\Crm\Http;
 
 final class Response {
 

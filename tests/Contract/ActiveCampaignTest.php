@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Contract;
+namespace Switchyard\Tests\Contract;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Provider\ActiveCampaign;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Provider\ActiveCampaign;
 
 final class ActiveCampaignTest extends ProviderContractTestCase {
 

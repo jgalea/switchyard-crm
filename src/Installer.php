@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit;
+namespace Switchyard;
 
-use Conduit\Logger\LogTable;
+use Switchyard\Logger\LogTable;
 
 final class Installer {
 
-	public const DB_VERSION_OPTION = 'conduit_db_version';
+	public const DB_VERSION_OPTION = 'switchyard_db_version';
 	public const DB_VERSION        = 1;
 
 	public static function activate(): void {
@@ -24,8 +24,8 @@ final class Installer {
 	}
 
 	public static function deactivate(): void {
-		wp_clear_scheduled_hook( 'conduit_prune_logs' );
-		wp_clear_scheduled_hook( 'conduit_refresh_tags' );
+		wp_clear_scheduled_hook( 'switchyard_prune_logs' );
+		wp_clear_scheduled_hook( 'switchyard_refresh_tags' );
 	}
 
 	/**

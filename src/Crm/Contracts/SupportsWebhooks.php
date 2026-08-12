@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Contracts;
+namespace Switchyard\Crm\Contracts;
 
-use Conduit\Webhook\Payload;
+use Switchyard\Webhook\Payload;
 use WP_REST_Request;
 
 /**

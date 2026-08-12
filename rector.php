@@ -14,7 +14,7 @@ return RectorConfig::configure()
 		[
 			__DIR__ . '/src',
 			__DIR__ . '/tests',
-			__DIR__ . '/conduit-crm.php',
+			__DIR__ . '/switchyard-crm.php',
 			__DIR__ . '/uninstall.php',
 		]
 	)

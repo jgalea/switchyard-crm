@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Settings;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
 
 /**
  * Syncs a contact that has no WordPress user behind it.
@@ -22,7 +22,7 @@ final class GuestSync {
 	private ContactResolver $resolver;
 	private Settings $settings;
 	private Logger $logger;
-	public const HOOK = 'conduit_push_guest';
+	public const HOOK = 'switchyard_push_guest';
 
 	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, Settings $settings, Logger $logger ) {
 		$this->registry = $registry;
@@ -94,7 +94,7 @@ final class GuestSync {
 			$this->apply_guest_tags( $contact_id, $tags );
 		}
 
-		do_action( 'conduit_guest_synced', $email, $contact_id );
+		do_action( 'switchyard_guest_synced', $email, $contact_id );
 
 		return $contact_id;
 	}

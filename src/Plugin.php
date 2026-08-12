@@ -2,33 +2,33 @@
 
 declare( strict_types=1 );
 
-namespace Conduit;
+namespace Switchyard;
 
-use Conduit\Access\ContentGate;
-use Conduit\Access\MenuFilter;
-use Conduit\Access\QueryFilter;
-use Conduit\Access\Rules;
-use Conduit\Access\Shortcodes;
-use Conduit\Admin\AdminPages;
-use Conduit\Admin\PostMetaBox;
-use Conduit\Crm\Http\Client;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Integration\Ecommerce\EasyDigitalDownloads;
-use Conduit\Integration\Ecommerce\WooCommerce;
-use Conduit\Integration\Forms\ContactForm7;
-use Conduit\Integration\Forms\FluentForms;
-use Conduit\Integration\Forms\GravityForms;
-use Conduit\Integration\Forms\WPForms;
-use Conduit\Integration\Registry as IntegrationRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Sync\ContactResolver;
-use Conduit\Sync\FieldMap;
-use Conduit\Sync\GuestSync;
-use Conduit\Sync\Queue;
-use Conduit\Sync\TagEngine;
-use Conduit\Sync\UserSync;
-use Conduit\Tracking\SiteTracking;
-use Conduit\Webhook\Listener;
+use Switchyard\Access\ContentGate;
+use Switchyard\Access\MenuFilter;
+use Switchyard\Access\QueryFilter;
+use Switchyard\Access\Rules;
+use Switchyard\Access\Shortcodes;
+use Switchyard\Admin\AdminPages;
+use Switchyard\Admin\PostMetaBox;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Integration\Ecommerce\EasyDigitalDownloads;
+use Switchyard\Integration\Ecommerce\WooCommerce;
+use Switchyard\Integration\Forms\ContactForm7;
+use Switchyard\Integration\Forms\FluentForms;
+use Switchyard\Integration\Forms\GravityForms;
+use Switchyard\Integration\Forms\WPForms;
+use Switchyard\Integration\Registry as IntegrationRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Sync\ContactResolver;
+use Switchyard\Sync\FieldMap;
+use Switchyard\Sync\GuestSync;
+use Switchyard\Sync\Queue;
+use Switchyard\Sync\TagEngine;
+use Switchyard\Sync\UserSync;
+use Switchyard\Tracking\SiteTracking;
+use Switchyard\Webhook\Listener;
 
 final class Plugin {
 
@@ -251,12 +251,12 @@ final class Plugin {
 		$this->register_maintenance();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			\WP_CLI::add_command( 'conduit', Cli\Command::class );
+			\WP_CLI::add_command( 'switchyard', Cli\Command::class );
 		}
 
 		// Companion plugins register their features and integrations here.
-		do_action( 'conduit_register_features', $this->get( Features::class ) );
-		do_action( 'conduit_loaded', $this );
+		do_action( 'switchyard_register_features', $this->get( Features::class ) );
+		do_action( 'switchyard_loaded', $this );
 	}
 
 	/**
@@ -269,7 +269,7 @@ final class Plugin {
 			return;
 		}
 
-		$bundled = CONDUIT_DIR . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+		$bundled = SWITCHYARD_DIR . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
 
 		if ( is_readable( $bundled ) ) {
 			require_once $bundled;
@@ -280,7 +280,7 @@ final class Plugin {
 		$tags = $this->get( TagEngine::class );
 
 		add_action(
-			'conduit_apply_tags_async',
+			'switchyard_apply_tags_async',
 			static function ( int $user_id, array $tag_list ) use ( $tags ): void {
 				/** @var list<string> $tag_list */
 				$tags->apply_tags( $user_id, $tag_list );
@@ -290,7 +290,7 @@ final class Plugin {
 		);
 
 		add_action(
-			'conduit_remove_tags_async',
+			'switchyard_remove_tags_async',
 			static function ( int $user_id, array $tag_list ) use ( $tags ): void {
 				/** @var list<string> $tag_list */
 				$tags->remove_tags( $user_id, $tag_list );
@@ -300,7 +300,7 @@ final class Plugin {
 		);
 
 		add_action(
-			'conduit_refresh_user_tags',
+			'switchyard_refresh_user_tags',
 			static function ( int $user_id ) use ( $tags ): void {
 				$tags->load_tags( $user_id );
 			}
@@ -311,7 +311,7 @@ final class Plugin {
 		// Batch jobs use their own hook so a bulk resync can be cancelled
 		// without also cancelling live per-user syncs sitting in the queue.
 		add_action(
-			'conduit_batch_push_user',
+			'switchyard_batch_push_user',
 			static function ( int $user_id ) use ( $sync ): void {
 				$sync->push( $user_id );
 			}
@@ -372,14 +372,14 @@ final class Plugin {
 		add_action(
 			'init',
 			static function (): void {
-				if ( ! wp_next_scheduled( 'conduit_prune_logs' ) ) {
-					wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'conduit_prune_logs' );
+				if ( ! wp_next_scheduled( 'switchyard_prune_logs' ) ) {
+					wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'switchyard_prune_logs' );
 				}
 			}
 		);
 
 		add_action(
-			'conduit_prune_logs',
+			'switchyard_prune_logs',
 			function (): void {
 				$this->get( Logger::class )->prune();
 			}

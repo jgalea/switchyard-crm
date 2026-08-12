@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Contracts;
+namespace Switchyard\Crm\Contracts;
 
 /**
  * Implemented by CRMs that provide a browser-side visitor tracking script.

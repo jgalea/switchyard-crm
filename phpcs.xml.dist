@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<ruleset name="Conduit CRM">
-	<description>WordPress coding standards for Conduit CRM.</description>
+<ruleset name="Switchyard CRM">
+	<description>WordPress coding standards for Switchyard CRM.</description>
 
 	<file>src</file>
-	<file>conduit-crm.php</file>
+	<file>switchyard-crm.php</file>
 	<file>uninstall.php</file>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
@@ -33,7 +33,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="conduit-crm"/>
+				<element value="switchyard-crm"/>
 			</property>
 		</properties>
 	</rule>

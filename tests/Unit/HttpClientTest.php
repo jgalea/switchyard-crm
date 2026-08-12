@@ -2,17 +2,17 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
 use Brain\Monkey\Functions;
-use Conduit\Crm\Exception\ApiException;
-use Conduit\Crm\Exception\CircuitOpenException;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\NotFoundException;
-use Conduit\Crm\Exception\RateLimitException;
-use Conduit\Crm\Http\Client;
-use Conduit\Logger\Logger;
-use Conduit\Tests\TestCase;
+use Switchyard\Crm\Exception\ApiException;
+use Switchyard\Crm\Exception\CircuitOpenException;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\NotFoundException;
+use Switchyard\Crm\Exception\RateLimitException;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Logger\Logger;
+use Switchyard\Tests\TestCase;
 
 /**
  * The client is the only thing standing between a flaky CRM and a broken

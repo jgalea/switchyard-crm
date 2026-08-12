@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Logger;
+namespace Switchyard\Logger;
 
-use Conduit\Settings;
+use Switchyard\Settings;
 
 /**
  * Structured logging to a dedicated table.

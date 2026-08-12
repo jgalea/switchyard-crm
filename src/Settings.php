@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit;
+namespace Switchyard;
 
 /**
  * Typed accessor over the single settings option.
@@ -12,7 +12,7 @@ namespace Conduit;
  */
 final class Settings {
 
-	public const OPTION = 'conduit_settings';
+	public const OPTION = 'switchyard_settings';
 
 	/** @var array<string, mixed>|null */
 	private ?array $data = null;
@@ -124,7 +124,7 @@ final class Settings {
 		}
 
 		/** @var bool $filtered */
-		$filtered = apply_filters( 'conduit_staging_mode', false );
+		$filtered = apply_filters( 'switchyard_staging_mode', false );
 
 		return $filtered;
 	}

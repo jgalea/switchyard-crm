@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Admin;
+namespace Switchyard\Admin;
 
-use Conduit\Sync\Queue;
+use Switchyard\Sync\Queue;
 
 /**
  * Fans a job out over every user, one scheduled action per user.
@@ -31,7 +31,7 @@ final class Batch {
 			);
 
 			// The hook is supplied by the caller and is always one of this
-			// plugin's own conduit_-prefixed constants; it is never user input.
+			// plugin's own switchyard_-prefixed constants; it is never user input.
 			// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound
 			foreach ( $user_ids as $user_id ) {
 				if ( function_exists( 'as_enqueue_async_action' ) ) {

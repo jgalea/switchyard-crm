@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
-use Conduit\Access\QueryFilter;
-use Conduit\Tests\TestCase;
+use Switchyard\Access\QueryFilter;
+use Switchyard\Tests\TestCase;
 use ReflectionClass;
 
 /**

@@ -2,18 +2,18 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Contract;
+namespace Switchyard\Tests\Contract;
 
 use Brain\Monkey\Functions;
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Contracts\SupportsTracking;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Http\Client;
-use Conduit\Logger\Logger;
-use Conduit\Tests\TestCase;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Contracts\SupportsTracking;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Logger\Logger;
+use Switchyard\Tests\TestCase;
 
 /**
  * The contract every CRM provider passes.

@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration\Ecommerce;
+namespace Switchyard\Integration\Ecommerce;
 
-use Conduit\Crm\Order;
-use Conduit\Crm\OrderLine;
-use Conduit\Integration\AbstractIntegration;
-use Conduit\Sync\GuestSync;
-use Conduit\Sync\UserSync;
+use Switchyard\Crm\Order;
+use Switchyard\Crm\OrderLine;
+use Switchyard\Integration\AbstractIntegration;
+use Switchyard\Sync\GuestSync;
+use Switchyard\Sync\UserSync;
 
 /**
  * Easy Digital Downloads.
@@ -34,7 +34,7 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 	public function register_hooks(): void {
 		add_action( 'edd_complete_purchase', array( $this, 'on_complete' ), 20 );
 		add_action( 'edd_post_refund_payment', array( $this, 'on_refund' ), 20 );
-		add_filter( 'conduit_wp_fields', array( $this, 'add_fields' ) );
+		add_filter( 'switchyard_wp_fields', array( $this, 'add_fields' ) );
 	}
 
 	/**
@@ -42,10 +42,10 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 	 * @return array<string, array<string, string>>
 	 */
 	public function add_fields( array $fields ): array {
-		$fields[ __( 'Easy Digital Downloads', 'conduit-crm' ) ] = array(
-			'conduit_edd_purchase_count' => __( 'Purchase Count', 'conduit-crm' ),
-			'conduit_edd_lifetime_value' => __( 'Lifetime Value', 'conduit-crm' ),
-			'edd_customer_address'       => __( 'Customer Address', 'conduit-crm' ),
+		$fields[ __( 'Easy Digital Downloads', 'switchyard-crm' ) ] = array(
+			'switchyard_edd_purchase_count' => __( 'Purchase Count', 'switchyard-crm' ),
+			'switchyard_edd_lifetime_value' => __( 'Lifetime Value', 'switchyard-crm' ),
+			'edd_customer_address'          => __( 'Customer Address', 'switchyard-crm' ),
 		);
 
 		return $fields;
@@ -81,10 +81,10 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 				/**
 				 * Fires once an EDD order has been synced to the CRM.
 				 *
-				 * @param \Conduit\Crm\Order $order   Normalised order, with line items.
+				 * @param \Switchyard\Crm\Order $order   Normalised order, with line items.
 				 * @param int                $user_id Customer user ID, 0 for a guest.
 				 */
-				do_action( 'conduit_order_synced', $this->to_order( $payment_id, $email ), $user_id );
+				do_action( 'switchyard_order_synced', $this->to_order( $payment_id, $email ), $user_id );
 			}
 		);
 	}
@@ -109,7 +109,7 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 
 				if ( ! empty( $options['remove_tags_on_refund'] ) && $user_id > 0 ) {
 					$this->queue->dispatch(
-						'conduit_remove_tags_async',
+						'switchyard_remove_tags_async',
 						array( $user_id, $this->tags_for_payment( $payment_id ) )
 					);
 				}
@@ -133,7 +133,7 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 					continue;
 				}
 
-				$download_tags = get_post_meta( $download_id, '_conduit_tags', true );
+				$download_tags = get_post_meta( $download_id, '_switchyard_tags', true );
 
 				if ( is_array( $download_tags ) ) {
 					$tags = array_merge( $tags, array_map( 'strval', $download_tags ) );
@@ -143,7 +143,7 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 
 		/** @var list<string> $result */
 		$result = apply_filters(
-			'conduit_edd_payment_tags',
+			'switchyard_edd_payment_tags',
 			array_values( array_unique( array_merge( $tags, $this->option_tags( 'purchase_tags' ) ) ) ),
 			$payment_id
 		);
@@ -155,7 +155,7 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 	 * @return array<string, mixed>
 	 */
 	private function guest_fields( int $payment_id, string $email ): array {
-		$map = get_option( 'conduit_field_map', array() );
+		$map = get_option( 'switchyard_field_map', array() );
 
 		if ( ! is_array( $map ) ) {
 			return array();
@@ -195,8 +195,8 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 			return;
 		}
 
-		update_user_meta( $user_id, 'conduit_edd_purchase_count', $customer->purchase_count ?? 0 );
-		update_user_meta( $user_id, 'conduit_edd_lifetime_value', $customer->purchase_value ?? 0 );
+		update_user_meta( $user_id, 'switchyard_edd_purchase_count', $customer->purchase_count ?? 0 );
+		update_user_meta( $user_id, 'switchyard_edd_lifetime_value', $customer->purchase_value ?? 0 );
 	}
 
 	private function to_order( int $payment_id, string $email ): Order {

@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration;
+namespace Switchyard\Integration;
 
 interface Integration {
 

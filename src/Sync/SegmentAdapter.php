@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * Presents one segmentation model regardless of what the CRM calls it.
@@ -50,11 +50,11 @@ final class SegmentAdapter {
 	public function label(): string {
 		switch ( $this->mode() ) {
 			case self::MODE_TAGS:
-				return __( 'Tags', 'conduit-crm' );
+				return __( 'Tags', 'switchyard-crm' );
 			case self::MODE_LISTS:
-				return __( 'Lists', 'conduit-crm' );
+				return __( 'Lists', 'switchyard-crm' );
 			default:
-				return __( 'Segments', 'conduit-crm' );
+				return __( 'Segments', 'switchyard-crm' );
 		}
 	}
 
@@ -145,7 +145,7 @@ final class SegmentAdapter {
 		}
 
 		throw new CrmException(
-			esc_html__( 'This CRM does not support creating segments from WordPress. Create it in the CRM first.', 'conduit-crm' )
+			esc_html__( 'This CRM does not support creating segments from WordPress. Create it in the CRM first.', 'switchyard-crm' )
 		);
 	}
 

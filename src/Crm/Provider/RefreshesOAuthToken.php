@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * Refresh-token OAuth, shared by the providers that use it.
@@ -42,7 +42,7 @@ trait RefreshesOAuthToken {
 	}
 
 	private function token_transient(): string {
-		return 'conduit_oauth_' . $this->get_slug();
+		return 'switchyard_oauth_' . $this->get_slug();
 	}
 
 	protected function access_token(): string {
@@ -63,7 +63,7 @@ trait RefreshesOAuthToken {
 
 		if ( '' === $refresh_token ) {
 			throw new ConnectionException(
-				esc_html__( 'No refresh token is stored. Reconnect the account.', 'conduit-crm' )
+				esc_html__( 'No refresh token is stored. Reconnect the account.', 'switchyard-crm' )
 			);
 		}
 
@@ -85,7 +85,7 @@ trait RefreshesOAuthToken {
 				->request( 'POST', add_query_arg( $params, $this->token_url() ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Could not refresh the access token. Reconnect the account.', 'conduit-crm' ),
+				esc_html__( 'Could not refresh the access token. Reconnect the account.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -93,7 +93,7 @@ trait RefreshesOAuthToken {
 		$token = $response->path( 'access_token' );
 
 		if ( ! is_string( $token ) || '' === $token ) {
-			throw new ConnectionException( esc_html__( 'The token endpoint did not return an access token.', 'conduit-crm' ) );
+			throw new ConnectionException( esc_html__( 'The token endpoint did not return an access token.', 'switchyard-crm' ) );
 		}
 
 		$expires = (int) $response->path( 'expires_in', 3600 );

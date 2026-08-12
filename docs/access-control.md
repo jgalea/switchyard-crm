@@ -2,7 +2,7 @@
 
 ## Per post
 
-Every post, page and public custom post type gets a Conduit access box in the
+Every post, page and public custom post type gets a Switchyard access box in the
 editor sidebar. Tick Restrict access, then choose tags and whether the visitor
 needs any of them or all of them.
 
@@ -19,7 +19,7 @@ with its own rule overrides the inherited one.
 
 ## Where the rule is enforced
 
-Gating only `the_content` leaks the material through other surfaces, so Conduit
+Gating only `the_content` leaks the material through other surfaces, so Switchyard
 applies the rule at four points:
 
 1. `template_redirect` for the single view, redirecting or showing the message.
@@ -49,21 +49,21 @@ Two related limits worth knowing:
 
 - The tag cache is refreshed on login, on webhook, and on a schedule. A tag
   removed directly in the CRM takes effect on the user's next login unless the
-  CRM sends a webhook. Call `conduit_refresh_tags()` where you need it sooner.
+  CRM sends a webhook. Call `switchyard_refresh_tags()` where you need it sooner.
 - Anyone who can edit a post can always see it, even without the tags. That is
   deliberate: without it a CRM outage would lock an author out of their own
-  drafts. If your editors should also be gated, use the `conduit_can_access`
+  drafts. If your editors should also be gated, use the `switchyard_can_access`
   filter.
 
 ## Shortcodes
 
 ```
-[conduit_if tag="VIP"]Members only.[/conduit_if]
-[conduit_if tag="Trial" not="true"]Hidden from trial users.[/conduit_if]
-[conduit_if tag="VIP,Founder" match="all"]Both tags required.[/conduit_if]
-[conduit_logged_in]…[/conduit_logged_in]
-[conduit_logged_out]…[/conduit_logged_out]
-[conduit_field key="first_name" default="there"]
+[switchyard_if tag="VIP"]Members only.[/switchyard_if]
+[switchyard_if tag="Trial" not="true"]Hidden from trial users.[/switchyard_if]
+[switchyard_if tag="VIP,Founder" match="all"]Both tags required.[/switchyard_if]
+[switchyard_logged_in]…[/switchyard_logged_in]
+[switchyard_logged_out]…[/switchyard_logged_out]
+[switchyard_field key="first_name" default="there"]
 ```
 
 ## How tags are read
@@ -74,4 +74,4 @@ this site writes a tag.
 
 That means a tag removed directly in the CRM takes effect on the user's next
 login, or immediately if the CRM sends a webhook. Sites that need it sooner can
-call `conduit_refresh_tags()` wherever it matters.
+call `switchyard_refresh_tags()` wherever it matters.

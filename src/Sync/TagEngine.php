@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Settings;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
 
 /**
  * Reads and writes a user's CRM tags.
@@ -22,7 +22,7 @@ final class TagEngine {
 	private ContactResolver $resolver;
 	private Settings $settings;
 	private Logger $logger;
-	public const META_TAGS = 'conduit_tags';
+	public const META_TAGS = 'switchyard_tags';
 
 	private ?SegmentAdapter $adapter = null;
 
@@ -60,7 +60,7 @@ final class TagEngine {
 		$tags = is_array( $tags ) ? array_values( array_map( 'strval', $tags ) ) : array();
 
 		/** @var list<string> $tags */
-		$tags = apply_filters( 'conduit_user_tags', $tags, $user_id );
+		$tags = apply_filters( 'switchyard_user_tags', $tags, $user_id );
 
 		return $tags;
 	}
@@ -73,7 +73,7 @@ final class TagEngine {
 
 		update_user_meta( $user_id, self::META_TAGS, $tags );
 
-		do_action( 'conduit_tags_updated', $user_id, $tags );
+		do_action( 'switchyard_tags_updated', $user_id, $tags );
 	}
 
 	public function has_tag( int $user_id, string $tag ): bool {

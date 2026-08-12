@@ -1,6 +1,6 @@
 <?php
 /**
- * Removes everything Conduit CRM stored.
+ * Removes everything Switchyard CRM stored.
  *
  * Contact IDs and cached tags go too: leaving them behind would let a
  * reinstall silently reuse stale mappings against a different CRM account.
@@ -13,36 +13,36 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 global $wpdb;
 
-$conduit_options = array(
-	'conduit_settings',
-	'conduit_field_map',
-	'conduit_webhook_secret',
-	'conduit_db_version',
+$switchyard_options = array(
+	'switchyard_settings',
+	'switchyard_field_map',
+	'switchyard_webhook_secret',
+	'switchyard_db_version',
 );
 
-foreach ( $conduit_options as $conduit_option ) {
-	delete_option( $conduit_option );
+foreach ( $switchyard_options as $switchyard_option ) {
+	delete_option( $switchyard_option );
 }
 
 // Per-integration settings.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'conduit_integration_%'" );
+$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'switchyard_integration_%'" );
 
 // Cached catalogues, circuit-breaker state and OAuth tokens.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_conduit_%' OR option_name LIKE '_transient_timeout_conduit_%'" );
+$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_switchyard_%' OR option_name LIKE '_transient_timeout_switchyard_%'" );
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ('conduit_contact_id','conduit_tags','conduit_last_sync')" );
+$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ('switchyard_contact_id','switchyard_tags','switchyard_last_sync')" );
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '\_conduit\_%'" );
+$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '\_switchyard\_%'" );
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DELETE FROM {$wpdb->termmeta} WHERE meta_key LIKE 'conduit\_%'" );
+$wpdb->query( "DELETE FROM {$wpdb->termmeta} WHERE meta_key LIKE 'switchyard\_%'" );
 
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}conduit_log" );
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}switchyard_log" );
 
-wp_clear_scheduled_hook( 'conduit_prune_logs' );
-wp_clear_scheduled_hook( 'conduit_refresh_tags' );
+wp_clear_scheduled_hook( 'switchyard_prune_logs' );
+wp_clear_scheduled_hook( 'switchyard_refresh_tags' );

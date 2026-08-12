@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration\Forms;
+namespace Switchyard\Integration\Forms;
 
 use WPCF7_ContactForm;
 use WPCF7_Submission;

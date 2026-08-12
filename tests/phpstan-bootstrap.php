@@ -5,7 +5,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CONDUIT_VERSION', '1.0.0' );
-define( 'CONDUIT_FILE', __DIR__ . '/../conduit-crm.php' );
-define( 'CONDUIT_DIR', __DIR__ . '/../' );
-define( 'CONDUIT_URL', 'https://example.test/' );
+define( 'SWITCHYARD_VERSION', '1.0.0' );
+define( 'SWITCHYARD_FILE', __DIR__ . '/../switchyard-crm.php' );
+define( 'SWITCHYARD_DIR', __DIR__ . '/../' );
+define( 'SWITCHYARD_URL', 'https://example.test/' );

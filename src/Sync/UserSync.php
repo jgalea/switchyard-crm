@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
-use Conduit\Crm\Exception\CircuitOpenException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Exception\RateLimitException;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Settings;
+use Switchyard\Crm\Exception\CircuitOpenException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\RateLimitException;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
 use WP_User;
 
 /**
@@ -28,10 +28,10 @@ final class UserSync {
 	private Queue $queue;
 	private Settings $settings;
 	private Logger $logger;
-	public const HOOK_PUSH = 'conduit_push_user';
-	public const HOOK_PULL = 'conduit_pull_user';
+	public const HOOK_PUSH = 'switchyard_push_user';
+	public const HOOK_PULL = 'switchyard_pull_user';
 
-	public const META_LAST_SYNC = 'conduit_last_sync';
+	public const META_LAST_SYNC = 'switchyard_last_sync';
 
 	/** @var array<int, bool> */
 	private array $in_flight = array();
@@ -74,7 +74,7 @@ final class UserSync {
 
 		if ( ! empty( $register_tags ) ) {
 			/** @var list<string> $register_tags */
-			$this->queue->dispatch( 'conduit_apply_tags_async', array( $user_id, $register_tags ) );
+			$this->queue->dispatch( 'switchyard_apply_tags_async', array( $user_id, $register_tags ) );
 		}
 	}
 
@@ -117,11 +117,11 @@ final class UserSync {
 
 		// Tags drive access, so a login is the moment they most need to be
 		// current: an entitlement revoked in the CRM should bite immediately.
-		$this->queue->dispatch( 'conduit_refresh_user_tags', array( $user->ID ) );
+		$this->queue->dispatch( 'switchyard_refresh_user_tags', array( $user->ID ) );
 	}
 
 	public function on_delete( int $user_id ): void {
-		do_action( 'conduit_user_deleted', $user_id, $this->resolver->cached_id( $user_id ) );
+		do_action( 'switchyard_user_deleted', $user_id, $this->resolver->cached_id( $user_id ) );
 	}
 
 	/**
@@ -154,7 +154,7 @@ final class UserSync {
 			return null;
 		}
 
-		if ( ! apply_filters( 'conduit_should_sync_user', true, $user_id ) ) {
+		if ( ! apply_filters( 'switchyard_should_sync_user', true, $user_id ) ) {
 			return null;
 		}
 
@@ -174,11 +174,11 @@ final class UserSync {
 
 				$this->resolver->store_id( $user_id, $contact_id );
 
-				do_action( 'conduit_contact_created', $user_id, $contact_id );
+				do_action( 'switchyard_contact_created', $user_id, $contact_id );
 			} else {
 				$provider->update_contact( $contact_id, $payload );
 
-				do_action( 'conduit_contact_updated', $user_id, $contact_id );
+				do_action( 'switchyard_contact_updated', $user_id, $contact_id );
 			}
 
 			update_user_meta( $user_id, self::META_LAST_SYNC, time() );
@@ -251,7 +251,7 @@ final class UserSync {
 		$this->fields->to_wordpress( $user_id, $data );
 		$this->tags->load_tags( $user_id );
 
-		do_action( 'conduit_user_pulled', $user_id, $contact_id );
+		do_action( 'switchyard_user_pulled', $user_id, $contact_id );
 	}
 
 	/**
@@ -319,7 +319,7 @@ final class UserSync {
 		$this->fields->to_wordpress( $user_id, $data );
 		$this->tags->load_tags( $user_id );
 
-		do_action( 'conduit_contact_imported', $user_id, $contact_id );
+		do_action( 'switchyard_contact_imported', $user_id, $contact_id );
 
 		return $user_id;
 	}

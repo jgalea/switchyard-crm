@@ -2,32 +2,32 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
 use Brain\Monkey\Functions;
-use Conduit\Access\ContentGate;
-use Conduit\Access\MenuFilter;
-use Conduit\Access\QueryFilter;
-use Conduit\Access\Rules;
-use Conduit\Access\Shortcodes;
-use Conduit\Admin\AdminPages;
-use Conduit\Admin\PostMetaBox;
-use Conduit\Crm\Http\Client;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Features;
-use Conduit\Integration\Registry as IntegrationRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Plugin;
-use Conduit\Settings;
-use Conduit\Sync\ContactResolver;
-use Conduit\Sync\FieldMap;
-use Conduit\Sync\GuestSync;
-use Conduit\Sync\Queue;
-use Conduit\Sync\TagEngine;
-use Conduit\Sync\UserSync;
-use Conduit\Tests\TestCase;
-use Conduit\Tracking\SiteTracking;
-use Conduit\Webhook\Listener;
+use Switchyard\Access\ContentGate;
+use Switchyard\Access\MenuFilter;
+use Switchyard\Access\QueryFilter;
+use Switchyard\Access\Rules;
+use Switchyard\Access\Shortcodes;
+use Switchyard\Admin\AdminPages;
+use Switchyard\Admin\PostMetaBox;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Features;
+use Switchyard\Integration\Registry as IntegrationRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Plugin;
+use Switchyard\Settings;
+use Switchyard\Sync\ContactResolver;
+use Switchyard\Sync\FieldMap;
+use Switchyard\Sync\GuestSync;
+use Switchyard\Sync\Queue;
+use Switchyard\Sync\TagEngine;
+use Switchyard\Sync\UserSync;
+use Switchyard\Tests\TestCase;
+use Switchyard\Tracking\SiteTracking;
+use Switchyard\Webhook\Listener;
 
 /**
  * Every service must actually construct.

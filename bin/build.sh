@@ -8,9 +8,9 @@
 # scanned as part of the plugin.
 set -euo pipefail
 
-SLUG="conduit-crm"
+SLUG="switchyard-crm"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT="$(cd "${ROOT}/.." && pwd)/.conduit-build"
+OUT="$(cd "${ROOT}/.." && pwd)/.switchyard-build"
 DEST="${OUT}/${SLUG}"
 
 rm -rf "${OUT}"

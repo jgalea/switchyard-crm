@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Contracts\SupportsTracking;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Exception\NotFoundException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Contracts\SupportsTracking;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\NotFoundException;
 
 /**
  * HubSpot CRM API v3, authenticated with a private app token.
@@ -34,15 +34,15 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 	public function get_credential_fields(): array {
 		return array(
 			'access_token' => array(
-				'label'    => __( 'Private App Token', 'conduit-crm' ),
+				'label'    => __( 'Private App Token', 'switchyard-crm' ),
 				'type'     => 'password',
-				'help'     => __( 'Settings → Integrations → Private Apps. Needs CRM contacts and lists scopes.', 'conduit-crm' ),
+				'help'     => __( 'Settings → Integrations → Private Apps. Needs CRM contacts and lists scopes.', 'switchyard-crm' ),
 				'required' => true,
 			),
 			'portal_id'    => array(
-				'label'    => __( 'Portal ID', 'conduit-crm' ),
+				'label'    => __( 'Portal ID', 'switchyard-crm' ),
 				'type'     => 'text',
-				'help'     => __( 'Optional. Needed for the tracking code.', 'conduit-crm' ),
+				'help'     => __( 'Optional. Needed for the tracking code.', 'switchyard-crm' ),
 				'required' => false,
 			),
 		);
@@ -64,7 +64,7 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 			$this->http()->get( '/crm/v3/objects/contacts', array( 'limit' => 1 ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'HubSpot rejected this token. Check that the private app has CRM contact scopes.', 'conduit-crm' ),
+				esc_html__( 'HubSpot rejected this token. Check that the private app has CRM contact scopes.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -101,7 +101,7 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 		$id = $response->path( 'id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'HubSpot did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'HubSpot did not return a contact ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -256,7 +256,7 @@ final class HubSpot extends AbstractProvider implements SupportsTags, SupportsTr
 		$id = $response->path( 'list.listId' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'HubSpot did not return a list ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'HubSpot did not return a list ID.', 'switchyard-crm' ) );
 		}
 
 		$this->flush_cache();

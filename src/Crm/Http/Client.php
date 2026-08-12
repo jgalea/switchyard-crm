@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Http;
+namespace Switchyard\Crm\Http;
 
-use Conduit\Crm\Exception\ApiException;
-use Conduit\Crm\Exception\CircuitOpenException;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\NotFoundException;
-use Conduit\Crm\Exception\RateLimitException;
-use Conduit\Logger\Logger;
+use Switchyard\Crm\Exception\ApiException;
+use Switchyard\Crm\Exception\CircuitOpenException;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\NotFoundException;
+use Switchyard\Crm\Exception\RateLimitException;
+use Switchyard\Logger\Logger;
 use WP_Error;
 
 /**
@@ -115,11 +115,11 @@ final class Client {
 
 		$args = array(
 			'method'  => $method,
-			'timeout' => (int) apply_filters( 'conduit_http_timeout', self::DEFAULT_TIMEOUT, $this->provider_slug ),
+			'timeout' => (int) apply_filters( 'switchyard_http_timeout', self::DEFAULT_TIMEOUT, $this->provider_slug ),
 			'headers' => array_merge(
 				array(
 					'Accept'     => 'application/json',
-					'User-Agent' => 'Conduit-CRM/' . CONDUIT_VERSION . '; ' . home_url(),
+					'User-Agent' => 'Switchyard-CRM/' . SWITCHYARD_VERSION . '; ' . home_url(),
 				),
 				$this->default_headers
 			),
@@ -133,7 +133,7 @@ final class Client {
 		}
 
 		/** @var array<string, mixed> $args */
-		$args = apply_filters( 'conduit_http_args', $args, $this->provider_slug, $url );
+		$args = apply_filters( 'switchyard_http_args', $args, $this->provider_slug, $url );
 
 		$attempt = 0;
 
@@ -213,23 +213,23 @@ final class Client {
 
 		if ( ! is_string( $host ) || '' === $host ) {
 			throw new ConnectionException(
-				esc_html__( 'The CRM address is not a valid URL.', 'conduit-crm' ),
+				esc_html__( 'The CRM address is not a valid URL.', 'switchyard-crm' ),
 				array( 'url' => $url )
 			);
 		}
 
 		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
 
-		if ( 'https' !== $scheme && ! apply_filters( 'conduit_allow_insecure_transport', false, $host ) ) {
+		if ( 'https' !== $scheme && ! apply_filters( 'switchyard_allow_insecure_transport', false, $host ) ) {
 			throw new ConnectionException(
-				esc_html__( 'Refusing to send CRM credentials over an unencrypted connection.', 'conduit-crm' ),
+				esc_html__( 'Refusing to send CRM credentials over an unencrypted connection.', 'switchyard-crm' ),
 				array( 'url' => $url )
 			);
 		}
 
-		if ( self::is_internal_host( $host ) && ! apply_filters( 'conduit_allow_internal_host', false, $host ) ) {
+		if ( self::is_internal_host( $host ) && ! apply_filters( 'switchyard_allow_internal_host', false, $host ) ) {
 			throw new ConnectionException(
-				esc_html__( 'Refusing to send CRM credentials to a private network address.', 'conduit-crm' ),
+				esc_html__( 'Refusing to send CRM credentials to a private network address.', 'switchyard-crm' ),
 				array( 'host' => $host )
 			);
 		}
@@ -313,7 +313,7 @@ final class Client {
 	}
 
 	private function sleep( int $seconds ): void {
-		if ( $seconds > 0 && ! defined( 'CONDUIT_TESTING' ) ) {
+		if ( $seconds > 0 && ! defined( 'SWITCHYARD_TESTING' ) ) {
 			sleep( $seconds );
 		}
 	}
@@ -375,7 +375,7 @@ final class Client {
 
 		return sprintf(
 			/* translators: %d: HTTP status code. */
-			esc_html__( 'The CRM returned an unexpected %d response.', 'conduit-crm' ),
+			esc_html__( 'The CRM returned an unexpected %d response.', 'switchyard-crm' ),
 			$response->status
 		);
 	}
@@ -394,7 +394,7 @@ final class Client {
 	}
 
 	private function circuit_key(): string {
-		return 'conduit_circuit_' . $this->provider_slug;
+		return 'switchyard_circuit_' . $this->provider_slug;
 	}
 
 	/** @throws CircuitOpenException */
@@ -405,7 +405,7 @@ final class Client {
 			// Message is escaped; the context array is logged, never printed.
 			// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			throw new CircuitOpenException(
-				esc_html__( 'Requests to this CRM are paused after repeated failures. They resume automatically.', 'conduit-crm' ),
+				esc_html__( 'Requests to this CRM are paused after repeated failures. They resume automatically.', 'switchyard-crm' ),
 				array( 'provider' => $this->provider_slug )
 			);
 			// phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped

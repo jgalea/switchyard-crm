@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Webhook;
+namespace Switchyard\Webhook;
 
 /**
  * The shared secret that authenticates inbound CRM calls.
@@ -12,7 +12,7 @@ namespace Conduit\Webhook;
  */
 final class Secret {
 
-	public const OPTION = 'conduit_webhook_secret';
+	public const OPTION = 'switchyard_webhook_secret';
 
 	public static function generate(): string {
 		return wp_generate_password( 32, false, false );
@@ -58,7 +58,7 @@ final class Secret {
 		return add_query_arg(
 			'secret',
 			self::get(),
-			rest_url( 'conduit/v1/webhook/' . $provider_slug )
+			rest_url( 'switchyard/v1/webhook/' . $provider_slug )
 		);
 	}
 
@@ -66,10 +66,10 @@ final class Secret {
 	 * The endpoint without the secret, for use with the header.
 	 */
 	public static function endpoint( string $provider_slug ): string {
-		return rest_url( 'conduit/v1/webhook/' . $provider_slug );
+		return rest_url( 'switchyard/v1/webhook/' . $provider_slug );
 	}
 
 	public static function header_name(): string {
-		return 'X-Conduit-Secret';
+		return 'X-Switchyard-Secret';
 	}
 }

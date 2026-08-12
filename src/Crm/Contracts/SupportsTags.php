@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Contracts;
+namespace Switchyard\Crm\Contracts;
 
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * Implemented by CRMs with a first-class tag or label concept.

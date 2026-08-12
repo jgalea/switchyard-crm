@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests;
+namespace Switchyard\Tests;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;

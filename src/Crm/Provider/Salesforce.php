@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsTags;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsTags;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
 
 /**
  * Salesforce, via the REST API on a refresh-token OAuth connection.
@@ -35,35 +35,35 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 	public function get_credential_fields(): array {
 		return array(
 			'client_id'     => array(
-				'label'    => __( 'Consumer Key', 'conduit-crm' ),
+				'label'    => __( 'Consumer Key', 'switchyard-crm' ),
 				'type'     => 'text',
 				'required' => true,
 			),
 			'client_secret' => array(
-				'label'    => __( 'Consumer Secret', 'conduit-crm' ),
+				'label'    => __( 'Consumer Secret', 'switchyard-crm' ),
 				'type'     => 'password',
 				'required' => true,
 			),
 			'refresh_token' => array(
-				'label'    => __( 'Refresh Token', 'conduit-crm' ),
+				'label'    => __( 'Refresh Token', 'switchyard-crm' ),
 				'type'     => 'password',
 				'required' => true,
 			),
 			'instance_url'  => array(
-				'label'    => __( 'Instance URL', 'conduit-crm' ),
+				'label'    => __( 'Instance URL', 'switchyard-crm' ),
 				'type'     => 'url',
-				'help'     => __( 'For example https://yourcompany.my.salesforce.com', 'conduit-crm' ),
+				'help'     => __( 'For example https://yourcompany.my.salesforce.com', 'switchyard-crm' ),
 				'required' => true,
 			),
 			'sandbox'       => array(
-				'label'    => __( 'Sandbox org', 'conduit-crm' ),
+				'label'    => __( 'Sandbox org', 'switchyard-crm' ),
 				'type'     => 'checkbox',
 				'required' => false,
 			),
 			'tag_field'     => array(
-				'label'    => __( 'Tag Field API Name', 'conduit-crm' ),
+				'label'    => __( 'Tag Field API Name', 'switchyard-crm' ),
 				'type'     => 'text',
-				'help'     => __( 'A multi-select picklist on Contact that holds tags. Defaults to Conduit_Tags__c.', 'conduit-crm' ),
+				'help'     => __( 'A multi-select picklist on Contact that holds tags. Defaults to Switchyard_Tags__c.', 'switchyard-crm' ),
 				'required' => false,
 			),
 		);
@@ -80,7 +80,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 	 * which versions it serves avoids pinning to one that ages out.
 	 */
 	private function api_version(): string {
-		$cached = get_transient( 'conduit_sf_version' );
+		$cached = get_transient( 'switchyard_sf_version' );
 
 		if ( is_string( $cached ) && '' !== $cached ) {
 			return $cached;
@@ -103,7 +103,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 			$version = self::FALLBACK_VERSION;
 		}
 
-		set_transient( 'conduit_sf_version', $version, WEEK_IN_SECONDS );
+		set_transient( 'switchyard_sf_version', $version, WEEK_IN_SECONDS );
 
 		return $version;
 	}
@@ -123,7 +123,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 		);
 	}
 
-	protected function http(): \Conduit\Crm\Http\Client {
+	protected function http(): \Switchyard\Crm\Http\Client {
 		$this->http = null;
 
 		return parent::http();
@@ -135,7 +135,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 			$this->http()->get( '/sobjects/' . self::OBJECT . '/describe' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Salesforce rejected these credentials. Check the connected app details and instance URL.', 'conduit-crm' ),
+				esc_html__( 'Salesforce rejected these credentials. Check the connected app details and instance URL.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -144,7 +144,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 	private function tag_field(): string {
 		$field = $this->credential( 'tag_field' );
 
-		return '' !== $field ? $field : 'Conduit_Tags__c';
+		return '' !== $field ? $field : 'Switchyard_Tags__c';
 	}
 
 	/**
@@ -175,7 +175,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 		$id = $response->path( 'id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'Salesforce did not return a record ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Salesforce did not return a record ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -194,7 +194,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 
 		$email = isset( $fields['Email'] ) && is_string( $fields['Email'] ) ? $fields['Email'] : '';
 
-		$fields['LastName'] = '' !== $email ? (string) strstr( $email, '@', true ) : __( 'Unknown', 'conduit-crm' );
+		$fields['LastName'] = '' !== $email ? (string) strstr( $email, '@', true ) : __( 'Unknown', 'switchyard-crm' );
 
 		return $fields;
 	}
@@ -341,7 +341,7 @@ final class Salesforce extends AbstractProvider implements SupportsTags, Support
 	 */
 	public function create_tag( string $label ): string {
 		throw new CrmException(
-			esc_html__( 'Salesforce tags are picklist values. Add the value to the tag field in Setup, then refresh the tag list.', 'conduit-crm' )
+			esc_html__( 'Salesforce tags are picklist values. Add the value to the tag field in Setup, then refresh the tag list.', 'switchyard-crm' )
 		);
 	}
 

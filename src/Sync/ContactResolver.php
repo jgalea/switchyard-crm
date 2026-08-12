@@ -2,11 +2,11 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Logger\Logger;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Logger\Logger;
 use WP_User;
 
 /**
@@ -20,7 +20,7 @@ final class ContactResolver {
 
 	private ProviderRegistry $registry;
 	private Logger $logger;
-	public const META_CONTACT_ID = 'conduit_contact_id';
+	public const META_CONTACT_ID = 'switchyard_contact_id';
 
 	public function __construct( ProviderRegistry $registry, Logger $logger ) {
 		$this->registry = $registry;

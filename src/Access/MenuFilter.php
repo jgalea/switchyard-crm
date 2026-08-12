@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Access;
+namespace Switchyard\Access;
 
-use Conduit\Sync\TagEngine;
+use Switchyard\Sync\TagEngine;
 use WP_Post;
 
 /**
@@ -18,9 +18,9 @@ final class MenuFilter {
 
 	private Rules $rules;
 	private TagEngine $tags;
-	public const META_TAGS  = '_conduit_menu_tags';
-	public const META_MATCH = '_conduit_menu_match';
-	public const META_STATE = '_conduit_menu_state';
+	public const META_TAGS  = '_switchyard_menu_tags';
+	public const META_MATCH = '_switchyard_menu_match';
+	public const META_STATE = '_switchyard_menu_state';
 
 	public function __construct( Rules $rules, TagEngine $tags ) {
 		$this->rules = $rules;

@@ -2,11 +2,11 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Http\Client;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Http\Client;
 
 /**
  * Shared plumbing for providers: credential storage, a configured HTTP client,
@@ -58,7 +58,7 @@ abstract class AbstractProvider implements Provider {
 				throw new ConnectionException(
 					sprintf(
 						/* translators: %s: credential field label. */
-						esc_html__( '%s is required to connect.', 'conduit-crm' ),
+						esc_html__( '%s is required to connect.', 'switchyard-crm' ),
 						esc_html( $field['label'] )
 					)
 				);
@@ -94,7 +94,7 @@ abstract class AbstractProvider implements Provider {
 	 * @return T
 	 */
 	protected function cached( string $key, callable $loader ) {
-		$transient = 'conduit_cat_' . $this->get_slug() . '_' . $key;
+		$transient = 'switchyard_cat_' . $this->get_slug() . '_' . $key;
 		$cached    = get_transient( $transient );
 
 		if ( false !== $cached ) {
@@ -110,7 +110,7 @@ abstract class AbstractProvider implements Provider {
 
 	public function flush_cache(): void {
 		foreach ( array( 'tags', 'fields', 'lists' ) as $key ) {
-			delete_transient( 'conduit_cat_' . $this->get_slug() . '_' . $key );
+			delete_transient( 'switchyard_cat_' . $this->get_slug() . '_' . $key );
 		}
 	}
 

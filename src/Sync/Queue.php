@@ -2,10 +2,10 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Sync;
+namespace Switchyard\Sync;
 
-use Conduit\Logger\Logger;
-use Conduit\Settings;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
 
 /**
  * Defers CRM work off the request that triggered it.
@@ -19,7 +19,7 @@ final class Queue {
 
 	private Settings $settings;
 	private Logger $logger;
-	public const GROUP = 'conduit';
+	public const GROUP = 'switchyard';
 
 	public function __construct( Settings $settings, Logger $logger ) {
 		$this->settings = $settings;
@@ -41,7 +41,7 @@ final class Queue {
 			return false;
 		}
 
-		return (bool) apply_filters( 'conduit_defer_sync', true );
+		return (bool) apply_filters( 'switchyard_defer_sync', true );
 	}
 
 	/**

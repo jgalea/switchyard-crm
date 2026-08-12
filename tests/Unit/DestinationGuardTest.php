@@ -2,14 +2,14 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Tests\Unit;
+namespace Switchyard\Tests\Unit;
 
 use Brain\Monkey\Functions;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Http\Client;
-use Conduit\Crm\Provider\Mailchimp;
-use Conduit\Logger\Logger;
-use Conduit\Tests\TestCase;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Crm\Provider\Mailchimp;
+use Switchyard\Logger\Logger;
+use Switchyard\Tests\TestCase;
 use ReflectionClass;
 
 /**
@@ -146,7 +146,7 @@ final class DestinationGuardTest extends TestCase {
 	 */
 	public function test_an_internal_host_can_be_allowed_by_filter(): void {
 		Functions\when( 'apply_filters' )->alias(
-			static fn( string $hook, $value ) => 'conduit_allow_internal_host' === $hook ? true : $value
+			static fn( string $hook, $value ) => 'switchyard_allow_internal_host' === $hook ? true : $value
 		);
 
 		$this->guard( 'https://10.0.0.5/api' );

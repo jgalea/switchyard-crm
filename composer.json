@@ -1,5 +1,5 @@
 {
-    "name": "jgalea/conduit-crm",
+    "name": "jgalea/switchyard-crm",
     "description": "Connect WordPress to your CRM. Sync users, purchases and form entries, and gate content with CRM tags.",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
@@ -19,12 +19,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Conduit\\": "src/"
+            "Switchyard\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Conduit\\Tests\\": "tests/"
+            "Switchyard\\Tests\\": "tests/"
         }
     },
     "config": {

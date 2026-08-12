@@ -1,4 +1,4 @@
-=== Conduit CRM ===
+=== Switchyard CRM Sync and Access ===
 Contributors: jeangalea
 Tags: crm, marketing automation, integration, sync, content restriction
 Requires at least: 6.8
@@ -12,7 +12,7 @@ Connect WordPress to your CRM. Sync users, purchases and form entries, and gate 
 
 == Description ==
 
-Conduit CRM keeps your WordPress site and your CRM in step. When someone registers, buys something or submits a form, their record lands in your CRM with the fields you mapped. When you tag them in the CRM, that tag decides what they can see on the site.
+Switchyard CRM keeps your WordPress site and your CRM in step. When someone registers, buys something or submits a form, their record lands in your CRM with the fields you mapped. When you tag them in the CRM, that tag decides what they can see on the site.
 
 Ten CRMs are supported, and the same features work on all of them.
 
@@ -47,11 +47,11 @@ No nag screens, no upsell banners, no review prompts.
 
 == External services ==
 
-Conduit CRM only ever talks to the one CRM you connect it to. No service is contacted until you pick a CRM under Conduit CRM → Connection and enter its credentials. Clearing those credentials stops all traffic to it.
+Switchyard CRM only ever talks to the one CRM you connect it to. No service is contacted until you pick a CRM under Switchyard CRM → Connection and enter its credentials. Clearing those credentials stops all traffic to it.
 
 What is sent: the contact data in your field map. That is always the email address, and then whatever user profile fields, order fields and form fields you have mapped. It is sent when someone registers or updates their profile, when a WooCommerce or Easy Digital Downloads order is placed or refunded, and when a mapped form is submitted. The plugin reads back tags, list membership and mapped fields, on demand or on the schedule you set, and can import contacts as WordPress users.
 
-Site tracking is a separate, off-by-default setting under Conduit CRM → Settings. Turning it on loads the CRM's own visitor tracking script in your visitors' browsers, from that CRM's servers: js.hs-scripts.com for HubSpot, static.klaviyo.com for Klaviyo, diffuser-cdn.app-us1.com for ActiveCampaign. Those scripts see what the CRM's tracking normally sees, which is page views and, for a logged-in visitor, the email address Conduit passes to identify them. Leave the setting off and none of it loads.
+Site tracking is a separate, off-by-default setting under Switchyard CRM → Settings. Turning it on loads the CRM's own visitor tracking script in your visitors' browsers, from that CRM's servers: js.hs-scripts.com for HubSpot, static.klaviyo.com for Klaviyo, diffuser-cdn.app-us1.com for ActiveCampaign. Those scripts see what the CRM's tracking normally sees, which is page views and, for a logged-in visitor, the email address Switchyard passes to identify them. Leave the setting off and none of it loads.
 
 FluentCRM runs inside your own WordPress installation, so selecting it sends nothing off-site. The other providers are third-party services, each governed by its own terms and privacy policy:
 
@@ -67,8 +67,8 @@ FluentCRM runs inside your own WordPress installation, so selecting it sends not
 
 == Installation ==
 
-1. Upload the plugin to `/wp-content/plugins/conduit-crm` and activate it.
-2. Go to Conduit CRM → Connection, pick your CRM and enter its credentials.
+1. Upload the plugin to `/wp-content/plugins/switchyard-crm` and activate it.
+2. Go to Switchyard CRM → Connection, pick your CRM and enter its credentials.
 3. Map your fields under Sync.
 4. Set access rules per post, or under Access for site-wide defaults.
 
@@ -76,11 +76,11 @@ FluentCRM runs inside your own WordPress installation, so selecting it sends not
 
 = Does this work with a CRM that has no tags? =
 
-Yes. Klaviyo, Brevo and MailerLite model segmentation as lists or groups rather than tags. Conduit uses whichever the CRM provides, and the settings screens use the CRM's own terminology.
+Yes. Klaviyo, Brevo and MailerLite model segmentation as lists or groups rather than tags. Switchyard uses whichever the CRM provides, and the settings screens use the CRM's own terminology.
 
 = What happens if my CRM goes down? =
 
-Nothing on the site breaks. Failed calls retry with backoff, then queue for later. After repeated failures Conduit stops calling that CRM for five minutes rather than adding a timeout to every page load. Access decisions use the cached tags in the meantime.
+Nothing on the site breaks. Failed calls retry with backoff, then queue for later. After repeated failures Switchyard stops calling that CRM for five minutes rather than adding a timeout to every page load. Access decisions use the cached tags in the meantime.
 
 = Does it work with guest checkout? =
 
@@ -92,11 +92,11 @@ Your field mapping and access rules are stored independently of the CRM, so swit
 
 = Is there a developer API? =
 
-Yes. `conduit_apply_tags()`, `conduit_remove_tags()`, `conduit_has_tag()`, `conduit_sync_user()`, `conduit_sync_contact()` and more, plus filters on every sync payload and access decision. There are WP-CLI commands for status, sync, tags and import.
+Yes. `switchyard_apply_tags()`, `switchyard_remove_tags()`, `switchyard_has_tag()`, `switchyard_sync_user()`, `switchyard_sync_contact()` and more, plus filters on every sync payload and access decision. There are WP-CLI commands for status, sync, tags and import.
 
 = How do I do something else with an order? =
 
-Every synced WooCommerce or EDD order fires `conduit_order_synced` with a normalised order object carrying line items, totals, currency and the customer user ID. Hook it to push orders wherever you want.
+Every synced WooCommerce or EDD order fires `switchyard_order_synced` with a normalised order object carrying line items, totals, currency and the customer user ID. Hook it to push orders wherever you want.
 
 == Changelog ==
 

@@ -7,7 +7,7 @@ parameters:
 	paths:
 		- src
 	scanFiles:
-		- conduit-crm.php
+		- switchyard-crm.php
 	bootstrapFiles:
 		- tests/phpstan-bootstrap.php
 	treatPhpDocTypesAsCertain: false

@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Exception\NotFoundException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\NotFoundException;
 
 /**
  * Brevo (formerly Sendinblue) API v3.
@@ -31,9 +31,9 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 	public function get_credential_fields(): array {
 		return array(
 			'api_key' => array(
-				'label'    => __( 'API Key', 'conduit-crm' ),
+				'label'    => __( 'API Key', 'switchyard-crm' ),
 				'type'     => 'password',
-				'help'     => __( 'Brevo → SMTP & API → API keys (v3).', 'conduit-crm' ),
+				'help'     => __( 'Brevo → SMTP & API → API keys (v3).', 'switchyard-crm' ),
 				'required' => true,
 			),
 		);
@@ -55,7 +55,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 			$this->http()->get( '/account' );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'Brevo rejected this API key.', 'conduit-crm' ),
+				esc_html__( 'Brevo rejected this API key.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -77,7 +77,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 		$email = $fields['email'] ?? '';
 
 		if ( ! is_string( $email ) || '' === $email ) {
-			throw new CrmException( esc_html__( 'Brevo needs an email address to create a contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Brevo needs an email address to create a contact.', 'switchyard-crm' ) );
 		}
 
 		unset( $fields['email'] );
@@ -100,7 +100,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 		}
 
 		if ( null === $id || '' === $id ) {
-			throw new CrmException( esc_html__( 'Brevo did not return a contact ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Brevo did not return a contact ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -150,7 +150,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 			function (): array {
 				$fields = array(
 					'email' => array(
-						'label' => __( 'Email', 'conduit-crm' ),
+						'label' => __( 'Email', 'switchyard-crm' ),
 						'type'  => 'email',
 					),
 				);
@@ -269,7 +269,7 @@ final class Brevo extends AbstractProvider implements SupportsLists, SupportsCon
 		$email = $response->path( 'email' );
 
 		if ( ! is_string( $email ) ) {
-			throw new CrmException( esc_html__( 'Could not resolve an email address for this Brevo contact.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'Could not resolve an email address for this Brevo contact.', 'switchyard-crm' ) );
 		}
 
 		return $email;

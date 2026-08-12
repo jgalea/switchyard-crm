@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm\Provider;
+namespace Switchyard\Crm\Provider;
 
-use Conduit\Crm\Contracts\SupportsContactImport;
-use Conduit\Crm\Contracts\SupportsLists;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\Exception\NotFoundException;
+use Switchyard\Crm\Contracts\SupportsContactImport;
+use Switchyard\Crm\Contracts\SupportsLists;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\Exception\NotFoundException;
 
 /**
  * MailerLite API.
@@ -31,9 +31,9 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 	public function get_credential_fields(): array {
 		return array(
 			'api_key' => array(
-				'label'    => __( 'API Token', 'conduit-crm' ),
+				'label'    => __( 'API Token', 'switchyard-crm' ),
 				'type'     => 'password',
-				'help'     => __( 'MailerLite → Integrations → API.', 'conduit-crm' ),
+				'help'     => __( 'MailerLite → Integrations → API.', 'switchyard-crm' ),
 				'required' => true,
 			),
 		);
@@ -55,7 +55,7 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 			$this->http()->get( '/groups', array( 'limit' => 1 ) );
 		} catch ( CrmException $e ) {
 			throw new ConnectionException(
-				esc_html__( 'MailerLite rejected this API token.', 'conduit-crm' ),
+				esc_html__( 'MailerLite rejected this API token.', 'switchyard-crm' ),
 				array( 'error' => esc_html( $e->getMessage() ) )
 			);
 		}
@@ -83,7 +83,7 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 		$id = $response->path( 'data.id' );
 
 		if ( ! is_scalar( $id ) ) {
-			throw new CrmException( esc_html__( 'MailerLite did not return a subscriber ID.', 'conduit-crm' ) );
+			throw new CrmException( esc_html__( 'MailerLite did not return a subscriber ID.', 'switchyard-crm' ) );
 		}
 
 		return (string) $id;
@@ -121,7 +121,7 @@ final class MailerLite extends AbstractProvider implements SupportsLists, Suppor
 			function (): array {
 				$fields = array(
 					'email' => array(
-						'label' => __( 'Email', 'conduit-crm' ),
+						'label' => __( 'Email', 'switchyard-crm' ),
 						'type'  => 'email',
 					),
 				);

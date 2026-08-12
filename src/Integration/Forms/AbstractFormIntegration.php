@@ -2,15 +2,15 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Integration\Forms;
+namespace Switchyard\Integration\Forms;
 
-use Conduit\Features;
-use Conduit\Integration\AbstractIntegration;
-use Conduit\Logger\Logger;
-use Conduit\Sync\GuestSync;
-use Conduit\Sync\Queue;
-use Conduit\Sync\TagEngine;
-use Conduit\Sync\UserSync;
+use Switchyard\Features;
+use Switchyard\Integration\AbstractIntegration;
+use Switchyard\Logger\Logger;
+use Switchyard\Sync\GuestSync;
+use Switchyard\Sync\Queue;
+use Switchyard\Sync\TagEngine;
+use Switchyard\Sync\UserSync;
 
 /**
  * Shared behaviour for form plugins.
@@ -19,7 +19,7 @@ use Conduit\Sync\UserSync;
  * expose its forms, and fire on submission. Subclasses supply those three
  * answers; everything after "we have an email and some values" is here.
  *
- * Per-form mapping is stored in Conduit's own option rather than in each form
+ * Per-form mapping is stored in Switchyard's own option rather than in each form
  * plugin's settings, so the configuration screen is identical for all of them
  * and a site can move a mapping between form plugins.
  */
@@ -107,16 +107,16 @@ abstract class AbstractFormIntegration extends AbstractIntegration {
 		}
 
 		/** @var array<string, mixed> $fields */
-		$fields = apply_filters( 'conduit_form_fields', $fields, $form_id, $values, $this->get_slug() );
+		$fields = apply_filters( 'switchyard_form_fields', $fields, $form_id, $values, $this->get_slug() );
 
 		/** @var list<string> $tags */
-		$tags = apply_filters( 'conduit_form_tags', $config['tags'], $form_id, $values, $this->get_slug() );
+		$tags = apply_filters( 'switchyard_form_tags', $config['tags'], $form_id, $values, $this->get_slug() );
 
 		// Deferred, because a form plugin's submit handler is on the critical
 		// path of a user waiting for a thank-you page.
 		$this->queue->dispatch( GuestSync::HOOK, array( $email, $fields, $tags ) );
 
-		do_action( 'conduit_form_submitted', $form_id, $email, $fields, $tags, $this->get_slug() );
+		do_action( 'switchyard_form_submitted', $form_id, $email, $fields, $tags, $this->get_slug() );
 	}
 
 	/**

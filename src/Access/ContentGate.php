@@ -2,9 +2,9 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Access;
+namespace Switchyard\Access;
 
-use Conduit\Settings;
+use Switchyard\Settings;
 use WP_Post;
 
 /**
@@ -43,7 +43,7 @@ final class ContentGate {
 			return;
 		}
 
-		do_action( 'conduit_access_denied', $post->ID, get_current_user_id() );
+		do_action( 'switchyard_access_denied', $post->ID, get_current_user_id() );
 
 		$redirect = $this->rules->redirect_for( $post->ID );
 
@@ -61,12 +61,12 @@ final class ContentGate {
 		}
 
 		/** @var string|null $custom */
-		$custom = apply_filters( 'conduit_access_denied_response', null, $post->ID );
+		$custom = apply_filters( 'switchyard_access_denied_response', null, $post->ID );
 
 		if ( is_string( $custom ) ) {
 			wp_die(
 				wp_kses_post( $custom ),
-				esc_html__( 'Access denied', 'conduit-crm' ),
+				esc_html__( 'Access denied', 'switchyard-crm' ),
 				array( 'response' => 403 )
 			);
 		}
@@ -101,14 +101,14 @@ final class ContentGate {
 		// Translated here, at render time, rather than in the settings
 		// defaults, which are read before init.
 		if ( '' === $message ) {
-			$message = __( 'You do not have access to this content.', 'conduit-crm' );
+			$message = __( 'You do not have access to this content.', 'switchyard-crm' );
 		}
 
 		/** @var string $message */
-		$message = apply_filters( 'conduit_restricted_message', $message, $post_id );
+		$message = apply_filters( 'switchyard_restricted_message', $message, $post_id );
 
 		return sprintf(
-			'<div class="conduit-restricted">%s</div>',
+			'<div class="switchyard-restricted">%s</div>',
 			wp_kses_post( wpautop( $message ) )
 		);
 	}

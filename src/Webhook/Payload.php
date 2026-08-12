@@ -2,7 +2,7 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Webhook;
+namespace Switchyard\Webhook;
 
 /**
  * What a CRM webhook boils down to once the provider has parsed it.

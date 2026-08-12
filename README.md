@@ -1,6 +1,6 @@
 <div align="center">
 
-# Conduit CRM
+# Switchyard CRM
 
 [![Docs](https://img.shields.io/badge/DOCS-read%20the%20guide-F5A623?style=for-the-badge)](docs/README.md)
 [![License](https://img.shields.io/badge/LICENSE-GPLv3-5C9E31?style=for-the-badge)](LICENSE)
@@ -35,44 +35,44 @@ Everything is logged with credentials redacted, so a support conversation starts
 ## Installing
 
 ```bash
-git clone https://github.com/jgalea/conduit-crm.git wp-content/plugins/conduit-crm
-cd wp-content/plugins/conduit-crm
+git clone https://github.com/jgalea/switchyard-crm.git wp-content/plugins/switchyard-crm
+cd wp-content/plugins/switchyard-crm
 composer install --no-dev
 ```
 
-Activate it, then go to Conduit CRM → Connection.
+Activate it, then go to Switchyard CRM → Connection.
 
 ## Developer API
 
 ```php
-conduit_apply_tags( array( 'Customer' ) );          // current user
-conduit_apply_tags( array( 'VIP' ), $user_id );
-conduit_remove_tags( array( 'Trial' ), $user_id );
+switchyard_apply_tags( array( 'Customer' ) );          // current user
+switchyard_apply_tags( array( 'VIP' ), $user_id );
+switchyard_remove_tags( array( 'Trial' ), $user_id );
 
-if ( conduit_has_tag( 'Customer' ) ) { /* … */ }
+if ( switchyard_has_tag( 'Customer' ) ) { /* … */ }
 
-conduit_sync_user( $user_id );                       // push now, skip the queue
-conduit_sync_contact( 'person@example.com', $fields, array( 'Lead' ) );
-conduit_can_access( $post_id, $user_id );
+switchyard_sync_user( $user_id );                       // push now, skip the queue
+switchyard_sync_contact( 'person@example.com', $fields, array( 'Lead' ) );
+switchyard_can_access( $post_id, $user_id );
 ```
 
 Tags may be passed as identifiers or as labels; labels are resolved against the CRM and created when they do not exist.
 
-Filters exist on the sync payload (`conduit_sync_fields`), the access decision (`conduit_can_access`), form field extraction (`conduit_form_fields`), HTTP arguments (`conduit_http_args`) and more. See [the developer guide](docs/developers.md).
+Filters exist on the sync payload (`switchyard_sync_fields`), the access decision (`switchyard_can_access`), form field extraction (`switchyard_form_fields`), HTTP arguments (`switchyard_http_args`) and more. See [the developer guide](docs/developers.md).
 
 ## WP-CLI
 
 ```bash
-wp conduit status
-wp conduit sync 42
-wp conduit sync                      # everyone, queued
-wp conduit tags 42 --refresh
-wp conduit import --tag=12 --role=subscriber
+wp switchyard status
+wp switchyard sync 42
+wp switchyard sync                      # everyone, queued
+wp switchyard tags 42 --refresh
+wp switchyard import --tag=12 --role=subscriber
 ```
 
 ## Adding a CRM
 
-Implement `Conduit\Crm\Contracts\Provider` plus whichever capability interfaces the CRM supports, then add a test extending `ProviderContractTestCase` with a fixture map. The contract suite proves the new provider behaves like the existing ten. See [adding a provider](docs/adding-a-provider.md).
+Implement `Switchyard\Crm\Contracts\Provider` plus whichever capability interfaces the CRM supports, then add a test extending `ProviderContractTestCase` with a fixture map. The contract suite proves the new provider behaves like the existing ten. See [adding a provider](docs/adding-a-provider.md).
 
 ## Development
 
@@ -87,4 +87,4 @@ composer analyse     # phpstan level 6
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
 
-Conduit CRM is an independent project. It is not affiliated with, endorsed by, or derived from any other CRM integration plugin, and the CRM names above are trademarks of their respective owners.
+Switchyard CRM is an independent project. It is not affiliated with, endorsed by, or derived from any other CRM integration plugin, and the CRM names above are trademarks of their respective owners.

@@ -2,16 +2,16 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Admin;
+namespace Switchyard\Admin;
 
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Crm\ProviderRegistry;
-use Conduit\Integration\Registry as IntegrationRegistry;
-use Conduit\Logger\Logger;
-use Conduit\Logger\LogTable;
-use Conduit\Settings;
-use Conduit\Sync\FieldMap;
-use Conduit\Webhook\Secret;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Crm\ProviderRegistry;
+use Switchyard\Integration\Registry as IntegrationRegistry;
+use Switchyard\Logger\Logger;
+use Switchyard\Logger\LogTable;
+use Switchyard\Settings;
+use Switchyard\Sync\FieldMap;
+use Switchyard\Webhook\Secret;
 
 /**
  * Settings screens.
@@ -27,7 +27,7 @@ final class AdminPages {
 	private FieldMap $fields;
 	private IntegrationRegistry $integrations;
 	private const CAPABILITY = 'manage_options';
-	private const SLUG       = 'conduit-crm';
+	private const SLUG       = 'switchyard-crm';
 
 	public function __construct( Settings $settings, ProviderRegistry $registry, FieldMap $fields, IntegrationRegistry $integrations ) {
 		$this->settings     = $settings;
@@ -38,14 +38,14 @@ final class AdminPages {
 
 	public function register_hooks(): void {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
-		add_action( 'admin_post_conduit_save', array( $this, 'handle_save' ) );
-		add_action( 'admin_post_conduit_action', array( $this, 'handle_action' ) );
+		add_action( 'admin_post_switchyard_save', array( $this, 'handle_save' ) );
+		add_action( 'admin_post_switchyard_action', array( $this, 'handle_action' ) );
 	}
 
 	public function register_menu(): void {
 		add_menu_page(
-			__( 'Conduit CRM', 'conduit-crm' ),
-			__( 'Conduit CRM', 'conduit-crm' ),
+			__( 'Switchyard CRM', 'switchyard-crm' ),
+			__( 'Switchyard CRM', 'switchyard-crm' ),
 			self::CAPABILITY,
 			self::SLUG,
 			array( $this, 'render' ),
@@ -70,15 +70,15 @@ final class AdminPages {
 		$tab = $this->current_tab();
 
 		$tabs = array(
-			'connection'   => __( 'Connection', 'conduit-crm' ),
-			'sync'         => __( 'Sync', 'conduit-crm' ),
-			'access'       => __( 'Access', 'conduit-crm' ),
-			'integrations' => __( 'Integrations', 'conduit-crm' ),
-			'logs'         => __( 'Logs', 'conduit-crm' ),
-			'tools'        => __( 'Tools', 'conduit-crm' ),
+			'connection'   => __( 'Connection', 'switchyard-crm' ),
+			'sync'         => __( 'Sync', 'switchyard-crm' ),
+			'access'       => __( 'Access', 'switchyard-crm' ),
+			'integrations' => __( 'Integrations', 'switchyard-crm' ),
+			'logs'         => __( 'Logs', 'switchyard-crm' ),
+			'tools'        => __( 'Tools', 'switchyard-crm' ),
 		);
 
-		echo '<div class="wrap"><h1>' . esc_html__( 'Conduit CRM', 'conduit-crm' ) . '</h1>';
+		echo '<div class="wrap"><h1>' . esc_html__( 'Switchyard CRM', 'switchyard-crm' ) . '</h1>';
 
 		$this->render_notices();
 
@@ -121,19 +121,19 @@ final class AdminPages {
 
 	private function render_notices(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$notice = isset( $_GET['conduit_notice'] ) ? sanitize_key( wp_unslash( $_GET['conduit_notice'] ) ) : '';
+		$notice = isset( $_GET['switchyard_notice'] ) ? sanitize_key( wp_unslash( $_GET['switchyard_notice'] ) ) : '';
 
 		if ( '' === $notice ) {
 			return;
 		}
 
 		$messages = array(
-			'saved'       => array( 'success', __( 'Settings saved.', 'conduit-crm' ) ),
-			'connected'   => array( 'success', __( 'Connected to the CRM.', 'conduit-crm' ) ),
-			'failed'      => array( 'error', __( 'Could not connect. Check the credentials and try again.', 'conduit-crm' ) ),
-			'refreshed'   => array( 'success', __( 'Tag and field lists refreshed.', 'conduit-crm' ) ),
-			'rotated'     => array( 'success', __( 'Webhook secret rotated. Update it in your CRM.', 'conduit-crm' ) ),
-			'logscleared' => array( 'success', __( 'Logs cleared.', 'conduit-crm' ) ),
+			'saved'       => array( 'success', __( 'Settings saved.', 'switchyard-crm' ) ),
+			'connected'   => array( 'success', __( 'Connected to the CRM.', 'switchyard-crm' ) ),
+			'failed'      => array( 'error', __( 'Could not connect. Check the credentials and try again.', 'switchyard-crm' ) ),
+			'refreshed'   => array( 'success', __( 'Tag and field lists refreshed.', 'switchyard-crm' ) ),
+			'rotated'     => array( 'success', __( 'Webhook secret rotated. Update it in your CRM.', 'switchyard-crm' ) ),
+			'logscleared' => array( 'success', __( 'Logs cleared.', 'switchyard-crm' ) ),
 		);
 
 		if ( ! isset( $messages[ $notice ] ) ) {
@@ -151,8 +151,8 @@ final class AdminPages {
 
 	private function form_open( string $tab ): void {
 		printf( '<form method="post" action="%s">', esc_url( admin_url( 'admin-post.php' ) ) );
-		wp_nonce_field( 'conduit_save_' . $tab );
-		printf( '<input type="hidden" name="action" value="conduit_save">' );
+		wp_nonce_field( 'switchyard_save_' . $tab );
+		printf( '<input type="hidden" name="action" value="switchyard_save">' );
 		printf( '<input type="hidden" name="tab" value="%s">', esc_attr( $tab ) );
 	}
 
@@ -164,9 +164,9 @@ final class AdminPages {
 
 		echo '<table class="form-table" role="presentation"><tbody>';
 
-		echo '<tr><th scope="row"><label for="conduit-provider">' . esc_html__( 'CRM', 'conduit-crm' ) . '</label></th><td>';
-		echo '<select name="provider" id="conduit-provider">';
-		echo '<option value="">' . esc_html__( '— Select —', 'conduit-crm' ) . '</option>';
+		echo '<tr><th scope="row"><label for="switchyard-provider">' . esc_html__( 'CRM', 'switchyard-crm' ) . '</label></th><td>';
+		echo '<select name="provider" id="switchyard-provider">';
+		echo '<option value="">' . esc_html__( '— Select —', 'switchyard-crm' ) . '</option>';
 
 		foreach ( $this->registry->available() as $slug => $name ) {
 			printf(
@@ -180,19 +180,19 @@ final class AdminPages {
 		echo '</select>';
 
 		if ( null !== $provider ) {
-			echo ' <span style="color:#1a7f37;">' . esc_html__( 'Connected', 'conduit-crm' ) . '</span>';
+			echo ' <span style="color:#1a7f37;">' . esc_html__( 'Connected', 'switchyard-crm' ) . '</span>';
 		} elseif ( '' !== $current ) {
-			echo ' <span style="color:#b32d2e;">' . esc_html__( 'Not connected', 'conduit-crm' ) . '</span>';
+			echo ' <span style="color:#b32d2e;">' . esc_html__( 'Not connected', 'switchyard-crm' ) . '</span>';
 		}
 
-		echo '<p class="description">' . esc_html__( 'Save after changing the CRM to see its credential fields.', 'conduit-crm' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Save after changing the CRM to see its credential fields.', 'switchyard-crm' ) . '</p>';
 		echo '</td></tr>';
 
 		if ( '' !== $current && $this->registry->has( $current ) ) {
 			$stored = $this->settings->credentials();
 
 			foreach ( $this->registry->make( $current )->get_credential_fields() as $key => $field ) {
-				$id = 'conduit-cred-' . $key;
+				$id = 'switchyard-cred-' . $key;
 
 				echo '<tr><th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
 
@@ -211,7 +211,7 @@ final class AdminPages {
 						esc_attr( $key ),
 						empty( $stored[ $key ] )
 							? ''
-							: esc_attr__( 'Saved. Leave blank to keep.', 'conduit-crm' )
+							: esc_attr__( 'Saved. Leave blank to keep.', 'switchyard-crm' )
 					);
 				} else {
 					printf(
@@ -232,7 +232,7 @@ final class AdminPages {
 
 		echo '</tbody></table>';
 
-		submit_button( __( 'Save and connect', 'conduit-crm' ) );
+		submit_button( __( 'Save and connect', 'switchyard-crm' ) );
 
 		echo '</form>';
 
@@ -242,10 +242,10 @@ final class AdminPages {
 	}
 
 	private function render_webhook_box( string $slug ): void {
-		echo '<h2>' . esc_html__( 'Webhook', 'conduit-crm' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Point your CRM at this endpoint to push tag changes back into WordPress.', 'conduit-crm' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Webhook', 'switchyard-crm' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Point your CRM at this endpoint to push tag changes back into WordPress.', 'switchyard-crm' ) . '</p>';
 
-		echo '<p><strong>' . esc_html__( 'Preferred: send the secret as a header', 'conduit-crm' ) . '</strong></p>';
+		echo '<p><strong>' . esc_html__( 'Preferred: send the secret as a header', 'switchyard-crm' ) . '</strong></p>';
 
 		printf(
 			'<p><code style="user-select:all;">%s</code><br><code style="user-select:all;">%s: %s</code></p>',
@@ -254,7 +254,7 @@ final class AdminPages {
 			esc_html( Secret::get() )
 		);
 
-		echo '<p>' . esc_html__( 'If your CRM cannot send a custom header, use this URL instead. It carries the secret in the query string, which is recorded in server access logs.', 'conduit-crm' ) . '</p>';
+		echo '<p>' . esc_html__( 'If your CRM cannot send a custom header, use this URL instead. It carries the secret in the query string, which is recorded in server access logs.', 'switchyard-crm' ) . '</p>';
 
 		printf(
 			'<p><code style="user-select:all;">%s</code></p>',
@@ -265,11 +265,11 @@ final class AdminPages {
 			'<p><a href="%s" class="button">%s</a></p>',
 			esc_url(
 				wp_nonce_url(
-					admin_url( 'admin-post.php?action=conduit_action&do=rotate_secret' ),
-					'conduit_action'
+					admin_url( 'admin-post.php?action=switchyard_action&do=rotate_secret' ),
+					'switchyard_action'
 				)
 			),
-			esc_html__( 'Rotate secret', 'conduit-crm' )
+			esc_html__( 'Rotate secret', 'switchyard-crm' )
 		);
 	}
 
@@ -277,7 +277,7 @@ final class AdminPages {
 		$provider = $this->registry->active();
 
 		if ( null === $provider ) {
-			echo '<p>' . esc_html__( 'Connect a CRM first.', 'conduit-crm' ) . '</p>';
+			echo '<p>' . esc_html__( 'Connect a CRM first.', 'switchyard-crm' ) . '</p>';
 
 			return;
 		}
@@ -286,16 +286,16 @@ final class AdminPages {
 
 		echo '<table class="form-table" role="presentation"><tbody>';
 
-		$this->checkbox_row( 'sync_on_register', __( 'Sync on registration', 'conduit-crm' ) );
-		$this->checkbox_row( 'sync_on_profile_update', __( 'Sync on profile update', 'conduit-crm' ) );
-		$this->checkbox_row( 'import_new_contacts', __( 'Create users from webhooks', 'conduit-crm' ) );
-		$this->checkbox_row( 'async_sync', __( 'Sync in the background', 'conduit-crm' ) );
-		$this->checkbox_row( 'site_tracking', __( 'Enable site tracking', 'conduit-crm' ) );
-		$this->checkbox_row( 'staging_mode', __( 'Staging mode (block all writes)', 'conduit-crm' ) );
+		$this->checkbox_row( 'sync_on_register', __( 'Sync on registration', 'switchyard-crm' ) );
+		$this->checkbox_row( 'sync_on_profile_update', __( 'Sync on profile update', 'switchyard-crm' ) );
+		$this->checkbox_row( 'import_new_contacts', __( 'Create users from webhooks', 'switchyard-crm' ) );
+		$this->checkbox_row( 'async_sync', __( 'Sync in the background', 'switchyard-crm' ) );
+		$this->checkbox_row( 'site_tracking', __( 'Enable site tracking', 'switchyard-crm' ) );
+		$this->checkbox_row( 'staging_mode', __( 'Staging mode (block all writes)', 'switchyard-crm' ) );
 
 		echo '</tbody></table>';
 
-		echo '<h2>' . esc_html__( 'Field mapping', 'conduit-crm' ) . '</h2>';
+		echo '<h2>' . esc_html__( 'Field mapping', 'switchyard-crm' ) . '</h2>';
 
 		try {
 			$crm_fields = $provider->get_available_fields();
@@ -308,9 +308,9 @@ final class AdminPages {
 		$map = $this->fields->all();
 
 		echo '<table class="widefat striped"><thead><tr>';
-		echo '<th>' . esc_html__( 'WordPress field', 'conduit-crm' ) . '</th>';
-		echo '<th>' . esc_html__( 'CRM field', 'conduit-crm' ) . '</th>';
-		echo '<th>' . esc_html__( 'Sync', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'WordPress field', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'CRM field', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Sync', 'switchyard-crm' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $this->fields->available_wp_fields() as $group => $group_fields ) {
@@ -324,10 +324,10 @@ final class AdminPages {
 				);
 
 				echo '<tr>';
-				printf( '<td><label for="conduit-map-%s">%s</label></td>', esc_attr( $key ), esc_html( $label ) );
+				printf( '<td><label for="switchyard-map-%s">%s</label></td>', esc_attr( $key ), esc_html( $label ) );
 
-				echo '<td><select id="conduit-map-' . esc_attr( $key ) . '" name="map[' . esc_attr( $key ) . '][crm_field]">';
-				echo '<option value="">' . esc_html__( '— None —', 'conduit-crm' ) . '</option>';
+				echo '<td><select id="switchyard-map-' . esc_attr( $key ) . '" name="map[' . esc_attr( $key ) . '][crm_field]">';
+				echo '<option value="">' . esc_html__( '— None —', 'switchyard-crm' ) . '</option>';
 
 				foreach ( $crm_fields as $crm_key => $crm_field ) {
 					printf(
@@ -368,30 +368,30 @@ final class AdminPages {
 
 		echo '<table class="form-table" role="presentation"><tbody>';
 
-		echo '<tr><th scope="row"><label for="conduit-message">' . esc_html__( 'Restricted message', 'conduit-crm' ) . '</label></th><td>';
+		echo '<tr><th scope="row"><label for="switchyard-message">' . esc_html__( 'Restricted message', 'switchyard-crm' ) . '</label></th><td>';
 		printf(
-			'<textarea id="conduit-message" name="restricted_message" rows="3" class="large-text">%s</textarea>',
+			'<textarea id="switchyard-message" name="restricted_message" rows="3" class="large-text">%s</textarea>',
 			esc_textarea( $this->settings->string( 'restricted_message' ) )
 		);
 		echo '</td></tr>';
 
-		echo '<tr><th scope="row"><label for="conduit-redirect">' . esc_html__( 'Redirect to', 'conduit-crm' ) . '</label></th><td>';
+		echo '<tr><th scope="row"><label for="switchyard-redirect">' . esc_html__( 'Redirect to', 'switchyard-crm' ) . '</label></th><td>';
 		// Arguments are an integer and a translated literal; the function
 		// escapes the option markup it builds from them.
 		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 		wp_dropdown_pages(
 			array(
 				'name'              => 'restricted_redirect',
-				'id'                => 'conduit-redirect',
+				'id'                => 'switchyard-redirect',
 				'selected'          => $this->settings->int( 'restricted_redirect' ),
-				'show_option_none'  => __( '— Show the message instead —', 'conduit-crm' ),
+				'show_option_none'  => __( '— Show the message instead —', 'switchyard-crm' ),
 				'option_none_value' => '0',
 			)
 		);
 		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '</td></tr>';
 
-		$this->checkbox_row( 'filter_queries', __( 'Hide restricted content from listings, search and feeds', 'conduit-crm' ) );
+		$this->checkbox_row( 'filter_queries', __( 'Hide restricted content from listings, search and feeds', 'switchyard-crm' ) );
 
 		echo '</tbody></table>';
 
@@ -401,11 +401,11 @@ final class AdminPages {
 	}
 
 	private function render_integrations(): void {
-		echo '<p>' . esc_html__( 'Integrations load automatically when their plugin is active.', 'conduit-crm' ) . '</p>';
+		echo '<p>' . esc_html__( 'Integrations load automatically when their plugin is active.', 'switchyard-crm' ) . '</p>';
 
 		echo '<table class="widefat striped"><thead><tr>';
-		echo '<th>' . esc_html__( 'Integration', 'conduit-crm' ) . '</th>';
-		echo '<th>' . esc_html__( 'Status', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Integration', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Status', 'switchyard-crm' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $this->integrations->status() as $status ) {
@@ -413,11 +413,11 @@ final class AdminPages {
 			printf( '<td>%s</td>', esc_html( $status['name'] ) );
 
 			if ( $status['loaded'] ) {
-				echo '<td><span style="color:#1a7f37;">' . esc_html__( 'Active', 'conduit-crm' ) . '</span></td>';
+				echo '<td><span style="color:#1a7f37;">' . esc_html__( 'Active', 'switchyard-crm' ) . '</span></td>';
 			} elseif ( $status['available'] ) {
-				echo '<td>' . esc_html__( 'Available, not loaded', 'conduit-crm' ) . '</td>';
+				echo '<td>' . esc_html__( 'Available, not loaded', 'switchyard-crm' ) . '</td>';
 			} else {
-				echo '<td><span style="color:#646970;">' . esc_html__( 'Plugin not active', 'conduit-crm' ) . '</span></td>';
+				echo '<td><span style="color:#646970;">' . esc_html__( 'Plugin not active', 'switchyard-crm' ) . '</span></td>';
 			}
 
 			echo '</tr>';
@@ -431,7 +431,7 @@ final class AdminPages {
 
 		$table = LogTable::name();
 
-		// $table is $wpdb->prefix . 'conduit_log'; identifiers cannot be bound,
+		// $table is $wpdb->prefix . 'switchyard_log'; identifiers cannot be bound,
 		// and an admin log viewer is deliberately uncached.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC LIMIT 200" );
@@ -439,8 +439,8 @@ final class AdminPages {
 		$this->form_open( 'logs' );
 
 		echo '<table class="form-table" role="presentation"><tbody>';
-		echo '<tr><th scope="row"><label for="conduit-loglevel">' . esc_html__( 'Log level', 'conduit-crm' ) . '</label></th><td>';
-		echo '<select id="conduit-loglevel" name="log_level">';
+		echo '<tr><th scope="row"><label for="switchyard-loglevel">' . esc_html__( 'Log level', 'switchyard-crm' ) . '</label></th><td>';
+		echo '<select id="switchyard-loglevel" name="log_level">';
 
 		foreach ( array( 'debug', 'info', 'notice', 'warning', 'error' ) as $level ) {
 			printf(
@@ -454,29 +454,29 @@ final class AdminPages {
 		echo '</select></td></tr>';
 		echo '</tbody></table>';
 
-		submit_button( __( 'Save', 'conduit-crm' ), 'secondary' );
+		submit_button( __( 'Save', 'switchyard-crm' ), 'secondary' );
 		echo '</form>';
 
 		printf(
 			'<p><a href="%s" class="button">%s</a></p>',
 			esc_url(
 				wp_nonce_url(
-					admin_url( 'admin-post.php?action=conduit_action&do=clear_logs' ),
-					'conduit_action'
+					admin_url( 'admin-post.php?action=switchyard_action&do=clear_logs' ),
+					'switchyard_action'
 				)
 			),
-			esc_html__( 'Clear logs', 'conduit-crm' )
+			esc_html__( 'Clear logs', 'switchyard-crm' )
 		);
 
 		echo '<table class="widefat striped"><thead><tr>';
-		echo '<th>' . esc_html__( 'Time', 'conduit-crm' ) . '</th>';
-		echo '<th>' . esc_html__( 'Level', 'conduit-crm' ) . '</th>';
-		echo '<th>' . esc_html__( 'Source', 'conduit-crm' ) . '</th>';
-		echo '<th>' . esc_html__( 'Message', 'conduit-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Time', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Level', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Source', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Message', 'switchyard-crm' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		if ( empty( $rows ) ) {
-			echo '<tr><td colspan="4">' . esc_html__( 'Nothing logged yet.', 'conduit-crm' ) . '</td></tr>';
+			echo '<tr><td colspan="4">' . esc_html__( 'Nothing logged yet.', 'switchyard-crm' ) . '</td></tr>';
 		}
 
 		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
@@ -488,7 +488,7 @@ final class AdminPages {
 				'<td>%s%s</td>',
 				esc_html( (string) $row->message ),
 				$row->context
-					? '<details><summary>' . esc_html__( 'Context', 'conduit-crm' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row->context ) . '</pre></details>'
+					? '<details><summary>' . esc_html__( 'Context', 'switchyard-crm' ) . '</summary><pre style="white-space:pre-wrap;">' . esc_html( (string) $row->context ) . '</pre></details>'
 					: ''
 			);
 			echo '</tr>';
@@ -499,9 +499,9 @@ final class AdminPages {
 
 	private function render_tools(): void {
 		$actions = array(
-			'refresh_catalogues' => __( 'Refresh tags and fields from the CRM', 'conduit-crm' ),
-			'resync_users'       => __( 'Resync all users to the CRM', 'conduit-crm' ),
-			'refresh_all_tags'   => __( 'Pull tags for all users from the CRM', 'conduit-crm' ),
+			'refresh_catalogues' => __( 'Refresh tags and fields from the CRM', 'switchyard-crm' ),
+			'resync_users'       => __( 'Resync all users to the CRM', 'switchyard-crm' ),
+			'refresh_all_tags'   => __( 'Pull tags for all users from the CRM', 'switchyard-crm' ),
 		);
 
 		echo '<table class="widefat striped"><tbody>';
@@ -512,18 +512,18 @@ final class AdminPages {
 				'<a href="%s" class="button">%s</a>',
 				esc_url(
 					wp_nonce_url(
-						admin_url( 'admin-post.php?action=conduit_action&do=' . $do ),
-						'conduit_action'
+						admin_url( 'admin-post.php?action=switchyard_action&do=' . $do ),
+						'switchyard_action'
 					)
 				),
-				esc_html__( 'Run', 'conduit-crm' )
+				esc_html__( 'Run', 'switchyard-crm' )
 			);
 			echo '</td></tr>';
 		}
 
 		echo '</tbody></table>';
 
-		echo '<p class="description">' . esc_html__( 'Batch jobs run in the background. Watch the Logs tab for progress.', 'conduit-crm' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Batch jobs run in the background. Watch the Logs tab for progress.', 'switchyard-crm' ) . '</p>';
 	}
 
 	private function checkbox_row( string $key, string $label ): void {
@@ -532,15 +532,15 @@ final class AdminPages {
 			esc_html( $label ),
 			esc_attr( $key ),
 			checked( $this->settings->bool( $key ), true, false ),
-			esc_html__( 'Enabled', 'conduit-crm' )
+			esc_html__( 'Enabled', 'switchyard-crm' )
 		);
 	}
 
 	public function handle_save(): void {
 		$tab = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : '';
 
-		if ( ! current_user_can( self::CAPABILITY ) || ! check_admin_referer( 'conduit_save_' . $tab ) ) {
-			wp_die( esc_html__( 'You are not allowed to do that.', 'conduit-crm' ) );
+		if ( ! current_user_can( self::CAPABILITY ) || ! check_admin_referer( 'switchyard_save_' . $tab ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'switchyard-crm' ) );
 		}
 
 		$notice = 'saved';
@@ -695,8 +695,8 @@ final class AdminPages {
 	// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 	public function handle_action(): void {
-		if ( ! current_user_can( self::CAPABILITY ) || ! check_admin_referer( 'conduit_action' ) ) {
-			wp_die( esc_html__( 'You are not allowed to do that.', 'conduit-crm' ) );
+		if ( ! current_user_can( self::CAPABILITY ) || ! check_admin_referer( 'switchyard_action' ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'switchyard-crm' ) );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -724,7 +724,7 @@ final class AdminPages {
 			case 'refresh_catalogues':
 				$provider = $this->registry->active();
 
-				if ( $provider instanceof \Conduit\Crm\Provider\AbstractProvider ) {
+				if ( $provider instanceof \Switchyard\Crm\Provider\AbstractProvider ) {
 					$provider->flush_cache();
 				}
 
@@ -732,11 +732,11 @@ final class AdminPages {
 				break;
 
 			case 'resync_users':
-				Batch::queue_all( 'conduit_batch_push_user' );
+				Batch::queue_all( 'switchyard_batch_push_user' );
 				break;
 
 			case 'refresh_all_tags':
-				Batch::queue_all( 'conduit_refresh_user_tags' );
+				Batch::queue_all( 'switchyard_refresh_user_tags' );
 				break;
 		}
 
@@ -747,9 +747,9 @@ final class AdminPages {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'           => self::SLUG,
-					'tab'            => $tab,
-					'conduit_notice' => $notice,
+					'page'              => self::SLUG,
+					'tab'               => $tab,
+					'switchyard_notice' => $notice,
 				),
 				admin_url( 'admin.php' )
 			)

@@ -2,12 +2,12 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Admin;
+namespace Switchyard\Admin;
 
-use Conduit\Access\QueryFilter;
-use Conduit\Access\Rules;
-use Conduit\Crm\Exception\CrmException;
-use Conduit\Sync\TagEngine;
+use Switchyard\Access\QueryFilter;
+use Switchyard\Access\Rules;
+use Switchyard\Crm\Exception\CrmException;
+use Switchyard\Sync\TagEngine;
 use WP_Post;
 
 /**
@@ -28,8 +28,8 @@ final class PostMetaBox {
 
 	public function add(): void {
 		add_meta_box(
-			'conduit-access',
-			__( 'Conduit access', 'conduit-crm' ),
+			'switchyard-access',
+			__( 'Switchyard access', 'switchyard-crm' ),
 			array( $this, 'render' ),
 			$this->rules->gated_post_types(),
 			'side',
@@ -38,7 +38,7 @@ final class PostMetaBox {
 	}
 
 	public function render( WP_Post $post ): void {
-		wp_nonce_field( 'conduit_access_' . $post->ID, 'conduit_access_nonce' );
+		wp_nonce_field( 'switchyard_access_' . $post->ID, 'switchyard_access_nonce' );
 
 		$enabled = (bool) get_post_meta( $post->ID, Rules::META_ENABLED, true );
 		$stored  = get_post_meta( $post->ID, Rules::META_TAGS, true );
@@ -46,15 +46,15 @@ final class PostMetaBox {
 		$match   = 'all' === get_post_meta( $post->ID, Rules::META_MATCH, true ) ? 'all' : 'any';
 
 		printf(
-			'<p><label><input type="checkbox" name="conduit_restrict" value="1" %s> %s</label></p>',
+			'<p><label><input type="checkbox" name="switchyard_restrict" value="1" %s> %s</label></p>',
 			checked( $enabled, true, false ),
-			esc_html__( 'Restrict access', 'conduit-crm' )
+			esc_html__( 'Restrict access', 'switchyard-crm' )
 		);
 
 		$adapter = $this->tags->adapter();
 
 		if ( null === $adapter || ! $adapter->supported() ) {
-			echo '<p class="description">' . esc_html__( 'Connect a CRM to restrict by tag. Without tags this restricts to logged-in users.', 'conduit-crm' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Connect a CRM to restrict by tag. Without tags this restricts to logged-in users.', 'switchyard-crm' ) . '</p>';
 
 			return;
 		}
@@ -67,7 +67,7 @@ final class PostMetaBox {
 
 		printf( '<p><strong>%s</strong></p>', esc_html( $adapter->label() ) );
 
-		echo '<select name="conduit_tags[]" multiple size="8" style="width:100%;">';
+		echo '<select name="switchyard_tags[]" multiple size="8" style="width:100%;">';
 
 		foreach ( $available as $id => $label ) {
 			printf(
@@ -80,21 +80,21 @@ final class PostMetaBox {
 
 		echo '</select>';
 
-		echo '<p><label>' . esc_html__( 'Requires', 'conduit-crm' ) . ' ';
-		echo '<select name="conduit_match">';
+		echo '<p><label>' . esc_html__( 'Requires', 'switchyard-crm' ) . ' ';
+		echo '<select name="switchyard_match">';
 		printf(
 			'<option value="any" %s>%s</option>',
 			selected( $match, 'any', false ),
-			esc_html__( 'any of these', 'conduit-crm' )
+			esc_html__( 'any of these', 'switchyard-crm' )
 		);
 		printf(
 			'<option value="all" %s>%s</option>',
 			selected( $match, 'all', false ),
-			esc_html__( 'all of these', 'conduit-crm' )
+			esc_html__( 'all of these', 'switchyard-crm' )
 		);
 		echo '</select></label></p>';
 
-		echo '<p class="description">' . esc_html__( 'Leave empty to allow any logged-in user.', 'conduit-crm' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Leave empty to allow any logged-in user.', 'switchyard-crm' ) . '</p>';
 	}
 
 	/**
@@ -107,9 +107,9 @@ final class PostMetaBox {
 			return;
 		}
 
-		$nonce = isset( $_POST['conduit_access_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['conduit_access_nonce'] ) ) : '';
+		$nonce = isset( $_POST['switchyard_access_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['switchyard_access_nonce'] ) ) : '';
 
-		if ( '' === $nonce || ! wp_verify_nonce( $nonce, 'conduit_access_' . $post_id ) ) {
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, 'switchyard_access_' . $post_id ) ) {
 			return;
 		}
 
@@ -117,16 +117,16 @@ final class PostMetaBox {
 			return;
 		}
 
-		if ( empty( $_POST['conduit_restrict'] ) ) {
+		if ( empty( $_POST['switchyard_restrict'] ) ) {
 			delete_post_meta( $post_id, Rules::META_ENABLED );
 			delete_post_meta( $post_id, Rules::META_TAGS );
 			delete_post_meta( $post_id, Rules::META_MATCH );
 		} else {
-			$tags = isset( $_POST['conduit_tags'] ) && is_array( $_POST['conduit_tags'] )
-				? array_map( 'sanitize_text_field', wp_unslash( $_POST['conduit_tags'] ) )
+			$tags = isset( $_POST['switchyard_tags'] ) && is_array( $_POST['switchyard_tags'] )
+				? array_map( 'sanitize_text_field', wp_unslash( $_POST['switchyard_tags'] ) )
 				: array();
 
-			$match = isset( $_POST['conduit_match'] ) ? sanitize_key( wp_unslash( $_POST['conduit_match'] ) ) : 'any';
+			$match = isset( $_POST['switchyard_match'] ) ? sanitize_key( wp_unslash( $_POST['switchyard_match'] ) ) : 'any';
 
 			update_post_meta( $post_id, Rules::META_ENABLED, 1 );
 			update_post_meta( $post_id, Rules::META_TAGS, array_values( $tags ) );

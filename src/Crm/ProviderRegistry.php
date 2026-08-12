@@ -2,13 +2,13 @@
 
 declare( strict_types=1 );
 
-namespace Conduit\Crm;
+namespace Switchyard\Crm;
 
-use Conduit\Crm\Contracts\Provider;
-use Conduit\Crm\Exception\ConnectionException;
-use Conduit\Crm\Http\Client;
-use Conduit\Logger\Logger;
-use Conduit\Settings;
+use Switchyard\Crm\Contracts\Provider;
+use Switchyard\Crm\Exception\ConnectionException;
+use Switchyard\Crm\Http\Client;
+use Switchyard\Logger\Logger;
+use Switchyard\Settings;
 use RuntimeException;
 
 /**
@@ -39,16 +39,16 @@ final class ProviderRegistry {
 		// resolve under the Contracts namespace and silently register
 		// classes that do not exist.
 		$defaults = array(
-			\Conduit\Crm\Provider\ActiveCampaign::class,
-			\Conduit\Crm\Provider\HubSpot::class,
-			\Conduit\Crm\Provider\Mailchimp::class,
-			\Conduit\Crm\Provider\Klaviyo::class,
-			\Conduit\Crm\Provider\Kit::class,
-			\Conduit\Crm\Provider\Brevo::class,
-			\Conduit\Crm\Provider\FluentCrm::class,
-			\Conduit\Crm\Provider\MailerLite::class,
-			\Conduit\Crm\Provider\Zoho::class,
-			\Conduit\Crm\Provider\Salesforce::class,
+			\Switchyard\Crm\Provider\ActiveCampaign::class,
+			\Switchyard\Crm\Provider\HubSpot::class,
+			\Switchyard\Crm\Provider\Mailchimp::class,
+			\Switchyard\Crm\Provider\Klaviyo::class,
+			\Switchyard\Crm\Provider\Kit::class,
+			\Switchyard\Crm\Provider\Brevo::class,
+			\Switchyard\Crm\Provider\FluentCrm::class,
+			\Switchyard\Crm\Provider\MailerLite::class,
+			\Switchyard\Crm\Provider\Zoho::class,
+			\Switchyard\Crm\Provider\Salesforce::class,
 		);
 
 		foreach ( $defaults as $class ) {

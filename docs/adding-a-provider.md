@@ -18,7 +18,7 @@ final class Example extends AbstractProvider implements SupportsTags {
     public function get_credential_fields(): array {
         return array(
             'api_key' => array(
-                'label'    => __( 'API Key', 'conduit-crm' ),
+                'label'    => __( 'API Key', 'switchyard-crm' ),
                 'type'     => 'password',
                 'required' => true,
             ),
@@ -37,7 +37,7 @@ final class Example extends AbstractProvider implements SupportsTags {
         try {
             $this->http()->get( '/me' );
         } catch ( CrmException $e ) {
-            throw new ConnectionException( __( 'Example rejected this key.', 'conduit-crm' ) );
+            throw new ConnectionException( __( 'Example rejected this key.', 'switchyard-crm' ) );
         }
     }
 
@@ -61,8 +61,8 @@ Add the fully qualified class to `ProviderRegistry::register_defaults()`, or fro
 another plugin:
 
 ```php
-add_action( 'conduit_loaded', function ( $plugin ) {
-    $plugin->get( Conduit\Crm\ProviderRegistry::class )->register( MyProvider::class );
+add_action( 'switchyard_loaded', function ( $plugin ) {
+    $plugin->get( Switchyard\Crm\ProviderRegistry::class )->register( MyProvider::class );
 } );
 ```
 
