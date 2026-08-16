@@ -13,6 +13,7 @@ phpstan.neon.dist
 phpunit.xml.dist
 rector.php
 .secret-scan-allow
+.product
 README.md
 bin
 node_modules
