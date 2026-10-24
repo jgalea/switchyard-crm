@@ -4,7 +4,7 @@ Tags: crm, marketing automation, integration, sync, content restriction
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -99,6 +99,12 @@ Yes. `switchyard_apply_tags()`, `switchyard_remove_tags()`, `switchyard_has_tag(
 Every synced WooCommerce or EDD order fires `switchyard_order_synced` with a normalised order object carrying line items, totals, currency and the customer user ID. Hook it to push orders wherever you want.
 
 == Changelog ==
+
+= 1.1.0 =
+* New: turn each integration, and each Pro module, on or off from the Integrations tab.
+* New: a Switchyard purchase tags box on products and downloads, separate from the access tags. Tags you already apply on purchase are copied over when you update.
+* Changed: the Webhook box and the Create users from webhooks setting only show for ActiveCampaign and Kit, the CRMs that send webhooks.
+* Fixed: saving a product or post while the CRM can't be reached no longer clears its tags.
 
 = 1.0.0 =
 * First release.
