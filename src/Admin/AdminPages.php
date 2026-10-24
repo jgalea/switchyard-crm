@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard\Admin;
 
+use Switchyard\Crm\Contracts\SupportsWebhooks;
 use Switchyard\Crm\Exception\CrmException;
 use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Integration\Registry as IntegrationRegistry;
@@ -236,7 +237,7 @@ final class AdminPages {
 
 		echo '</form>';
 
-		if ( null !== $provider ) {
+		if ( $provider instanceof SupportsWebhooks ) {
 			$this->render_webhook_box( $provider->get_slug() );
 		}
 	}
