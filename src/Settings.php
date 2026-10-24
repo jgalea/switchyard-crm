@@ -42,6 +42,8 @@ final class Settings {
 			'log_retention_days'     => 30,
 			'async_sync'             => true,
 			'staging_mode'           => false,
+			'disabled_integrations'  => array(),
+			'disabled_modules'       => array(),
 		);
 	}
 
@@ -103,6 +105,16 @@ final class Settings {
 		$this->data = $data;
 
 		update_option( self::OPTION, $data );
+	}
+
+	/**
+	 * Whether the site owner switched a slug off on the Integrations tab.
+	 * The enable filters are applied on top of this by the callers.
+	 *
+	 * @param 'disabled_integrations'|'disabled_modules' $key
+	 */
+	public function is_switched_off( string $key, string $slug ): bool {
+		return in_array( $slug, $this->array( $key ), true );
 	}
 
 	/** @return array<string, mixed> */

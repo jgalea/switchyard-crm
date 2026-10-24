@@ -402,16 +402,20 @@ final class AdminPages {
 	}
 
 	private function render_integrations(): void {
-		echo '<p>' . esc_html__( 'Integrations load automatically when their plugin is active.', 'switchyard-crm' ) . '</p>';
+		echo '<p>' . esc_html__( 'Integrations load when their plugin is active. Untick one to keep it from loading.', 'switchyard-crm' ) . '</p>';
+
+		$this->form_open( 'integrations' );
 
 		echo '<table class="widefat striped"><thead><tr>';
 		echo '<th>' . esc_html__( 'Integration', 'switchyard-crm' ) . '</th>';
+		echo '<th>' . esc_html__( 'Enabled', 'switchyard-crm' ) . '</th>';
 		echo '<th>' . esc_html__( 'Status', 'switchyard-crm' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
-		foreach ( $this->integrations->status() as $status ) {
+		foreach ( $this->integrations->status() as $slug => $status ) {
 			echo '<tr>';
 			printf( '<td>%s</td>', esc_html( $status['name'] ) );
+			echo '<td>' . $this->toggle( 'integrations', $slug, $status['enabled'], $status['locked'] ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 			if ( $status['loaded'] ) {
 				echo '<td><span style="color:#1a7f37;">' . esc_html__( 'Active', 'switchyard-crm' ) . '</span></td>';
@@ -425,6 +429,59 @@ final class AdminPages {
 		}
 
 		echo '</tbody></table>';
+
+		$modules = $this->module_toggles();
+
+		if ( array() !== $modules ) {
+			echo '<h2>' . esc_html__( 'Modules', 'switchyard-crm' ) . '</h2>';
+			echo '<table class="widefat striped"><thead><tr>';
+			echo '<th>' . esc_html__( 'Module', 'switchyard-crm' ) . '</th>';
+			echo '<th>' . esc_html__( 'Enabled', 'switchyard-crm' ) . '</th>';
+			echo '</tr></thead><tbody>';
+
+			foreach ( $modules as $slug => $module ) {
+				printf( '<tr><td>%s</td>', esc_html( $module['label'] ) );
+				echo '<td>' . $this->toggle( 'modules', $slug, $module['enabled'], $module['locked'] ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+
+			echo '</tbody></table>';
+		}
+
+		submit_button();
+
+		echo '</form>';
+	}
+
+	/**
+	 * The checkbox markup, escaped here. A locked toggle is one a filter
+	 * overrides, so the stored choice would have no effect.
+	 */
+	private function toggle( string $group, string $slug, bool $enabled, bool $locked ): string {
+		$html = sprintf(
+			'<input type="checkbox" name="toggle[%s][%s]" value="1" %s %s>',
+			esc_attr( $group ),
+			esc_attr( $slug ),
+			checked( $enabled, true, false ),
+			disabled( $locked, true, false )
+		);
+
+		if ( $locked ) {
+			$html .= ' <span class="description">' . esc_html__( 'Set by a filter on this site.', 'switchyard-crm' ) . '</span>';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Modules that companion plugins let the owner switch off.
+	 *
+	 * @return array<string, array{label: string, enabled: bool, locked: bool}>
+	 */
+	private function module_toggles(): array {
+		/** @var array<string, array{label: string, enabled: bool, locked: bool}> $modules */
+		$modules = apply_filters( 'switchyard_module_toggles', array() );
+
+		return $modules;
 	}
 
 	private function render_logs(): void {
@@ -556,6 +613,9 @@ final class AdminPages {
 			case 'access':
 				$this->save_access();
 				break;
+			case 'integrations':
+				$this->save_integrations();
+				break;
 			case 'logs':
 				$this->save_logs();
 				break;
@@ -677,6 +737,43 @@ final class AdminPages {
 			)
 		);
 		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	}
+
+	/**
+	 * The nonce is verified in handle_save() before this is reached.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Missing
+	 */
+	private function save_integrations(): void {
+		$submitted = isset( $_POST['toggle'] ) && is_array( $_POST['toggle'] )
+			? array_map( 'array_keys', array_filter( wp_unslash( $_POST['toggle'] ), 'is_array' ) ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			: array();
+
+		$groups = array(
+			'integrations' => array( 'disabled_integrations', $this->integrations->status() ),
+			'modules'      => array( 'disabled_modules', $this->module_toggles() ),
+		);
+
+		$values = array();
+
+		foreach ( $groups as $group => $config ) {
+			list( $key, $rows ) = $config;
+
+			$on = array_map( 'sanitize_key', $submitted[ $group ] ?? array() );
+			// Slugs not listed here (a companion plugin is inactive) keep their stored state.
+			$off = array_values( array_diff( $this->settings->array( $key ), array_keys( $rows ) ) );
+
+			foreach ( $rows as $slug => $row ) {
+				// A locked row has no live checkbox, so its stored choice stays as it was.
+				if ( $row['locked'] ? $this->settings->is_switched_off( $key, $slug ) : ! in_array( $slug, $on, true ) ) {
+					$off[] = $slug;
+				}
+			}
+
+			$values[ $key ] = $off;
+		}
+
+		$this->settings->merge( $values );
 	}
 
 	/**

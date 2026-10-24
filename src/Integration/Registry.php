@@ -6,6 +6,7 @@ namespace Switchyard\Integration;
 
 use Switchyard\Container;
 use Switchyard\Logger\Logger;
+use Switchyard\Settings;
 
 /**
  * Loads the integrations whose host plugin is actually active.
@@ -18,15 +19,17 @@ final class Registry {
 
 	private Container $container;
 	private Logger $logger;
+	private Settings $settings;
 	/** @var array<string, callable(Container): Integration> */
 	private array $factories = array();
 
 	/** @var array<string, Integration> */
 	private array $loaded = array();
 
-	public function __construct( Container $container, Logger $logger ) {
+	public function __construct( Container $container, Logger $logger, Settings $settings ) {
 		$this->container = $container;
 		$this->logger    = $logger;
+		$this->settings  = $settings;
 	}
 
 	/**
@@ -58,7 +61,7 @@ final class Registry {
 				continue;
 			}
 
-			if ( ! apply_filters( 'switchyard_enable_integration', true, $slug ) ) {
+			if ( ! $this->is_enabled( $slug ) ) {
 				continue;
 			}
 
@@ -82,6 +85,14 @@ final class Registry {
 		}
 	}
 
+	private function is_enabled( string $slug ): bool {
+		return (bool) apply_filters(
+			'switchyard_enable_integration',
+			! $this->settings->is_switched_off( 'disabled_integrations', $slug ),
+			$slug
+		);
+	}
+
 	/** @return array<string, Integration> */
 	public function loaded(): array {
 		return $this->loaded;
@@ -95,7 +106,7 @@ final class Registry {
 	 * Every registered integration and whether its host plugin is active,
 	 * for the integrations screen.
 	 *
-	 * @return array<string, array{name: string, available: bool, loaded: bool}>
+	 * @return array<string, array{name: string, available: bool, loaded: bool, enabled: bool, locked: bool}>
 	 */
 	public function status(): array {
 		$status = array();
@@ -107,10 +118,14 @@ final class Registry {
 				continue;
 			}
 
+			$chosen = ! $this->settings->is_switched_off( 'disabled_integrations', $slug );
+
 			$status[ $slug ] = array(
 				'name'      => $integration->get_name(),
 				'available' => $integration->is_available(),
 				'loaded'    => isset( $this->loaded[ $slug ] ),
+				'enabled'   => $chosen,
+				'locked'    => $this->is_enabled( $slug ) !== $chosen,
 			);
 		}
 

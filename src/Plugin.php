@@ -198,7 +198,8 @@ final class Plugin {
 			IntegrationRegistry::class,
 			static fn ( Container $c ): IntegrationRegistry => new IntegrationRegistry(
 				$c,
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( Settings::class )
 			)
 		);
 
