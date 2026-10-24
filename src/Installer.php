@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard;
 
+use Switchyard\Admin\PostMetaBox;
 use Switchyard\Logger\LogTable;
 
 final class Installer {
@@ -55,22 +56,35 @@ final class Installer {
 	private static function split_purchase_tags(): void {
 		global $wpdb;
 
-		$types = array( 'product', 'product_variation', 'download' );
+		$types        = array( 'product', 'product_variation', 'download' );
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+		$from         = "FROM {$wpdb->postmeta} m
+			INNER JOIN {$wpdb->posts} p ON p.ID = m.post_id
+			WHERE m.meta_key = %s
+			AND p.post_type IN ({$placeholders})
+			AND NOT EXISTS (
+				SELECT 1 FROM {$wpdb->postmeta} x WHERE x.post_id = m.post_id AND x.meta_key = %s
+			)";
+		$args         = array_merge( array( '_switchyard_tags' ), $types, array( PostMetaBox::META_PURCHASE_TAGS ) );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.post_id {$from}", $args ) );
+
+		if ( array() === $ids ) {
+			return;
+		}
+
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
-				SELECT m.post_id, %s, m.meta_value
-				FROM {$wpdb->postmeta} m
-				INNER JOIN {$wpdb->posts} p ON p.ID = m.post_id
-				WHERE m.meta_key = %s
-				AND p.post_type IN (" . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ")
-				AND NOT EXISTS (
-					SELECT 1 FROM {$wpdb->postmeta} x WHERE x.post_id = m.post_id AND x.meta_key = %s
-				)",
-				array_merge( array( '_switchyard_purchase_tags', '_switchyard_tags' ), $types, array( '_switchyard_purchase_tags' ) )
+				"INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) SELECT m.post_id, %s, m.meta_value {$from}",
+				array_merge( array( PostMetaBox::META_PURCHASE_TAGS ), $args )
 			)
 		);
+		// phpcs:enable
+
+		// The insert bypassed the meta API, so a persistent object cache still holds the old rows.
+		foreach ( $ids as $id ) {
+			wp_cache_delete( (int) $id, 'post_meta' );
+		}
 	}
 }
