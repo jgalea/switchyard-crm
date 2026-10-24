@@ -289,7 +289,9 @@ final class AdminPages {
 
 		$this->checkbox_row( 'sync_on_register', __( 'Sync on registration', 'switchyard-crm' ) );
 		$this->checkbox_row( 'sync_on_profile_update', __( 'Sync on profile update', 'switchyard-crm' ) );
-		$this->checkbox_row( 'import_new_contacts', __( 'Create users from webhooks', 'switchyard-crm' ) );
+		if ( $provider instanceof SupportsWebhooks ) {
+			$this->checkbox_row( 'import_new_contacts', __( 'Create users from webhooks', 'switchyard-crm' ) );
+		}
 		$this->checkbox_row( 'async_sync', __( 'Sync in the background', 'switchyard-crm' ) );
 		$this->checkbox_row( 'site_tracking', __( 'Enable site tracking', 'switchyard-crm' ) );
 		$this->checkbox_row( 'staging_mode', __( 'Staging mode (block all writes)', 'switchyard-crm' ) );
@@ -680,16 +682,20 @@ final class AdminPages {
 	 * phpcs:disable WordPress.Security.NonceVerification.Missing
 	 */
 	private function save_sync(): void {
-		$this->settings->merge(
-			array(
-				'sync_on_register'       => ! empty( $_POST['sync_on_register'] ),
-				'sync_on_profile_update' => ! empty( $_POST['sync_on_profile_update'] ),
-				'import_new_contacts'    => ! empty( $_POST['import_new_contacts'] ),
-				'async_sync'             => ! empty( $_POST['async_sync'] ),
-				'site_tracking'          => ! empty( $_POST['site_tracking'] ),
-				'staging_mode'           => ! empty( $_POST['staging_mode'] ),
-			)
+		$values = array(
+			'sync_on_register'       => ! empty( $_POST['sync_on_register'] ),
+			'sync_on_profile_update' => ! empty( $_POST['sync_on_profile_update'] ),
+			'async_sync'             => ! empty( $_POST['async_sync'] ),
+			'site_tracking'          => ! empty( $_POST['site_tracking'] ),
+			'staging_mode'           => ! empty( $_POST['staging_mode'] ),
 		);
+
+		// The field is only shown for CRMs that send webhooks; keep the stored value otherwise.
+		if ( $this->registry->active() instanceof SupportsWebhooks ) {
+			$values['import_new_contacts'] = ! empty( $_POST['import_new_contacts'] );
+		}
+
+		$this->settings->merge( $values );
 
 		// Same shape as the credentials array: sanitized per entry below.
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
