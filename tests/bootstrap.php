@@ -57,3 +57,11 @@ require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 // The plugin bootstrap normally does this; api.php is not in the composer
 // files autoload because it guards on ABSPATH.
 require_once dirname( __DIR__ ) . '/src/api.php';
+
+if ( ! class_exists( 'WP_Post' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_Post {
+
+		public int $ID = 0;
+	}
+}
