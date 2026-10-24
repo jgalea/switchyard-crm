@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard\Integration\Ecommerce;
 
+use Switchyard\Admin\PostMetaBox;
 use Switchyard\Crm\Order;
 use Switchyard\Crm\OrderLine;
 use Switchyard\Integration\AbstractIntegration;
@@ -240,7 +241,7 @@ final class WooCommerce extends AbstractIntegration {
 					continue;
 				}
 
-				$product_tags = get_post_meta( $product_id, '_switchyard_tags', true );
+				$product_tags = get_post_meta( $product_id, PostMetaBox::META_PURCHASE_TAGS, true );
 
 				if ( is_array( $product_tags ) ) {
 					$tags = array_merge( $tags, array_map( 'strval', $product_tags ) );

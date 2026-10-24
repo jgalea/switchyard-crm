@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard\Integration\Ecommerce;
 
+use Switchyard\Admin\PostMetaBox;
 use Switchyard\Crm\Order;
 use Switchyard\Crm\OrderLine;
 use Switchyard\Integration\AbstractIntegration;
@@ -133,7 +134,7 @@ final class EasyDigitalDownloads extends AbstractIntegration {
 					continue;
 				}
 
-				$download_tags = get_post_meta( $download_id, '_switchyard_tags', true );
+				$download_tags = get_post_meta( $download_id, PostMetaBox::META_PURCHASE_TAGS, true );
 
 				if ( is_array( $download_tags ) ) {
 					$tags = array_merge( $tags, array_map( 'strval', $download_tags ) );

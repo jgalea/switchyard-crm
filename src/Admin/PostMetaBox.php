@@ -15,6 +15,8 @@ use WP_Post;
  */
 final class PostMetaBox {
 
+	public const META_PURCHASE_TAGS = '_switchyard_purchase_tags';
+
 	private Rules $rules;
 	private TagEngine $tags;
 	public function __construct( Rules $rules, TagEngine $tags ) {
@@ -24,6 +26,15 @@ final class PostMetaBox {
 	public function register_hooks(): void {
 		add_action( 'add_meta_boxes', array( $this, 'add' ) );
 		add_action( 'save_post', array( $this, 'save' ), 10, 2 );
+		add_action( 'save_post', array( $this, 'save_purchase_tags' ), 10, 2 );
+	}
+
+	/** @return list<string> */
+	private function product_post_types(): array {
+		/** @var list<string> $types */
+		$types = apply_filters( 'switchyard_purchase_tag_post_types', array( 'product', 'download' ) );
+
+		return array_values( array_filter( $types, 'post_type_exists' ) );
 	}
 
 	public function add(): void {
@@ -35,6 +46,88 @@ final class PostMetaBox {
 			'side',
 			'default'
 		);
+
+		$products = $this->product_post_types();
+
+		if ( array() !== $products ) {
+			add_meta_box(
+				'switchyard-purchase-tags',
+				__( 'Switchyard purchase tags', 'switchyard-crm' ),
+				array( $this, 'render_purchase_tags' ),
+				$products,
+				'side',
+				'default'
+			);
+		}
+	}
+
+	public function render_purchase_tags( WP_Post $post ): void {
+		wp_nonce_field( 'switchyard_purchase_tags_' . $post->ID, 'switchyard_purchase_tags_nonce' );
+
+		$stored = get_post_meta( $post->ID, self::META_PURCHASE_TAGS, true );
+		$stored = is_array( $stored ) ? array_map( 'strval', $stored ) : array();
+
+		$adapter = $this->tags->adapter();
+
+		if ( null === $adapter || ! $adapter->supported() ) {
+			echo '<p class="description">' . esc_html__( 'Connect a CRM to choose tags.', 'switchyard-crm' ) . '</p>';
+
+			return;
+		}
+
+		try {
+			$available = $adapter->available();
+		} catch ( CrmException $exception ) {
+			$available = array();
+		}
+
+		printf( '<p><strong>%s</strong></p>', esc_html( $adapter->label() ) );
+
+		echo '<select name="switchyard_purchase_tags[]" multiple size="8" style="width:100%;">';
+
+		foreach ( $available as $id => $label ) {
+			printf(
+				'<option value="%s" %s>%s</option>',
+				esc_attr( (string) $id ),
+				in_array( (string) $id, $stored, true ) ? 'selected' : '',
+				esc_html( $label )
+			);
+		}
+
+		echo '</select>';
+
+		echo '<p class="description">' . esc_html__( 'Applied to the customer when they buy this. Separate from the access tags above.', 'switchyard-crm' ) . '</p>';
+	}
+
+	/**
+	 * @param WP_Post $post Unused, but part of the save_post signature.
+	 */
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter
+	public function save_purchase_tags( int $post_id, WP_Post $post ): void {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		$nonce = isset( $_POST['switchyard_purchase_tags_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['switchyard_purchase_tags_nonce'] ) ) : '';
+
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, 'switchyard_purchase_tags_' . $post_id ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		$tags = isset( $_POST['switchyard_purchase_tags'] ) && is_array( $_POST['switchyard_purchase_tags'] )
+			? array_map( 'sanitize_text_field', wp_unslash( $_POST['switchyard_purchase_tags'] ) )
+			: array();
+
+		if ( array() === $tags ) {
+			delete_post_meta( $post_id, self::META_PURCHASE_TAGS );
+		} else {
+			update_post_meta( $post_id, self::META_PURCHASE_TAGS, array_values( $tags ) );
+		}
 	}
 
 	public function render( WP_Post $post ): void {
