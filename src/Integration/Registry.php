@@ -118,14 +118,15 @@ final class Registry {
 				continue;
 			}
 
-			$chosen = ! $this->settings->is_switched_off( 'disabled_integrations', $slug );
+			$chosen    = ! $this->settings->is_switched_off( 'disabled_integrations', $slug );
+			$effective = $this->is_enabled( $slug );
 
 			$status[ $slug ] = array(
 				'name'      => $integration->get_name(),
 				'available' => $integration->is_available(),
 				'loaded'    => isset( $this->loaded[ $slug ] ),
-				'enabled'   => $chosen,
-				'locked'    => $this->is_enabled( $slug ) !== $chosen,
+				'enabled'   => $effective,
+				'locked'    => $effective !== $chosen,
 			);
 		}
 
