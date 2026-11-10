@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Switchyard CRM Sync and Access
+ * Plugin Name:       Switchyard CRM
  * Plugin URI:        https://github.com/jgalea/switchyard-crm
  * Description:       Connect WordPress to your CRM. Sync users, purchases and form entries, and gate content with CRM tags.
  * Version:           1.1.0
