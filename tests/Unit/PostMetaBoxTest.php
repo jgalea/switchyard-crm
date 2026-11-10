@@ -112,6 +112,7 @@ final class PostMetaBoxTest extends TestCase {
 		$registry = new ProviderRegistry( new Client( $logger ), $settings, $logger );
 
 		$active = new \ReflectionProperty( $registry, 'active' );
+		$active->setAccessible( true );
 		$active->setValue( $registry, $provider );
 
 		$tags = new TagEngine( $registry, new ContactResolver( $registry, $logger ), $settings, $logger );
