@@ -713,7 +713,7 @@ final class AdminPages {
 
 			$crm_field = sanitize_text_field( (string) ( $entry['crm_field'] ?? '' ) );
 
-			if ( '' === $crm_field ) {
+			if ( '' === $crm_field || ! $this->fields->allows( sanitize_key( (string) $wp_key ) ) ) {
 				continue;
 			}
 

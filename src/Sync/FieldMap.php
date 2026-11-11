@@ -79,6 +79,21 @@ final class FieldMap {
 	}
 
 	/**
+	 * Whether a WordPress key is one of the fields offered for mapping, which
+	 * keeps role, capability and other internal meta out of reach of both the
+	 * map and the field shortcode.
+	 */
+	public function allows( string $wp_key ): bool {
+		foreach ( $this->available_wp_fields() as $group_fields ) {
+			if ( isset( $group_fields[ $wp_key ] ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Builds the CRM payload for a user.
 	 *
 	 * @param array<string, mixed> $overrides Values that take precedence over
@@ -195,7 +210,7 @@ final class FieldMap {
 		$user_fields = array();
 
 		foreach ( $this->all() as $wp_key => $entry ) {
-			if ( empty( $entry['active'] ) ) {
+			if ( empty( $entry['active'] ) || ! $this->allows( $wp_key ) ) {
 				continue;
 			}
 

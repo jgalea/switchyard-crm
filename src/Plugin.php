@@ -171,7 +171,7 @@ final class Plugin {
 
 		$c->set(
 			Shortcodes::class,
-			static fn ( Container $c ): Shortcodes => new Shortcodes( $c->get( TagEngine::class ) )
+			static fn ( Container $c ): Shortcodes => new Shortcodes( $c->get( TagEngine::class ), $c->get( FieldMap::class ) )
 		);
 
 		$c->set(
