@@ -325,12 +325,15 @@ final class UserSync {
 	}
 
 	/**
+	 * Reads the contact's own email, never another email-shaped value such as
+	 * a "referrer email" custom field.
+	 *
 	 * @param array<string, mixed> $data
 	 */
 	private function find_email( array $data ): ?string {
-		foreach ( $data as $value ) {
-			if ( is_string( $value ) && is_email( $value ) ) {
-				return $value;
+		foreach ( array( 'email', 'Email', 'email_address' ) as $key ) {
+			if ( isset( $data[ $key ] ) && is_string( $data[ $key ] ) && is_email( $data[ $key ] ) ) {
+				return $data[ $key ];
 			}
 		}
 
