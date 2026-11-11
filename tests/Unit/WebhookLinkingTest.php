@@ -72,7 +72,7 @@ final class WebhookLinkingTest extends TestCase {
 
 		$request->params['provider'] = 'fakecrm';
 
-		return $this->listener( $registry, $resolver, $tags, $sync, $settings, $logger )->handle( $request );
+		return $this->listener( $registry, $resolver, $sync, $settings, $logger )->handle( $request );
 	}
 
 	public function test_a_body_contact_id_cannot_relink_a_user_to_another_contact(): void {
@@ -124,12 +124,12 @@ final class WebhookLinkingTest extends TestCase {
 		$tags     = new TagEngine( $registry, $resolver, $settings, $logger );
 		$sync     = new UserSync( $registry, $resolver, new FieldMap(), $tags, new Queue( $settings, $logger ), $settings, $logger );
 
-		$this->listener( $registry, $resolver, $tags, $sync, $settings, $logger )->register_routes();
+		$this->listener( $registry, $resolver, $sync, $settings, $logger )->register_routes();
 
 		$this->assertSame( 'POST', $registered['methods'] );
 	}
 
-	private function listener( ProviderRegistry $registry, ContactResolver $resolver, TagEngine $tags, UserSync $sync, Settings $settings, Logger $logger ): Listener {
-		return new Listener( $registry, $resolver, $tags, $sync, $settings, $logger );
+	private function listener( ProviderRegistry $registry, ContactResolver $resolver, UserSync $sync, Settings $settings, Logger $logger ): Listener {
+		return new Listener( $registry, $resolver, $sync, $settings, $logger );
 	}
 }

@@ -9,7 +9,6 @@ use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Logger\Logger;
 use Switchyard\Settings;
 use Switchyard\Sync\ContactResolver;
-use Switchyard\Sync\TagEngine;
 use Switchyard\Sync\UserSync;
 use WP_Error;
 use WP_REST_Request;
@@ -27,14 +26,12 @@ final class Listener {
 
 	private ProviderRegistry $registry;
 	private ContactResolver $resolver;
-	private TagEngine $tags;
 	private UserSync $sync;
 	private Settings $settings;
 	private Logger $logger;
-	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, TagEngine $tags, UserSync $sync, Settings $settings, Logger $logger ) {
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, UserSync $sync, Settings $settings, Logger $logger ) {
 		$this->registry = $registry;
 		$this->resolver = $resolver;
-		$this->tags     = $tags;
 		$this->sync     = $sync;
 		$this->settings = $settings;
 		$this->logger   = $logger;

@@ -12,6 +12,7 @@ use Switchyard\Access\Shortcodes;
 use Switchyard\Admin\AdminPages;
 use Switchyard\Admin\IntegrationSettings;
 use Switchyard\Admin\PostMetaBox;
+use Switchyard\Admin\TagPicker;
 use Switchyard\Crm\Http\Client;
 use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Integration\Ecommerce\EasyDigitalDownloads;
@@ -180,7 +181,6 @@ final class Plugin {
 			static fn ( Container $c ): Listener => new Listener(
 				$c->get( ProviderRegistry::class ),
 				$c->get( ContactResolver::class ),
-				$c->get( TagEngine::class ),
 				$c->get( UserSync::class ),
 				$c->get( Settings::class ),
 				$c->get( Logger::class )
@@ -217,10 +217,15 @@ final class Plugin {
 		);
 
 		$c->set(
+			TagPicker::class,
+			static fn ( Container $c ): TagPicker => new TagPicker( $c->get( TagEngine::class ) )
+		);
+
+		$c->set(
 			IntegrationSettings::class,
 			static fn ( Container $c ): IntegrationSettings => new IntegrationSettings(
 				$c->get( Settings::class ),
-				$c->get( TagEngine::class ),
+				$c->get( TagPicker::class ),
 				$c->get( ProviderRegistry::class ),
 				$c->get( IntegrationRegistry::class )
 			)

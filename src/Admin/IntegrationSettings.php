@@ -9,7 +9,6 @@ use Switchyard\Integration\Forms\AbstractFormIntegration;
 use Switchyard\Integration\Registry as IntegrationRegistry;
 use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Settings;
-use Switchyard\Sync\TagEngine;
 
 /**
  * Tag and form settings that live on the Integrations tab.
@@ -25,66 +24,15 @@ final class IntegrationSettings {
 	);
 
 	private Settings $settings;
-	private TagEngine $tags;
+	private TagPicker $picker;
 	private ProviderRegistry $registry;
 	private IntegrationRegistry $integrations;
-	public function __construct( Settings $settings, TagEngine $tags, ProviderRegistry $registry, IntegrationRegistry $integrations ) {
+	public function __construct( Settings $settings, TagPicker $picker, ProviderRegistry $registry, IntegrationRegistry $integrations ) {
 		$this->settings     = $settings;
-		$this->tags         = $tags;
+		$this->picker       = $picker;
 		$this->registry     = $registry;
 		$this->integrations = $integrations;
 	}
-	/**
-	 * @return array<string, string>|null Tag ID => label, or null when no CRM tags can be listed.
-	 */
-	private function tag_choices(): ?array {
-		$adapter = $this->tags->adapter();
-
-		if ( null === $adapter || ! $adapter->supported() ) {
-			return null;
-		}
-
-		try {
-			$choices = array();
-
-			foreach ( $adapter->available() as $id => $label ) {
-				$choices[ (string) $id ] = (string) $label;
-			}
-
-			return $choices;
-		} catch ( CrmException $e ) {
-			return null;
-		}
-	}
-
-	/**
-	 * @param array<string, string> $choices
-	 * @param list<string>          $selected
-	 */
-	private function tag_select( string $name, string $id, string $label, array $choices, array $selected ): void {
-		// Tags that were saved but are no longer listed stay selectable, so
-		// saving doesn't silently drop them.
-		foreach ( $selected as $tag ) {
-			if ( ! isset( $choices[ $tag ] ) ) {
-				$choices[ $tag ] = '#' . $tag;
-			}
-		}
-
-		printf( '<label for="%s" class="screen-reader-text">%s</label>', esc_attr( $id ), esc_html( $label ) );
-		printf( '<select id="%s" name="%s[]" multiple size="6" class="switchyard-tags">', esc_attr( $id ), esc_attr( $name ) );
-
-		foreach ( $choices as $tag => $tag_label ) {
-			printf(
-				'<option value="%s" %s>%s</option>',
-				esc_attr( (string) $tag ),
-				selected( in_array( (string) $tag, $selected, true ), true, false ),
-				esc_html( $tag_label )
-			);
-		}
-
-		echo '</select>';
-	}
-
 	/**
 	 * @return array<string, mixed>
 	 */
@@ -107,7 +55,7 @@ final class IntegrationSettings {
 			return;
 		}
 
-		$choices = $this->tag_choices();
+		$choices = $this->picker->choices();
 
 		$this->render_registration( $choices );
 
@@ -140,7 +88,7 @@ final class IntegrationSettings {
 		echo '<table class="form-table" role="presentation"><tbody><tr>';
 		echo '<th scope="row">' . esc_html__( 'Tags for new registrations', 'switchyard-crm' ) . '</th><td>';
 
-		$this->tag_select( 'register_tags', 'switchyard-register-tags', __( 'Tags for new registrations', 'switchyard-crm' ), $choices, $this->tag_list( $this->settings->array( 'register_tags' ) ) );
+		$this->picker->render( 'register_tags', 'switchyard-register-tags', __( 'Tags for new registrations', 'switchyard-crm' ), $choices, $this->tag_list( $this->settings->array( 'register_tags' ) ) );
 
 		echo '<p class="description">' . esc_html__( 'Applied to every new user when they register.', 'switchyard-crm' ) . '</p>';
 		echo '</td></tr></tbody></table>';
@@ -172,7 +120,7 @@ final class IntegrationSettings {
 			$id = 'switchyard-' . $slug . '-' . $key;
 
 			printf( '<tr><th scope="row">%s</th><td>', esc_html( $row[0] ) );
-			$this->tag_select( 'store[' . $slug . '][' . $key . ']', $id, $row[0], $choices, $this->tag_list( $stored[ $key ] ?? array() ) );
+			$this->picker->render( 'store[' . $slug . '][' . $key . ']', $id, $row[0], $choices, $this->tag_list( $stored[ $key ] ?? array() ) );
 
 			if ( '' !== $row[1] ) {
 				echo '<p class="description">' . esc_html( $row[1] ) . '</p>';
@@ -198,7 +146,7 @@ final class IntegrationSettings {
 				$label = sprintf( __( 'Tags when an order becomes %s', 'switchyard-crm' ), (string) $status_label );
 
 				printf( '<tr><th scope="row">%s</th><td>', esc_html( $label ) );
-				$this->tag_select(
+				$this->picker->render(
 					'store[woocommerce][status_tags][' . $status . ']',
 					'switchyard-woocommerce-status-' . $status,
 					$label,
@@ -280,7 +228,7 @@ final class IntegrationSettings {
 
 			if ( null !== $choices ) {
 				printf( '<tr><th scope="row">%s</th><td>', esc_html__( 'Tags', 'switchyard-crm' ) );
-				$this->tag_select( $base . '[tags]', $dom . '-tags', __( 'Tags', 'switchyard-crm' ), $choices, $this->tag_list( $config['tags'] ?? array() ) );
+				$this->picker->render( $base . '[tags]', $dom . '-tags', __( 'Tags', 'switchyard-crm' ), $choices, $this->tag_list( $config['tags'] ?? array() ) );
 				echo '</td></tr>';
 			}
 
@@ -333,7 +281,7 @@ final class IntegrationSettings {
 	 */
 	public function save(): void {
 		if ( ! empty( $_POST['register_tags_present'] ) ) {
-			$this->settings->set( 'register_tags', $this->posted_tags( $_POST['register_tags'] ?? array() ) );
+			$this->settings->set( 'register_tags', TagPicker::posted( $_POST['register_tags'] ?? array() ) );
 		}
 
 		foreach ( self::STORES as $slug => $name ) {
@@ -345,15 +293,15 @@ final class IntegrationSettings {
 
 			$options = $this->stored( $slug );
 
-			$options['purchase_tags']         = $this->posted_tags( $posted['purchase_tags'] ?? array() );
-			$options['refund_tags']           = $this->posted_tags( $posted['refund_tags'] ?? array() );
+			$options['purchase_tags']         = TagPicker::posted( $posted['purchase_tags'] ?? array() );
+			$options['refund_tags']           = TagPicker::posted( $posted['refund_tags'] ?? array() );
 			$options['remove_tags_on_refund'] = ! empty( $posted['remove_tags_on_refund'] );
 
 			if ( 'woocommerce' === $slug ) {
 				$status_tags = array();
 
 				foreach ( is_array( $posted['status_tags'] ?? null ) ? $posted['status_tags'] : array() as $status => $tags ) {
-					$tags = $this->posted_tags( $tags );
+					$tags = TagPicker::posted( $tags );
 
 					if ( array() !== $tags ) {
 						$status_tags[ sanitize_key( (string) $status ) ] = $tags;
@@ -400,7 +348,7 @@ final class IntegrationSettings {
 					'enabled'         => ! empty( $entry['enabled'] ),
 					'email_field'     => isset( $valid[ $email_field ] ) ? $email_field : '',
 					'map'             => $map,
-					'tags'            => $this->posted_tags( $entry['tags'] ?? array() ),
+					'tags'            => TagPicker::posted( $entry['tags'] ?? array() ),
 					'update_existing' => ! empty( $entry['update_existing'] ),
 				);
 			}
@@ -413,24 +361,4 @@ final class IntegrationSettings {
 	}
 
 	// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-	/**
-	 * @param mixed $value
-	 * @return list<string>
-	 */
-	private function posted_tags( $value ): array {
-		if ( ! is_array( $value ) ) {
-			return array();
-		}
-
-		return array_values(
-			array_filter(
-				array_map(
-					static fn ( $tag ): string => is_scalar( $tag ) ? sanitize_text_field( wp_unslash( (string) $tag ) ) : '',
-					$value
-				),
-				static fn ( string $tag ): bool => '' !== $tag
-			)
-		);
-	}
 }
