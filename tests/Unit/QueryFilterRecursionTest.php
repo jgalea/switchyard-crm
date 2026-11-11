@@ -25,18 +25,22 @@ final class QueryFilterRecursionTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_a_cold_cache_with_a_term_rule_does_not_recurse_through_pre_get_posts(): void {
+	public function test_a_cold_cache_with_a_term_rule_never_runs_a_wp_query(): void {
 		$GLOBALS['wpdb'] = new class() {
 			public string $postmeta = 'wp_postmeta';
 			public string $termmeta = 'wp_termmeta';
+			public string $term_taxonomy = 'wp_term_taxonomy';
+			public string $term_relationships = 'wp_term_relationships';
+			public string $posts = 'wp_posts';
 
+			/** @param mixed ...$args */
 			public function prepare( string $query, ...$args ): string {
 				return $query;
 			}
 
 			/** @return list<string> */
 			public function get_col( string $query ): array {
-				return str_contains( $query, 'termmeta' ) ? array( '7' ) : array( '3' );
+				return str_contains( $query, 'term_relationships' ) ? array( '11', '12' ) : array( '3' );
 			}
 		};
 
@@ -55,23 +59,16 @@ final class QueryFilterRecursionTest extends TestCase {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 		Functions\when( 'get_post' )->justReturn( null );
 
-		$depth = 0;
-
 		Functions\when( 'get_posts' )->alias(
-			function () use ( &$depth, $filter, $query ): array {
-				if ( ++$depth > 3 ) {
-					throw new RuntimeException( 'pre_get_posts recursion' );
-				}
-
+			function () use ( $filter, $query ): array {
 				$filter->exclude_restricted( $query );
 
-				return array( 11 );
+				throw new RuntimeException( 'the restricted-ID lookup ran a WP_Query' );
 			}
 		);
 
 		$filter->exclude_restricted( $query );
 
-		$this->assertSame( 1, $depth );
-		$this->assertSame( array( 3, 11 ), $this->transients['switchyard_restricted_ids'] );
+		$this->assertSame( array( 3, 11, 12 ), $this->transients['switchyard_restricted_ids'] );
 	}
 }

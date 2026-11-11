@@ -21,7 +21,6 @@ final class QueryFilter {
 
 	private Rules $rules;
 	private Settings $settings;
-	private bool $building = false;
 
 	public function __construct( Rules $rules, Settings $settings ) {
 		$this->rules    = $rules;
@@ -85,33 +84,21 @@ final class QueryFilter {
 			return $cached;
 		}
 
-		// The term lookup runs a WP_Query, which fires pre_get_posts and lands
-		// back here with the transient still cold.
-		if ( $this->building ) {
-			return array();
-		}
-
 		global $wpdb;
 
-		$this->building = true;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+				Rules::META_ENABLED,
+				'1'
+			)
+		);
 
-		try {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$ids = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
-					Rules::META_ENABLED,
-					'1'
-				)
-			);
+		$ids = array_map( 'intval', $ids );
 
-			$ids = array_map( 'intval', $ids );
-
-			$ids = array_merge( $ids, $this->posts_in_restricted_terms() );
-			$ids = array_values( array_unique( $ids ) );
-		} finally {
-			$this->building = false;
-		}
+		$ids = array_merge( $ids, $this->posts_in_restricted_terms() );
+		$ids = array_values( array_unique( $ids ) );
 
 		set_transient( 'switchyard_restricted_ids', $ids, HOUR_IN_SECONDS );
 
@@ -119,42 +106,39 @@ final class QueryFilter {
 	}
 
 	/**
+	 * Posts assigned to a term that carries an access rule, in any taxonomy.
+	 *
+	 * Plain SQL rather than WP_Query: a query here would fire pre_get_posts
+	 * and land back in exclude_restricted() with the cache still cold.
+	 *
 	 * @return list<int>
 	 */
 	private function posts_in_restricted_terms(): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$term_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT term_id FROM {$wpdb->termmeta} WHERE meta_key = %s AND meta_value != ''",
-				Rules::TERM_META_TAGS
-			)
-		);
+		$types = $this->rules->gated_post_types();
 
-		if ( empty( $term_ids ) ) {
+		if ( empty( $types ) ) {
 			return array();
 		}
 
-		$posts = get_posts(
-			array(
-				'post_type'      => $this->rules->gated_post_types(),
-				'posts_per_page' => 500,
-				'fields'         => 'ids',
-				'post_status'    => 'publish',
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- result is cached in a transient.
-				'tax_query'      => array(
-					array(
-						'taxonomy'         => 'category',
-						'field'            => 'term_id',
-						'terms'            => array_map( 'intval', $term_ids ),
-						'include_children' => true,
-					),
-				),
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT tr.object_id
+				FROM {$wpdb->termmeta} tm
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = tm.term_id
+				INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id
+				WHERE tm.meta_key = %s AND tm.meta_value != '' AND p.post_status = 'publish' AND p.post_type IN ({$placeholders})",
+				array_merge( array( Rules::TERM_META_TAGS ), $types )
 			)
 		);
+		// phpcs:enable
 
-		return array_map( 'intval', is_array( $posts ) ? $posts : array() );
+		return array_map( 'intval', $ids );
 	}
 
 	/**
