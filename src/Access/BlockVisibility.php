@@ -12,7 +12,8 @@ use Switchyard\Sync\TagEngine;
  * visitors, or users holding CRM tags.
  *
  * The rule is stored in the block's own attributes, so it travels with the
- * content and needs no server-side registration.
+ * content. The attributes are also registered server-side, so server-rendered
+ * previews in the editor accept them.
  */
 final class BlockVisibility {
 
@@ -24,7 +25,33 @@ final class BlockVisibility {
 	}
 	public function register_hooks(): void {
 		add_filter( 'render_block', array( $this, 'filter_block' ), 10, 2 );
+		add_filter( 'register_block_type_args', array( $this, 'register_attributes' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor' ) );
+	}
+
+	/**
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public function register_attributes( array $args ): array {
+		$attributes = is_array( $args['attributes'] ?? null ) ? $args['attributes'] : array();
+
+		$args['attributes'] = $attributes + array(
+			'switchyardAudience' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'switchyardTags'     => array(
+				'type'    => 'array',
+				'default' => array(),
+			),
+			'switchyardMatch'    => array(
+				'type'    => 'string',
+				'default' => 'any',
+			),
+		);
+
+		return $args;
 	}
 
 	/**

@@ -72,4 +72,15 @@ final class BlockVisibilityTest extends TestCase {
 	public function test_tag_blocks_are_hidden_from_visitors(): void {
 		$this->assertSame( '', $this->render( array( 'switchyardAudience' => 'tags', 'switchyardTags' => array( '10' ) ) ) );
 	}
+
+	public function test_the_visibility_attributes_are_registered_on_the_server_for_every_block(): void {
+		$world  = new World( new FakeCrm(), $this->createMock( Logger::class ) );
+		$filter = new BlockVisibility( $world->tags, new TagPicker( $world->tags ) );
+
+		$args = $filter->register_attributes( array( 'attributes' => array( 'showPostCounts' => array( 'type' => 'boolean' ) ) ) );
+
+		$this->assertSame( array( 'showPostCounts', 'switchyardAudience', 'switchyardTags', 'switchyardMatch' ), array_keys( $args['attributes'] ) );
+		$this->assertSame( array( 'type' => 'boolean' ), $args['attributes']['showPostCounts'] );
+		$this->assertSame( array(), $filter->register_attributes( array() )['attributes']['switchyardTags']['default'] );
+	}
 }
