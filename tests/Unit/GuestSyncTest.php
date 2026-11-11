@@ -73,4 +73,21 @@ final class GuestSyncTest extends TestCase {
 
 		$this->assertSame( array( 'first_name' => 'Alice' ), $crm->records['C1'] );
 	}
+
+	public function test_a_form_cannot_seed_a_registered_users_contact_or_tags(): void {
+		$crm = new FakeCrm();
+		$user     = new \WP_User();
+		$user->ID = 7;
+		Functions\when( 'get_user_by' )->justReturn( $user );
+		Functions\when( 'update_user_meta' )->alias(
+			static function (): void {
+				throw new \RuntimeException( 'linked a user' );
+			}
+		);
+
+		$this->sync( $crm )->push( 'admin@example.com', array( 'first_name' => 'Pwned' ), array( 'vip' ), false );
+
+		$this->assertSame( array( 'email' => 'admin@example.com' ), $crm->added[0][1] );
+		$this->assertSame( array(), $crm->tags );
+	}
 }

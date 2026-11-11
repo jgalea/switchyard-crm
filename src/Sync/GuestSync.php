@@ -84,10 +84,16 @@ final class GuestSync {
 					return null;
 				}
 
+				// An unauthenticated submission must not seed the profile of a
+				// registered user, so a user's contact gets the email and nothing
+				// else, and isn't linked to the account.
+				$unverified = null !== $user_id && ! $update_existing;
+				$fields     = $unverified ? array() : $fields;
+
 				$fields[ $email_field ] = $email;
 				$contact_id             = $provider->add_contact( $fields );
 
-				if ( null !== $user_id ) {
+				if ( null !== $user_id && ! $unverified ) {
 					$this->resolver->store_id( $user_id, $contact_id );
 				}
 			} elseif ( $update_existing && ! empty( $fields ) ) {
@@ -102,7 +108,7 @@ final class GuestSync {
 			return null;
 		}
 
-		if ( ! empty( $tags ) ) {
+		if ( ! empty( $tags ) && ( null === $user_id || $update_existing ) ) {
 			$this->apply_guest_tags( $contact_id, $tags );
 		}
 
