@@ -241,6 +241,11 @@ final class Plugin {
 		);
 
 		$c->set(
+			Privacy::class,
+			static fn ( Container $c ): Privacy => new Privacy( $c->get( ContactResolver::class ), $c->get( TagEngine::class ) )
+		);
+
+		$c->set(
 			TagPicker::class,
 			static fn ( Container $c ): TagPicker => new TagPicker( $c->get( TagEngine::class ) )
 		);
@@ -282,6 +287,7 @@ final class Plugin {
 		$this->get( MenuFilter::class )->register_hooks();
 		$this->get( Shortcodes::class )->register_hooks();
 		$this->get( BlockVisibility::class )->register_hooks();
+		$this->get( Privacy::class )->register_hooks();
 		$this->get( Listener::class )->register_hooks();
 		$this->get( SiteTracking::class )->register_hooks();
 
