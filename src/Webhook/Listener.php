@@ -19,9 +19,9 @@ use WP_REST_Server;
 /**
  * Inbound endpoint for CRM automations.
  *
- * Deliberately does not trust tag data in the request body. A webhook body
- * can be replayed or forged; the tags are always re-read from the CRM after
- * the call, so the worst a bad request can do is cause an extra API read.
+ * Deliberately does not trust the request body. A webhook body can be
+ * replayed or forged; tags are re-read from the CRM after the call, and a
+ * contact ID in the body never creates a link between a user and a contact.
  */
 final class Listener {
 
@@ -138,8 +138,11 @@ final class Listener {
 			}
 		}
 
-		if ( null !== $payload->contact_id ) {
-			$this->resolver->store_id( $user_id, $payload->contact_id );
+		// The contact ID in the body is only used to find a user that is
+		// already linked to it. A new link comes from the CRM's own answer for
+		// the user's email, so a request can't attach a user to another contact.
+		if ( $this->resolver->user_for_email( $payload->email ) === $user_id ) {
+			$this->resolver->resolve_by_email( $payload->email, $user_id );
 		}
 
 		// Authoritative read, rather than trusting the request body.
