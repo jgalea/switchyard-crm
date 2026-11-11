@@ -28,7 +28,18 @@ final class FluentForms extends AbstractFormIntegration {
  */
 	public function on_submission( int $entry_id, array $form_data, $form = null ): void {
 		$this->guard(
-			function () use ( $form_data, $form ): void {
+			function () use ( $entry_id, $form_data, $form ): void {
+				global $wpdb;
+
+				$table = $wpdb->prefix . 'fluentform_submissions';
+
+				// Fluent Forms stores entries flagged by Akismet or CleanTalk
+				// with a spam status and still fires this hook for them.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter
+				if ( 'spam' === $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$table} WHERE id = %d", $entry_id ) ) ) {
+					return;
+				}
+
 				$form_id = '';
 
 				if ( is_object( $form ) && isset( $form->id ) ) {
