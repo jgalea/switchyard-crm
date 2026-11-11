@@ -27,18 +27,27 @@ final class ContactResolver {
 		$this->logger   = $logger;
 	}
 
+	/**
+	 * User meta is shared by every site on a network, but contact IDs and tags
+	 * belong to the CRM account of one site, so on multisite the key carries
+	 * the blog ID.
+	 */
+	public static function meta_key( string $base ): string {
+		return is_multisite() ? $base . '_' . get_current_blog_id() : $base;
+	}
+
 	public function cached_id( int $user_id ): ?string {
-		$id = get_user_meta( $user_id, self::META_CONTACT_ID, true );
+		$id = get_user_meta( $user_id, self::meta_key( self::META_CONTACT_ID ), true );
 
 		return is_string( $id ) && '' !== $id ? $id : null;
 	}
 
 	public function store_id( int $user_id, string $contact_id ): void {
-		update_user_meta( $user_id, self::META_CONTACT_ID, $contact_id );
+		update_user_meta( $user_id, self::meta_key( self::META_CONTACT_ID ), $contact_id );
 	}
 
 	public function forget( int $user_id ): void {
-		delete_user_meta( $user_id, self::META_CONTACT_ID );
+		delete_user_meta( $user_id, self::meta_key( self::META_CONTACT_ID ) );
 	}
 
 	/**
@@ -113,7 +122,7 @@ final class ContactResolver {
 		// phpcs:disable WordPress.DB.SlowDBQuery
 		$users = get_users(
 			array(
-				'meta_key'   => self::META_CONTACT_ID,
+				'meta_key'   => self::meta_key( self::META_CONTACT_ID ),
 				'meta_value' => $contact_id,
 				'number'     => 1,
 				'fields'     => 'ID',

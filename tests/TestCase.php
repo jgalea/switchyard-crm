@@ -37,6 +37,7 @@ abstract class TestCase extends BaseTestCase {
 	 */
 	protected function stub_wordpress(): void {
 		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( 'is_multisite' )->justReturn( false );
 		Functions\when( 'esc_html__' )->returnArg( 1 );
 		Functions\when( 'esc_js' )->returnArg( 1 );
 		Functions\when( 'esc_html' )->returnArg( 1 );

@@ -181,7 +181,7 @@ final class UserSync {
 				do_action( 'switchyard_contact_updated', $user_id, $contact_id );
 			}
 
-			update_user_meta( $user_id, self::META_LAST_SYNC, time() );
+			update_user_meta( $user_id, ContactResolver::meta_key( self::META_LAST_SYNC ), time() );
 
 			return $contact_id;
 		} catch ( RateLimitException $e ) {

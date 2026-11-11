@@ -55,7 +55,7 @@ final class TagEngine {
 	 * @return list<string>
 	 */
 	public function get_tags( int $user_id ): array {
-		$tags = get_user_meta( $user_id, self::META_TAGS, true );
+		$tags = get_user_meta( $user_id, ContactResolver::meta_key( self::META_TAGS ), true );
 
 		$tags = is_array( $tags ) ? array_values( array_map( 'strval', $tags ) ) : array();
 
@@ -71,7 +71,7 @@ final class TagEngine {
 	public function set_cache( int $user_id, array $tags ): void {
 		$tags = array_values( array_unique( array_map( 'strval', $tags ) ) );
 
-		update_user_meta( $user_id, self::META_TAGS, $tags );
+		update_user_meta( $user_id, ContactResolver::meta_key( self::META_TAGS ), $tags );
 
 		do_action( 'switchyard_tags_updated', $user_id, $tags );
 	}

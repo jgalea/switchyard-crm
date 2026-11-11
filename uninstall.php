@@ -33,7 +33,7 @@ $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'switchyard_i
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_switchyard_%' OR option_name LIKE '_transient_timeout_switchyard_%'" );
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ('switchyard_contact_id','switchyard_tags','switchyard_last_sync')" );
+$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'switchyard\_contact\_id%' OR meta_key LIKE 'switchyard\_tags%' OR meta_key LIKE 'switchyard\_last\_sync%'" );
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '\_switchyard\_%'" );
