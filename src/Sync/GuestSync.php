@@ -4,7 +4,6 @@ declare( strict_types=1 );
 
 namespace Switchyard\Sync;
 
-use Switchyard\Crm\Contracts\Provider;
 use Switchyard\Crm\Exception\CrmException;
 use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Logger\Logger;
@@ -77,7 +76,7 @@ final class GuestSync {
 			$contact_id = $this->resolver->resolve_by_email( $email, $user_id );
 
 			if ( null === $contact_id ) {
-				$email_field = $this->email_field( $provider );
+				$email_field = $this->field_map->email_field( $provider );
 
 				if ( null === $email_field ) {
 					$this->logger->warning( 'Could not create a guest contact because the CRM has no email field to fill.' );
@@ -110,26 +109,6 @@ final class GuestSync {
 		do_action( 'switchyard_guest_synced', $email, $contact_id );
 
 		return $contact_id;
-	}
-
-	/**
-	 * The CRM field that holds the email: the one the site mapped to the
-	 * WordPress email, otherwise the provider's own email field.
-	 */
-	private function email_field( Provider $provider ): ?string {
-		$mapped = $this->field_map->all()['user_email'] ?? null;
-
-		if ( null !== $mapped && ! empty( $mapped['active'] ) && '' !== $mapped['crm_field'] ) {
-			return $mapped['crm_field'];
-		}
-
-		foreach ( $provider->get_available_fields() as $key => $field ) {
-			if ( 'email' === ( $field['type'] ?? '' ) ) {
-				return (string) $key;
-			}
-		}
-
-		return null;
 	}
 
 	/**

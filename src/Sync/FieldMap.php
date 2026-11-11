@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard\Sync;
 
+use Switchyard\Crm\Contracts\Provider;
 use WP_User;
 
 /**
@@ -91,6 +92,26 @@ final class FieldMap {
 		}
 
 		return false;
+	}
+
+	/**
+	 * The CRM field that holds the email: the one the site mapped to the
+	 * WordPress email, otherwise the provider's own email field.
+	 */
+	public function email_field( Provider $provider ): ?string {
+		$mapped = $this->all()['user_email'] ?? null;
+
+		if ( null !== $mapped && ! empty( $mapped['active'] ) && '' !== $mapped['crm_field'] ) {
+			return $mapped['crm_field'];
+		}
+
+		foreach ( $provider->get_available_fields() as $key => $field ) {
+			if ( 'email' === ( $field['type'] ?? '' ) ) {
+				return (string) $key;
+			}
+		}
+
+		return null;
 	}
 
 	/**

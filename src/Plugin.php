@@ -280,12 +280,13 @@ final class Plugin {
 
 	private function register_async_handlers(): void {
 		$tags = $this->get( TagEngine::class );
+		$sync = $this->get( UserSync::class );
 
 		add_action(
 			'switchyard_apply_tags_async',
-			static function ( int $user_id, array $tag_list ) use ( $tags ): void {
+			static function ( int $user_id, array $tag_list ) use ( $sync ): void {
 				/** @var list<string> $tag_list */
-				$tags->apply_tags( $user_id, $tag_list );
+				$sync->apply_tags_creating_contact( $user_id, $tag_list );
 			},
 			10,
 			2
@@ -307,8 +308,6 @@ final class Plugin {
 				$tags->load_tags( $user_id );
 			}
 		);
-
-		$sync = $this->get( UserSync::class );
 
 		// Batch jobs use their own hook so a bulk resync can be cancelled
 		// without also cancelling live per-user syncs sitting in the queue.

@@ -69,7 +69,7 @@ final class FakeCrm implements Provider, SupportsTags, SupportsWebhooks {
 	}
 
 	public function get_available_tags(): array {
-		return array();
+		return array( '10' => 'Customer' );
 	}
 
 	public function get_tags( string $contact_id ): array {

@@ -31,6 +31,8 @@ final class UserSync {
 	public const HOOK_PUSH = 'switchyard_push_user';
 	public const HOOK_PULL = 'switchyard_pull_user';
 
+	public const HOOK_REGISTER = 'switchyard_register_user';
+
 	public const META_LAST_SYNC = 'switchyard_last_sync';
 
 	/** @var array<int, bool> */
@@ -61,6 +63,7 @@ final class UserSync {
 			2
 		);
 		add_action( self::HOOK_PULL, array( $this, 'pull' ) );
+		add_action( self::HOOK_REGISTER, array( $this, 'register_user' ) );
 	}
 
 	public function on_register( int $user_id ): void {
@@ -68,14 +71,37 @@ final class UserSync {
 			return;
 		}
 
-		$this->queue->dispatch( self::HOOK_PUSH, array( $user_id, array() ) );
+		$this->queue->dispatch( self::HOOK_REGISTER, array( $user_id ) );
+	}
 
+	/**
+	 * Pushes a new user, then tags them, in one job so the tags always find the
+	 * contact the push just created.
+	 */
+	public function register_user( int $user_id ): void {
+		do_action( self::HOOK_PUSH, $user_id, array() );
+
+		/** @var list<string> $register_tags */
 		$register_tags = $this->settings->array( 'register_tags' );
 
 		if ( ! empty( $register_tags ) ) {
-			/** @var list<string> $register_tags */
-			$this->queue->dispatch( 'switchyard_apply_tags_async', array( $user_id, $register_tags ) );
+			$this->tags->apply_tags( $user_id, $register_tags );
 		}
+	}
+
+	/**
+	 * Applies tags to a user whose contact may not exist yet, creating it
+	 * first so the tags are not dropped.
+	 *
+	 * @param list<string> $tag_list
+	 */
+	public function apply_tags_creating_contact( int $user_id, array $tag_list ): void {
+		if ( $this->tags->apply_tags( $user_id, $tag_list ) || null !== $this->resolver->cached_id( $user_id ) ) {
+			return;
+		}
+
+		$this->push( $user_id );
+		$this->tags->apply_tags( $user_id, $tag_list );
 	}
 
 	/**
@@ -86,15 +112,14 @@ final class UserSync {
 			return;
 		}
 
-		// An email change invalidates the cached contact mapping, because the
-		// CRM identifies contacts by email and the old ID may now belong to a
-		// record this user no longer owns.
+		// The cached contact ID stays: it identifies the same CRM contact after
+		// an email change, and the push below sends the new address to it.
 		if ( $old_data instanceof WP_User ) {
 			$user = get_userdata( $user_id );
 
 			if ( $user instanceof WP_User && $user->user_email !== $old_data->user_email ) {
 				$this->logger->info(
-					'Email changed, so the cached contact mapping was cleared.',
+					'Email changed, so the next push sends the new address to the same CRM contact.',
 					array( 'user_id' => $user_id )
 				);
 			}
@@ -161,21 +186,30 @@ final class UserSync {
 		$this->in_flight[ $user_id ] = true;
 
 		try {
-			$payload = $this->fields->to_crm( $user_id, $overrides );
-
-			if ( empty( $payload ) ) {
-				return null;
-			}
-
+			$payload    = $this->fields->to_crm( $user_id, $overrides );
 			$contact_id = $this->resolver->resolve( $user_id );
 
 			if ( null === $contact_id ) {
+				$email_field = $this->fields->email_field( $provider );
+
+				if ( null !== $email_field ) {
+					$payload[ $email_field ] = $user->user_email;
+				}
+
+				if ( empty( $payload ) ) {
+					return null;
+				}
+
 				$contact_id = $provider->add_contact( $payload );
 
 				$this->resolver->store_id( $user_id, $contact_id );
 
 				do_action( 'switchyard_contact_created', $user_id, $contact_id );
 			} else {
+				if ( empty( $payload ) ) {
+					return null;
+				}
+
 				$provider->update_contact( $contact_id, $payload );
 
 				do_action( 'switchyard_contact_updated', $user_id, $contact_id );
