@@ -25,7 +25,7 @@ applies the rule at four points:
 1. `template_redirect` for the single view, redirecting or showing the message.
 2. `pre_get_posts` to drop restricted posts from archives, search and feeds.
 3. REST responses, which have content and excerpt emptied.
-4. Menu items, widgets, blocks and page lists.
+4. Menu items, blocks, comments and page lists.
 
 Query filtering can be switched off under Access if you are handling it yourself.
 
@@ -47,7 +47,7 @@ a false sense of security.
 
 Two related limits worth knowing:
 
-- The tag cache is refreshed on login, on webhook, and on a schedule. A tag
+- The tag cache is refreshed on login and on webhook. A tag
   removed directly in the CRM takes effect on the user's next login unless the
   CRM sends a webhook. Call `switchyard_refresh_tags()` where you need it sooner.
 - Anyone who can edit a post can always see it, even without the tags. That is

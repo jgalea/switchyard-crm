@@ -16,9 +16,9 @@ Ten CRMs, one model. When someone registers, buys or submits a form, their recor
 
 Outward: user registration and profile changes, WooCommerce orders including guest checkout, Easy Digital Downloads purchases and refunds, and submissions from Gravity Forms, WPForms, Fluent Forms and Contact Form 7 with per-form field mapping.
 
-Back inward: tags via an inbound webhook, so a CRM automation can grant or revoke access; any mapped field on demand; and contacts imported as WordPress users.
+Back inward: tags via an inbound webhook, so a CRM automation can grant or revoke access; any mapped field on a webhook or on demand; and contacts imported as WordPress users.
 
-Access control: restrict any post type or taxonomy term by tag. Restricted content is filtered out of archives, search, feeds and the REST API, not merely hidden on the single view. Menu items, widgets and blocks get their own visibility rules.
+Access control: restrict any post type or taxonomy term by tag. Restricted content is filtered out of archives, search, feeds and the REST API, not merely hidden on the single view. Menu items and blocks get their own visibility rules.
 
 ## Supported CRMs
 
