@@ -5,12 +5,17 @@ declare( strict_types=1 );
 namespace Switchyard;
 
 use Switchyard\Access\ContentGate;
+use Switchyard\Access\BlockVisibility;
 use Switchyard\Access\MenuFilter;
 use Switchyard\Access\QueryFilter;
 use Switchyard\Access\Rules;
 use Switchyard\Access\Shortcodes;
 use Switchyard\Admin\AdminPages;
+use Switchyard\Admin\IntegrationSettings;
 use Switchyard\Admin\PostMetaBox;
+use Switchyard\Admin\RuleFields;
+use Switchyard\Admin\TagPicker;
+use Switchyard\Admin\UserPanel;
 use Switchyard\Crm\Http\Client;
 use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Integration\Ecommerce\EasyDigitalDownloads;
@@ -134,6 +139,7 @@ final class Plugin {
 			static fn ( Container $c ): GuestSync => new GuestSync(
 				$c->get( ProviderRegistry::class ),
 				$c->get( ContactResolver::class ),
+				$c->get( FieldMap::class ),
 				$c->get( Settings::class ),
 				$c->get( Logger::class )
 			)
@@ -170,7 +176,7 @@ final class Plugin {
 
 		$c->set(
 			Shortcodes::class,
-			static fn ( Container $c ): Shortcodes => new Shortcodes( $c->get( TagEngine::class ) )
+			static fn ( Container $c ): Shortcodes => new Shortcodes( $c->get( TagEngine::class ), $c->get( FieldMap::class ) )
 		);
 
 		$c->set(
@@ -178,7 +184,6 @@ final class Plugin {
 			static fn ( Container $c ): Listener => new Listener(
 				$c->get( ProviderRegistry::class ),
 				$c->get( ContactResolver::class ),
-				$c->get( TagEngine::class ),
 				$c->get( UserSync::class ),
 				$c->get( Settings::class ),
 				$c->get( Logger::class )
@@ -209,6 +214,48 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( ProviderRegistry::class ),
 				$c->get( FieldMap::class ),
+				$c->get( IntegrationRegistry::class ),
+				$c->get( IntegrationSettings::class )
+			)
+		);
+
+		$c->set(
+			BlockVisibility::class,
+			static fn ( Container $c ): BlockVisibility => new BlockVisibility( $c->get( TagEngine::class ), $c->get( TagPicker::class ) )
+		);
+
+		$c->set(
+			RuleFields::class,
+			static fn ( Container $c ): RuleFields => new RuleFields( $c->get( Rules::class ), $c->get( TagPicker::class ) )
+		);
+
+		$c->set(
+			UserPanel::class,
+			static fn ( Container $c ): UserPanel => new UserPanel(
+				$c->get( UserSync::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( TagEngine::class ),
+				$c->get( TagPicker::class ),
+				$c->get( ProviderRegistry::class )
+			)
+		);
+
+		$c->set(
+			Privacy::class,
+			static fn ( Container $c ): Privacy => new Privacy( $c->get( ContactResolver::class ), $c->get( TagEngine::class ) )
+		);
+
+		$c->set(
+			TagPicker::class,
+			static fn ( Container $c ): TagPicker => new TagPicker( $c->get( TagEngine::class ) )
+		);
+
+		$c->set(
+			IntegrationSettings::class,
+			static fn ( Container $c ): IntegrationSettings => new IntegrationSettings(
+				$c->get( Settings::class ),
+				$c->get( TagPicker::class ),
+				$c->get( ProviderRegistry::class ),
 				$c->get( IntegrationRegistry::class )
 			)
 		);
@@ -231,20 +278,22 @@ final class Plugin {
 
 		Installer::maybe_upgrade();
 
-		$this->boot_action_scheduler();
-
 		$this->get( UserSync::class )->register_hooks();
 		$this->get( GuestSync::class )->register_hooks();
 		$this->get( ContentGate::class )->register_hooks();
 		$this->get( QueryFilter::class )->register_hooks();
 		$this->get( MenuFilter::class )->register_hooks();
 		$this->get( Shortcodes::class )->register_hooks();
+		$this->get( BlockVisibility::class )->register_hooks();
+		$this->get( Privacy::class )->register_hooks();
 		$this->get( Listener::class )->register_hooks();
 		$this->get( SiteTracking::class )->register_hooks();
 
 		if ( is_admin() ) {
 			$this->get( AdminPages::class )->register_hooks();
 			$this->get( PostMetaBox::class )->register_hooks();
+			$this->get( RuleFields::class )->register_hooks();
+			$this->get( UserPanel::class )->register_hooks();
 		}
 
 		$this->register_async_handlers();
@@ -260,31 +309,15 @@ final class Plugin {
 		do_action( 'switchyard_loaded', $this );
 	}
 
-	/**
-	 * Action Scheduler is bundled, but WooCommerce and several other plugins
-	 * ship their own copy. Loading it unconditionally would define its
-	 * functions twice, so only load ours when nothing else has.
-	 */
-	private function boot_action_scheduler(): void {
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			return;
-		}
-
-		$bundled = SWITCHYARD_DIR . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
-
-		if ( is_readable( $bundled ) ) {
-			require_once $bundled;
-		}
-	}
-
 	private function register_async_handlers(): void {
 		$tags = $this->get( TagEngine::class );
+		$sync = $this->get( UserSync::class );
 
 		add_action(
 			'switchyard_apply_tags_async',
-			static function ( int $user_id, array $tag_list ) use ( $tags ): void {
+			static function ( int $user_id, array $tag_list ) use ( $sync ): void {
 				/** @var list<string> $tag_list */
-				$tags->apply_tags( $user_id, $tag_list );
+				$sync->apply_tags_creating_contact( $user_id, $tag_list );
 			},
 			10,
 			2
@@ -306,8 +339,6 @@ final class Plugin {
 				$tags->load_tags( $user_id );
 			}
 		);
-
-		$sync = $this->get( UserSync::class );
 
 		// Batch jobs use their own hook so a bulk resync can be cancelled
 		// without also cancelling live per-user syncs sitting in the queue.

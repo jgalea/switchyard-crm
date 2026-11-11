@@ -65,3 +65,127 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public int $ID = 0;
 	}
 }
+
+if ( ! class_exists( 'WP_Query' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_Query {
+
+		/** @var array<string, mixed> */
+		public array $query_vars = array();
+
+		public bool $singular = false;
+
+		public function is_singular(): bool {
+			return $this->singular;
+		}
+
+		/** @return mixed */
+		public function get( string $key, $fallback = '' ) {
+			return $this->query_vars[ $key ] ?? $fallback;
+		}
+
+		/** @param mixed $value */
+		public function set( string $key, $value ): void {
+			$this->query_vars[ $key ] = $value;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_User' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_User {
+
+		public int $ID = 0;
+		public string $user_email = '';
+		public string $user_login = '';
+		public string $display_name = '';
+		public string $first_name = '';
+		public string $last_name = '';
+
+		/** @var list<string> */
+		public array $roles = array();
+	}
+}
+
+if ( ! class_exists( 'WP_Error' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_Error {
+
+		public string $code;
+		public string $message;
+
+		/** @var mixed */
+		public $data;
+
+		/** @param mixed $data */
+		public function __construct( string $code = '', string $message = '', $data = '' ) {
+			$this->code    = $code;
+			$this->message = $message;
+			$this->data    = $data;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_REST_Server' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_REST_Server {
+
+		public const READABLE  = 'GET';
+		public const CREATABLE = 'POST';
+	}
+}
+
+if ( ! class_exists( 'WP_REST_Request' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_REST_Request {
+
+		/** @var array<string, mixed> */
+		public array $params = array();
+
+		/** @var array<string, string> */
+		public array $headers = array();
+
+		/** @return mixed */
+		public function get_param( string $key ) {
+			return $this->params[ $key ] ?? null;
+		}
+
+		public function get_header( string $key ): ?string {
+			return $this->headers[ $key ] ?? null;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_REST_Response' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_REST_Response {
+
+		/** @var mixed */
+		private $data;
+		private int $status;
+
+		/** @param mixed $data */
+		public function __construct( $data = null, int $status = 200 ) {
+			$this->data   = $data;
+			$this->status = $status;
+		}
+
+		/** @return mixed */
+		public function get_data() {
+			return $this->data;
+		}
+
+		public function get_status(): int {
+			return $this->status;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_Comment_Query' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_Comment_Query {
+
+		/** @var array<string, mixed> */
+		public array $query_vars = array();
+	}
+}

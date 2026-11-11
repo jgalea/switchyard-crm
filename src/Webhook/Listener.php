@@ -9,7 +9,6 @@ use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Logger\Logger;
 use Switchyard\Settings;
 use Switchyard\Sync\ContactResolver;
-use Switchyard\Sync\TagEngine;
 use Switchyard\Sync\UserSync;
 use WP_Error;
 use WP_REST_Request;
@@ -19,22 +18,20 @@ use WP_REST_Server;
 /**
  * Inbound endpoint for CRM automations.
  *
- * Deliberately does not trust tag data in the request body. A webhook body
- * can be replayed or forged; the tags are always re-read from the CRM after
- * the call, so the worst a bad request can do is cause an extra API read.
+ * Deliberately does not trust the request body. A webhook body can be
+ * replayed or forged; tags are re-read from the CRM after the call, and a
+ * contact ID in the body never creates a link between a user and a contact.
  */
 final class Listener {
 
 	private ProviderRegistry $registry;
 	private ContactResolver $resolver;
-	private TagEngine $tags;
 	private UserSync $sync;
 	private Settings $settings;
 	private Logger $logger;
-	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, TagEngine $tags, UserSync $sync, Settings $settings, Logger $logger ) {
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, UserSync $sync, Settings $settings, Logger $logger ) {
 		$this->registry = $registry;
 		$this->resolver = $resolver;
-		$this->tags     = $tags;
 		$this->sync     = $sync;
 		$this->settings = $settings;
 		$this->logger   = $logger;
@@ -48,7 +45,7 @@ final class Listener {
 			'switchyard/v1',
 			'/webhook/(?P<provider>[a-z0-9\-]+)',
 			array(
-				'methods'             => array( WP_REST_Server::CREATABLE, WP_REST_Server::READABLE ),
+				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'handle' ),
 				'permission_callback' => array( $this, 'authorise' ),
 				'args'                => array(
@@ -138,12 +135,16 @@ final class Listener {
 			}
 		}
 
-		if ( null !== $payload->contact_id ) {
-			$this->resolver->store_id( $user_id, $payload->contact_id );
+		// The contact ID in the body is only used to find a user that is
+		// already linked to it. A new link comes from the CRM's own answer for
+		// the user's email, so a request can't attach a user to another contact.
+		if ( $this->resolver->user_for_email( $payload->email ) === $user_id ) {
+			$this->resolver->resolve_by_email( $payload->email, $user_id );
 		}
 
-		// Authoritative read, rather than trusting the request body.
-		$this->tags->load_tags( $user_id );
+		// Authoritative read of the contact, rather than trusting the request
+		// body: mapped fields and tags both come from the CRM's own record.
+		$this->sync->pull( $user_id );
 
 		do_action( 'switchyard_webhook_received', $payload, $user_id );
 
@@ -156,13 +157,7 @@ final class Listener {
 			$slug
 		);
 
-		return new WP_REST_Response(
-			array(
-				'message' => 'ok',
-				'user_id' => $user_id,
-			),
-			200
-		);
+		return new WP_REST_Response( array( 'message' => 'ok' ), 200 );
 	}
 
 	private function resolve_user( Payload $payload ): ?int {

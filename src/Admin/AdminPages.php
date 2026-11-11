@@ -27,14 +27,16 @@ final class AdminPages {
 	private ProviderRegistry $registry;
 	private FieldMap $fields;
 	private IntegrationRegistry $integrations;
+	private IntegrationSettings $integration_settings;
 	private const CAPABILITY = 'manage_options';
 	private const SLUG       = 'switchyard-crm';
 
-	public function __construct( Settings $settings, ProviderRegistry $registry, FieldMap $fields, IntegrationRegistry $integrations ) {
-		$this->settings     = $settings;
-		$this->registry     = $registry;
-		$this->fields       = $fields;
-		$this->integrations = $integrations;
+	public function __construct( Settings $settings, ProviderRegistry $registry, FieldMap $fields, IntegrationRegistry $integrations, IntegrationSettings $integration_settings ) {
+		$this->settings             = $settings;
+		$this->registry             = $registry;
+		$this->fields               = $fields;
+		$this->integrations         = $integrations;
+		$this->integration_settings = $integration_settings;
 	}
 
 	public function register_hooks(): void {
@@ -137,6 +139,20 @@ final class AdminPages {
 			'logscleared' => array( 'success', __( 'Logs cleared.', 'switchyard-crm' ) ),
 		);
 
+		if ( 'queued' === $notice ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$count = isset( $_GET['switchyard_count'] ) ? absint( $_GET['switchyard_count'] ) : 0;
+
+			$messages['queued'] = array(
+				'success',
+				sprintf(
+					/* translators: %s: number of users. */
+					_n( 'Queued %s user. Watch the Logs tab for progress.', 'Queued %s users. Watch the Logs tab for progress.', $count, 'switchyard-crm' ),
+					number_format_i18n( $count )
+				),
+			);
+		}
+
 		if ( ! isset( $messages[ $notice ] ) ) {
 			return;
 		}
@@ -160,8 +176,14 @@ final class AdminPages {
 	private function render_connection(): void {
 		$this->form_open( 'connection' );
 
-		$current  = $this->settings->provider_slug();
+		$saved    = $this->settings->provider_slug();
 		$provider = $this->registry->active();
+
+		// Picking a CRM reloads the screen so its credential fields appear
+		// without a save first.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$chosen  = isset( $_GET['provider'] ) ? sanitize_key( wp_unslash( $_GET['provider'] ) ) : $saved;
+		$current = $this->registry->has( $chosen ) ? $chosen : $saved;
 
 		echo '<table class="form-table" role="presentation"><tbody>';
 
@@ -180,17 +202,24 @@ final class AdminPages {
 
 		echo '</select>';
 
-		if ( null !== $provider ) {
-			echo ' <span style="color:#1a7f37;">' . esc_html__( 'Connected', 'switchyard-crm' ) . '</span>';
-		} elseif ( '' !== $current ) {
-			echo ' <span style="color:#b32d2e;">' . esc_html__( 'Not connected', 'switchyard-crm' ) . '</span>';
+		if ( $current === $saved && null !== $provider ) {
+			echo ' <span style="color:#1a7f37;"><span aria-hidden="true">&#10003;</span> ' . esc_html__( 'Connected', 'switchyard-crm' ) . '</span>';
+		} elseif ( $current === $saved && '' !== $saved ) {
+			echo ' <span style="color:#b32d2e;"><span aria-hidden="true">&#10007;</span> ' . esc_html__( 'Not connected', 'switchyard-crm' ) . '</span>';
 		}
 
-		echo '<p class="description">' . esc_html__( 'Save after changing the CRM to see its credential fields.', 'switchyard-crm' ) . '</p>';
+		wp_print_inline_script_tag(
+			sprintf(
+				"document.getElementById('switchyard-provider').addEventListener('change',function(){window.location=%s+encodeURIComponent(this.value);});",
+				wp_json_encode( admin_url( 'admin.php?page=' . self::SLUG . '&tab=connection&provider=' ) )
+			)
+		);
+
+		echo '<p class="description">' . esc_html__( 'Choose a CRM to see its credential fields.', 'switchyard-crm' ) . '</p>';
 		echo '</td></tr>';
 
 		if ( '' !== $current && $this->registry->has( $current ) ) {
-			$stored = $this->settings->credentials();
+			$stored = $current === $saved ? $this->settings->credentials() : array();
 
 			foreach ( $this->registry->make( $current )->get_credential_fields() as $key => $field ) {
 				$id = 'switchyard-cred-' . $key;
@@ -263,13 +292,14 @@ final class AdminPages {
 		);
 
 		printf(
-			'<p><a href="%s" class="button">%s</a></p>',
+			'<p><a href="%s" class="button" onclick="return confirm(%s)">%s</a></p>',
 			esc_url(
 				wp_nonce_url(
 					admin_url( 'admin-post.php?action=switchyard_action&do=rotate_secret' ),
 					'switchyard_action'
 				)
 			),
+			esc_attr( wp_json_encode( __( 'Rotate the secret? Every CRM automation using the current one stops working until you update it.', 'switchyard-crm' ) ) ),
 			esc_html__( 'Rotate secret', 'switchyard-crm' )
 		);
 	}
@@ -342,16 +372,13 @@ final class AdminPages {
 				}
 
 				echo '</select>';
-				printf(
-					'<input type="hidden" name="map[%s][type]" value="%s">',
-					esc_attr( $key ),
-					esc_attr( $crm_fields[ $entry['crm_field'] ?? '' ]['type'] ?? 'text' )
-				);
 				echo '</td>';
 
 				printf(
-					'<td><input type="checkbox" name="map[%s][active]" value="1" %s></td>',
+					'<td><label class="screen-reader-text" for="switchyard-active-%1$s">%2$s</label><input type="checkbox" id="switchyard-active-%1$s" name="map[%1$s][active]" value="1" %3$s></td>',
 					esc_attr( $key ),
+					/* translators: %s: WordPress field name. */
+					esc_html( sprintf( __( 'Sync %s', 'switchyard-crm' ), $label ) ),
 					checked( ! empty( $entry['active'] ), true, false )
 				);
 
@@ -449,6 +476,10 @@ final class AdminPages {
 			echo '</tbody></table>';
 		}
 
+		$this->integration_settings->render();
+
+		do_action( 'switchyard_admin_integrations_settings' );
+
 		submit_button();
 
 		echo '</form>';
@@ -491,10 +522,41 @@ final class AdminPages {
 
 		$table = LogTable::name();
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$level  = isset( $_GET['level'] ) ? sanitize_key( wp_unslash( $_GET['level'] ) ) : '';
+		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+		$paged  = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$per_page = 50;
+		$where    = array( '1=%d' );
+		$args     = array( 1 );
+
+		if ( array_key_exists( $level, Logger::LEVELS ) ) {
+			$where[] = 'level = %s';
+			$args[]  = $level;
+		}
+
+		if ( '' !== $search ) {
+			$where[] = '(message LIKE %s OR source LIKE %s OR context LIKE %s)';
+			$like    = '%' . $wpdb->esc_like( $search ) . '%';
+			array_push( $args, $like, $like, $like );
+		}
+
+		$where_sql = implode( ' AND ', $where );
+
 		// $table is $wpdb->prefix . 'switchyard_log'; identifiers cannot be bound,
 		// and an admin log viewer is deliberately uncached.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC LIMIT 200" );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}", $args ) );
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d",
+				array_merge( $args, array( $per_page, ( $paged - 1 ) * $per_page ) )
+			)
+		);
+		// phpcs:enable
 
 		$this->form_open( 'logs' );
 
@@ -502,31 +564,55 @@ final class AdminPages {
 		echo '<tr><th scope="row"><label for="switchyard-loglevel">' . esc_html__( 'Log level', 'switchyard-crm' ) . '</label></th><td>';
 		echo '<select id="switchyard-loglevel" name="log_level">';
 
-		foreach ( array( 'debug', 'info', 'notice', 'warning', 'error' ) as $level ) {
+		foreach ( array( 'debug', 'info', 'notice', 'warning', 'error' ) as $option ) {
 			printf(
 				'<option value="%s" %s>%s</option>',
-				esc_attr( $level ),
-				selected( $this->settings->string( 'log_level' ), $level, false ),
-				esc_html( ucfirst( $level ) )
+				esc_attr( $option ),
+				selected( $this->settings->string( 'log_level' ), $option, false ),
+				esc_html( ucfirst( $option ) )
 			);
 		}
 
 		echo '</select></td></tr>';
+
+		echo '<tr><th scope="row"><label for="switchyard-logretention">' . esc_html__( 'Keep logs for', 'switchyard-crm' ) . '</label></th><td>';
+		printf(
+			'<input type="number" id="switchyard-logretention" name="log_retention_days" min="1" max="365" value="%d" class="small-text"> %s',
+			(int) $this->settings->int( 'log_retention_days', 30 ),
+			esc_html__( 'days', 'switchyard-crm' )
+		);
+		echo '</td></tr>';
 		echo '</tbody></table>';
 
 		submit_button( __( 'Save', 'switchyard-crm' ), 'secondary' );
 		echo '</form>';
 
 		printf(
-			'<p><a href="%s" class="button">%s</a></p>',
+			'<p><a href="%s" class="button" onclick="return confirm(%s)">%s</a></p>',
 			esc_url(
 				wp_nonce_url(
 					admin_url( 'admin-post.php?action=switchyard_action&do=clear_logs' ),
 					'switchyard_action'
 				)
 			),
+			esc_attr( (string) wp_json_encode( __( 'Delete every log entry?', 'switchyard-crm' ) ) ),
 			esc_html__( 'Clear logs', 'switchyard-crm' )
 		);
+
+		printf( '<form method="get" action="%s" class="tablenav top">', esc_url( admin_url( 'admin.php' ) ) );
+		printf( '<input type="hidden" name="page" value="%s"><input type="hidden" name="tab" value="logs">', esc_attr( self::SLUG ) );
+		echo '<label class="screen-reader-text" for="switchyard-logfilter">' . esc_html__( 'Filter by level', 'switchyard-crm' ) . '</label>';
+		echo '<select id="switchyard-logfilter" name="level"><option value="">' . esc_html__( 'All levels', 'switchyard-crm' ) . '</option>';
+
+		foreach ( array_keys( Logger::LEVELS ) as $option ) {
+			printf( '<option value="%s" %s>%s</option>', esc_attr( $option ), selected( $level, $option, false ), esc_html( ucfirst( $option ) ) );
+		}
+
+		echo '</select> ';
+		echo '<label class="screen-reader-text" for="switchyard-logsearch">' . esc_html__( 'Search logs', 'switchyard-crm' ) . '</label>';
+		printf( '<input type="search" id="switchyard-logsearch" name="s" value="%s"> ', esc_attr( $search ) );
+		submit_button( __( 'Filter', 'switchyard-crm' ), 'secondary', '', false );
+		echo '</form>';
 
 		echo '<table class="widefat striped"><thead><tr>';
 		echo '<th>' . esc_html__( 'Time', 'switchyard-crm' ) . '</th>';
@@ -555,6 +641,25 @@ final class AdminPages {
 		}
 
 		echo '</tbody></table>';
+
+		$pages = (int) ceil( $total / $per_page );
+
+		if ( $pages > 1 ) {
+			echo '<div class="tablenav bottom"><div class="tablenav-pages">';
+			// paginate_links() escapes the links it builds.
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo paginate_links(
+				array(
+					'base'      => add_query_arg( 'paged', '%#%' ),
+					'format'    => '',
+					'current'   => $paged,
+					'total'     => $pages,
+					'prev_text' => '&lsaquo;',
+					'next_text' => '&rsaquo;',
+				)
+			);
+			echo '</div></div>';
+		}
 	}
 
 	private function render_tools(): void {
@@ -562,6 +667,13 @@ final class AdminPages {
 			'refresh_catalogues' => __( 'Refresh tags and fields from the CRM', 'switchyard-crm' ),
 			'resync_users'       => __( 'Resync all users to the CRM', 'switchyard-crm' ),
 			'refresh_all_tags'   => __( 'Pull tags for all users from the CRM', 'switchyard-crm' ),
+			'pull_users'         => __( 'Pull mapped fields and tags for all users from the CRM', 'switchyard-crm' ),
+		);
+
+		$confirm = array(
+			'resync_users'     => __( 'Queue every user for a push to the CRM?', 'switchyard-crm' ),
+			'refresh_all_tags' => __( 'Queue every user for a tag refresh from the CRM?', 'switchyard-crm' ),
+			'pull_users'       => __( 'Queue every user for a field and tag pull from the CRM?', 'switchyard-crm' ),
 		);
 
 		echo '<table class="widefat striped"><tbody>';
@@ -569,13 +681,14 @@ final class AdminPages {
 		foreach ( $actions as $do => $label ) {
 			echo '<tr><td>' . esc_html( $label ) . '</td><td>';
 			printf(
-				'<a href="%s" class="button">%s</a>',
+				'<a href="%s" class="button"%s>%s</a>',
 				esc_url(
 					wp_nonce_url(
 						admin_url( 'admin-post.php?action=switchyard_action&do=' . $do ),
 						'switchyard_action'
 					)
 				),
+				isset( $confirm[ $do ] ) ? ' onclick="return confirm(' . esc_attr( (string) wp_json_encode( $confirm[ $do ] ) ) . ')"' : '',
 				esc_html__( 'Run', 'switchyard-crm' )
 			);
 			echo '</td></tr>';
@@ -706,6 +819,12 @@ final class AdminPages {
 
 		$map = array();
 
+		try {
+			$crm_fields = null === $this->registry->active() ? array() : $this->registry->active()->get_available_fields();
+		} catch ( CrmException $e ) {
+			$crm_fields = array();
+		}
+
 		foreach ( $submitted as $wp_key => $entry ) {
 			if ( ! is_array( $entry ) ) {
 				continue;
@@ -713,13 +832,13 @@ final class AdminPages {
 
 			$crm_field = sanitize_text_field( (string) ( $entry['crm_field'] ?? '' ) );
 
-			if ( '' === $crm_field ) {
+			if ( '' === $crm_field || ! $this->fields->allows( sanitize_key( (string) $wp_key ) ) ) {
 				continue;
 			}
 
 			$map[ sanitize_key( (string) $wp_key ) ] = array(
 				'crm_field' => $crm_field,
-				'type'      => sanitize_key( (string) ( $entry['type'] ?? 'text' ) ),
+				'type'      => $crm_fields[ $crm_field ]['type'] ?? 'text',
 				'active'    => ! empty( $entry['active'] ),
 			);
 		}
@@ -780,6 +899,10 @@ final class AdminPages {
 		}
 
 		$this->settings->merge( $values );
+
+		$this->integration_settings->save();
+
+		do_action( 'switchyard_admin_integrations_save' );
 	}
 
 	/**
@@ -790,9 +913,13 @@ final class AdminPages {
 	private function save_logs(): void {
 		$level = isset( $_POST['log_level'] ) ? sanitize_key( wp_unslash( $_POST['log_level'] ) ) : 'error';
 
-		$this->settings->set(
-			'log_level',
-			array_key_exists( $level, Logger::LEVELS ) ? $level : 'error'
+		$days = isset( $_POST['log_retention_days'] ) ? absint( $_POST['log_retention_days'] ) : 30;
+
+		$this->settings->merge(
+			array(
+				'log_level'          => array_key_exists( $level, Logger::LEVELS ) ? $level : 'error',
+				'log_retention_days' => min( 365, max( 1, $days ) ),
+			)
 		);
 	}
 
@@ -808,6 +935,7 @@ final class AdminPages {
 
 		$notice = 'saved';
 		$tab    = 'tools';
+		$count  = 0;
 
 		switch ( $do ) {
 			case 'rotate_secret':
@@ -836,24 +964,34 @@ final class AdminPages {
 				break;
 
 			case 'resync_users':
-				Batch::queue_all( 'switchyard_batch_push_user' );
+				$count  = Batch::queue_all( 'switchyard_batch_push_user' );
+				$notice = 'queued';
 				break;
 
 			case 'refresh_all_tags':
-				Batch::queue_all( 'switchyard_refresh_user_tags' );
+				$count  = Batch::queue_all( 'switchyard_refresh_user_tags' );
+				$notice = 'queued';
+				break;
+
+			case 'pull_users':
+				$count  = Batch::queue_all( 'switchyard_pull_user' );
+				$notice = 'queued';
 				break;
 		}
 
-		$this->redirect( $tab, $notice );
+		$this->redirect( $tab, $notice, $count );
 	}
 
-	private function redirect( string $tab, string $notice ): void {
+	private function redirect( string $tab, string $notice, int $count = 0 ): void {
 		wp_safe_redirect(
 			add_query_arg(
-				array(
-					'page'              => self::SLUG,
-					'tab'               => $tab,
-					'switchyard_notice' => $notice,
+				array_filter(
+					array(
+						'page'              => self::SLUG,
+						'tab'               => $tab,
+						'switchyard_notice' => $notice,
+						'switchyard_count'  => $count,
+					)
 				),
 				admin_url( 'admin.php' )
 			)

@@ -155,11 +155,20 @@ final class PostMetaBoxTest extends TestCase {
 		$this->assertStringNotContainsString( '<select', $html );
 	}
 
-	public function test_access_box_outputs_no_field_when_the_crm_fails(): void {
+	public function test_access_box_still_offers_the_restrict_switch_when_the_crm_fails(): void {
 		$html = $this->render( true, 'access' );
 
-		$this->assertStringNotContainsString( 'switchyard_access_nonce', $html );
-		$this->assertStringNotContainsString( 'switchyard_restrict', $html );
+		$this->assertStringContainsString( 'switchyard_access_nonce', $html );
+		$this->assertStringContainsString( 'name="switchyard_restrict"', $html );
+		$this->assertStringNotContainsString( '<select', $html );
+	}
+
+	public function test_unticking_restrict_while_the_crm_is_down_keeps_the_stored_tags(): void {
+		$_POST = array( 'switchyard_access_nonce' => 'x' );
+
+		$this->box( true )->save( 5, $this->post() );
+
+		$this->assertSame( array( Rules::META_ENABLED ), $this->deleted );
 	}
 
 	public function test_save_without_the_form_leaves_stored_tags_alone(): void {

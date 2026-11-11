@@ -55,6 +55,9 @@ return empty.
 | `switchyard_webhook_received` | A CRM webhook was handled. |
 | `switchyard_access_denied` | Someone was refused a post. |
 | `switchyard_contact_imported` | A contact became a user. |
+| `switchyard_admin_integrations_settings` | Inside the Integrations tab form, to add settings sections. |
+| `switchyard_admin_integrations_save` | After the Integrations tab form is saved, with the nonce and capability already checked. |
+| `switchyard_erased_personal_data` | A person's data was erased. Receives the email and the CRM contact ID, so a site can remove the contact from its CRM. |
 
 ## Order objects
 

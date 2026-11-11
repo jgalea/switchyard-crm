@@ -32,6 +32,11 @@ final class GravityForms extends AbstractFormIntegration {
 	public function on_submission( array $entry, array $form ): void {
 		$this->guard(
 			function () use ( $entry, $form ): void {
+				// The hook also runs for entries Gravity Forms has marked as spam.
+				if ( 'spam' === ( $entry['status'] ?? '' ) ) {
+					return;
+				}
+
 				$form_id = (string) ( $form['id'] ?? '' );
 
 				if ( '' === $form_id ) {

@@ -47,17 +47,18 @@ abstract class AbstractFormIntegration extends AbstractIntegration {
 	/**
 	 * Configuration for one form.
 	 *
-	 * @return array{enabled: bool, map: array<string, string>, tags: list<string>, email_field: string}
+	 * @return array{enabled: bool, map: array<string, string>, tags: list<string>, email_field: string, update_existing: bool}
 	 */
 	protected function form_config( string $form_id ): array {
 		$all    = $this->options();
 		$config = $all['forms'][ $form_id ] ?? array();
 
 		return array(
-			'enabled'     => ! empty( $config['enabled'] ),
-			'map'         => is_array( $config['map'] ?? null ) ? $config['map'] : array(),
-			'tags'        => is_array( $config['tags'] ?? null ) ? array_map( 'strval', $config['tags'] ) : array(),
-			'email_field' => (string) ( $config['email_field'] ?? '' ),
+			'enabled'         => ! empty( $config['enabled'] ),
+			'map'             => is_array( $config['map'] ?? null ) ? $config['map'] : array(),
+			'tags'            => is_array( $config['tags'] ?? null ) ? array_map( 'strval', $config['tags'] ) : array(),
+			'email_field'     => (string) ( $config['email_field'] ?? '' ),
+			'update_existing' => ! array_key_exists( 'update_existing', $config ) || ! empty( $config['update_existing'] ),
 		);
 	}
 
@@ -114,7 +115,12 @@ abstract class AbstractFormIntegration extends AbstractIntegration {
 
 		// Deferred, because a form plugin's submit handler is on the critical
 		// path of a user waiting for a thank-you page.
-		$this->queue->dispatch( GuestSync::HOOK, array( $email, $fields, $tags ) );
+		// A form can't overwrite the CRM record of a registered user unless that
+		// user is the one submitting it.
+		$owner  = get_user_by( 'email', $email );
+		$update = $config['update_existing'] && ( ! $owner instanceof \WP_User || get_current_user_id() === $owner->ID );
+
+		$this->queue->dispatch( GuestSync::HOOK, array( $email, $fields, $tags, $update ) );
 
 		do_action( 'switchyard_form_submitted', $form_id, $email, $fields, $tags, $this->get_slug() );
 	}

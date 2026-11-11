@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard\Sync;
 
+use Switchyard\Crm\Contracts\Provider;
 use WP_User;
 
 /**
@@ -76,6 +77,41 @@ final class FieldMap {
 		$fields = apply_filters( 'switchyard_wp_fields', $fields );
 
 		return $fields;
+	}
+
+	/**
+	 * Whether a WordPress key is one of the fields offered for mapping, which
+	 * keeps role, capability and other internal meta out of reach of both the
+	 * map and the field shortcode.
+	 */
+	public function allows( string $wp_key ): bool {
+		foreach ( $this->available_wp_fields() as $group_fields ) {
+			if ( isset( $group_fields[ $wp_key ] ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * The CRM field that holds the email: the one the site mapped to the
+	 * WordPress email, otherwise the provider's own email field.
+	 */
+	public function email_field( Provider $provider ): ?string {
+		$mapped = $this->all()['user_email'] ?? null;
+
+		if ( null !== $mapped && ! empty( $mapped['active'] ) && '' !== $mapped['crm_field'] ) {
+			return $mapped['crm_field'];
+		}
+
+		foreach ( $provider->get_available_fields() as $key => $field ) {
+			if ( 'email' === ( $field['type'] ?? '' ) ) {
+				return (string) $key;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -195,7 +231,7 @@ final class FieldMap {
 		$user_fields = array();
 
 		foreach ( $this->all() as $wp_key => $entry ) {
-			if ( empty( $entry['active'] ) ) {
+			if ( empty( $entry['active'] ) || ! $this->allows( $wp_key ) ) {
 				continue;
 			}
 

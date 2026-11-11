@@ -45,6 +45,15 @@ require_once $switchyard_autoloader;
 // ABSPATH, so it must only ever be included from inside WordPress.
 require_once SWITCHYARD_DIR . 'src/api.php';
 
+// Action Scheduler registers itself on plugins_loaded at priority 0, so it has
+// to be required while plugins are still loading. Another plugin's copy wins
+// when it loaded first; the bundled one only fills the gap.
+$switchyard_scheduler = SWITCHYARD_DIR . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+
+if ( ! class_exists( 'ActionScheduler_Versions', false ) && is_readable( $switchyard_scheduler ) ) {
+	require_once $switchyard_scheduler;
+}
+
 register_activation_hook( __FILE__, array( Switchyard\Installer::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( Switchyard\Installer::class, 'deactivate' ) );
 

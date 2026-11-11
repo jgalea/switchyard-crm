@@ -26,12 +26,12 @@ Ten CRMs are supported, and the same features work on all of them.
 **What syncs back**
 
 * Tags, through an inbound webhook, so a CRM automation can grant or revoke access
-* Any mapped field, on demand or on a schedule
+* Any mapped field, when the CRM sends a webhook and on demand from the user profile or the Tools tab
 * Contacts imported as WordPress users
 
 **Access control**
 
-Restrict any post, page or custom post type by tag, or restrict a whole taxonomy term. Restricted content is kept out of archives, search, feeds and the REST API, not just hidden from the single view. Menu items, widgets and blocks have their own visibility rules, and there are shortcodes for conditional content inside a post.
+Restrict any post, page or custom post type by tag, or restrict a whole taxonomy term from its edit screen. Restricted content is kept out of archives, search, feeds, comments and the REST API, not just hidden from the single view. Menu items and blocks have their own visibility rules, and there are shortcodes for conditional content inside a post.
 
 **Supported CRMs**
 
@@ -49,9 +49,9 @@ No nag screens, no upsell banners, no review prompts.
 
 Switchyard CRM only ever talks to the one CRM you connect it to. No service is contacted until you pick a CRM under Switchyard CRM → Connection and enter its credentials. Clearing those credentials stops all traffic to it.
 
-What is sent: the contact data in your field map. That is always the email address, and then whatever user profile fields, order fields and form fields you have mapped. It is sent when someone registers or updates their profile, when a WooCommerce or Easy Digital Downloads order is placed or refunded, and when a mapped form is submitted. The plugin reads back tags, list membership and mapped fields, on demand or on the schedule you set, and can import contacts as WordPress users.
+What is sent: the contact data in your field map. That is always the email address, and then whatever user profile fields, order fields and form fields you have mapped. It is sent when someone registers or updates their profile, when a WooCommerce or Easy Digital Downloads order is placed or refunded, and when a mapped form is submitted. The plugin reads back tags and list membership when a user logs in and when the CRM sends a webhook, reads mapped fields on demand and on a webhook, and can import contacts as WordPress users.
 
-Site tracking is a separate, off-by-default setting under Switchyard CRM → Settings. Turning it on loads the CRM's own visitor tracking script in your visitors' browsers, from that CRM's servers: js.hs-scripts.com for HubSpot, static.klaviyo.com for Klaviyo, diffuser-cdn.app-us1.com for ActiveCampaign. Those scripts see what the CRM's tracking normally sees, which is page views and, for a logged-in visitor, the email address Switchyard passes to identify them. Leave the setting off and none of it loads.
+Site tracking is a separate, off-by-default setting under Switchyard CRM → Sync. Turning it on loads the CRM's own visitor tracking script in your visitors' browsers, from that CRM's servers: js.hs-scripts.com for HubSpot, static.klaviyo.com for Klaviyo, diffuser-cdn.app-us1.com for ActiveCampaign. Those scripts see what the CRM's tracking normally sees, which is page views and, for a logged-in visitor, the email address Switchyard passes to identify them. Leave the setting off and none of it loads.
 
 FluentCRM runs inside your own WordPress installation, so selecting it sends nothing off-site. The other providers are third-party services, each governed by its own terms and privacy policy:
 
@@ -80,7 +80,7 @@ Yes. Klaviyo, Brevo and MailerLite model segmentation as lists or groups rather 
 
 = What happens if my CRM goes down? =
 
-Nothing on the site breaks. Failed calls retry with backoff, then queue for later. After repeated failures Switchyard stops calling that CRM for five minutes rather than adding a timeout to every page load. Access decisions use the cached tags in the meantime.
+Nothing on the site breaks. Failed calls retry with backoff. After repeated failures Switchyard stops calling that CRM for five minutes rather than adding a timeout to every page load. Access decisions use the cached tags in the meantime.
 
 = Does it work with guest checkout? =
 
@@ -99,6 +99,20 @@ Yes. `switchyard_apply_tags()`, `switchyard_remove_tags()`, `switchyard_has_tag(
 Every synced WooCommerce or EDD order fires `switchyard_order_synced` with a normalised order object carrying line items, totals, currency and the customer user ID. Hook it to push orders wherever you want.
 
 == Changelog ==
+
+= Unreleased =
+* New: settings for registration tags, WooCommerce and EDD purchase, status and refund tags, and per-form field mapping on the Integrations tab.
+* New: block visibility for every block, and access rule fields on term edit screens and menu items.
+* New: CRM panel and sync buttons on the user profile, and a Sync to CRM row action in the users list.
+* New: webhooks pull mapped fields back onto the user, and a Tools action pulls them for everyone.
+* New: personal-data export and erasure, and privacy policy text.
+* New: log search, level filter, paging and a retention setting.
+* Fixed: a term access rule no longer crashes archive pages, and term rules now apply to posts in any taxonomy.
+* Fixed: a webhook can no longer link a user to a different CRM contact.
+* Fixed: on multisite, contact IDs and tags are kept per site.
+* Fixed: new contacts always get their email address, including guest form entries and registration tags.
+* Fixed: comments on restricted posts are hidden from REST and feeds.
+* Fixed: entries flagged as spam are not sent to the CRM.
 
 = 1.1.0 =
 * New: turn each integration, and each Pro module, on or off from the Integrations tab.

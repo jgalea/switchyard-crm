@@ -10,7 +10,7 @@ use Switchyard\Logger\LogTable;
 final class Installer {
 
 	public const DB_VERSION_OPTION = 'switchyard_db_version';
-	public const DB_VERSION        = 2;
+	public const DB_VERSION        = 3;
 
 	public static function activate(): void {
 		self::maybe_upgrade();
@@ -42,11 +42,49 @@ final class Installer {
 
 		LogTable::create();
 
-		if ( $installed > 0 ) {
+		if ( $installed > 0 && $installed < 2 ) {
 			self::split_purchase_tags();
 		}
 
+		if ( $installed > 0 && is_multisite() ) {
+			self::scope_user_meta();
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Contact IDs and tags used to share one unscoped key across a network. Copy
+	 * them to this site's scoped keys so members keep their access. The option
+	 * that gates this is per site, so each site runs it once, on its first load.
+	 */
+	private static function scope_user_meta(): void {
+		global $wpdb;
+
+		foreach ( array( Sync\ContactResolver::META_CONTACT_ID, Sync\TagEngine::META_TAGS, Sync\UserSync::META_LAST_SYNC ) as $base ) {
+			$scoped = Sync\ContactResolver::meta_key( $base );
+
+			do {
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT m.user_id, m.meta_value FROM {$wpdb->usermeta} m
+						WHERE m.meta_key = %s
+						AND NOT EXISTS ( SELECT 1 FROM {$wpdb->usermeta} x WHERE x.user_id = m.user_id AND x.meta_key = %s )
+						LIMIT 500",
+						$base,
+						$scoped
+					)
+				);
+				// phpcs:enable
+
+				$copied = 0;
+
+				foreach ( (array) $rows as $row ) {
+					$copied += add_user_meta( (int) $row->user_id, $scoped, maybe_unserialize( $row->meta_value ), true ) ? 1 : 0;
+				}
+			} while ( $copied > 0 );
+		}
 	}
 
 	/**

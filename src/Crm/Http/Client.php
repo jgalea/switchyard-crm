@@ -140,7 +140,7 @@ final class Client {
 		while ( true ) {
 			++$attempt;
 
-			$raw = wp_remote_request( $url, $args );
+			$raw = wp_safe_remote_request( $url, $args );
 
 			if ( $raw instanceof WP_Error ) {
 				if ( $attempt < self::MAX_ATTEMPTS ) {
@@ -156,9 +156,9 @@ final class Client {
 				$this->logger->error(
 					'Transport failure contacting the CRM.',
 					array(
-						'url'     => $url,
+						'url'     => $this->redact_url( $url ),
 						'method'  => $method,
-						'error'   => $raw->get_error_message(),
+						'error'   => $this->redact_url( $raw->get_error_message() ),
 						'attempt' => $attempt,
 					),
 					$this->provider_slug
@@ -167,7 +167,7 @@ final class Client {
 				// The message is escaped; the context array is logged, never
 				// printed, so escaping it would corrupt the stored value.
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-				throw new ConnectionException( esc_html( $raw->get_error_message() ), array( 'url' => $url ) );
+				throw new ConnectionException( esc_html( $raw->get_error_message() ), array( 'url' => $this->redact_url( $url ) ) );
 			}
 
 			$response = $this->to_response( $raw );
@@ -382,15 +382,31 @@ final class Client {
 
 	/** @param array<mixed>|null $body */
 	private function log_exchange( string $method, string $url, ?array $body, Response $response, string $level ): void {
+		$excerpt = substr( $response->body, 0, 1000 );
+
+		// Failures are logged at the default level, so they carry the shape of
+		// the exchange but not the personal data in it. Debug keeps everything.
+		if ( 'debug' !== $level ) {
+			$url     = $this->redact_url( $url );
+			$body    = null === $body ? null : array_keys( $body );
+			$excerpt = (string) preg_replace( '/[^\s"\'<>@,;]+@[^\s"\'<>@,;]+/', '[email]', $excerpt );
+		}
+
 		$this->logger->log(
 			$level,
 			sprintf( '%s %s responded %d.', $method, $url, $response->status ),
 			array(
 				'request'  => $body,
-				'response' => substr( $response->body, 0, 1000 ),
+				'response' => $excerpt,
 			),
 			$this->provider_slug
 		);
+	}
+
+	private function redact_url( string $url ): string {
+		$path = rawurldecode( (string) strtok( $url, '?' ) );
+
+		return (string) preg_replace( '/[^\s"\'<>@,;\/]+@[^\s"\'<>@,;\/]+/', '[email]', $path );
 	}
 
 	private function circuit_key(): string {

@@ -5,6 +5,7 @@ declare( strict_types=1 );
 namespace Switchyard\Access;
 
 use Switchyard\Settings;
+use WP_Comment_Query;
 use WP_Post;
 use WP_Query;
 use WP_REST_Response;
@@ -21,6 +22,7 @@ final class QueryFilter {
 
 	private Rules $rules;
 	private Settings $settings;
+
 	public function __construct( Rules $rules, Settings $settings ) {
 		$this->rules    = $rules;
 		$this->settings = $settings;
@@ -32,23 +34,30 @@ final class QueryFilter {
 
 		add_action( 'pre_get_posts', array( $this, 'exclude_restricted' ) );
 		add_filter( 'get_pages', array( $this, 'filter_pages' ) );
+		add_action( 'pre_get_comments', array( $this, 'exclude_restricted_comments' ) );
 
+		// Custom post types are registered on init, after this runs.
+		add_action( 'init', array( $this, 'register_rest_filters' ), 20 );
+
+		// Titles and URLs leak through these even when the body does not.
+		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'filter_sitemap_query' ), 10, 2 );
+		add_filter( 'get_previous_post_where', array( $this, 'filter_adjacent_post' ) );
+		add_filter( 'get_next_post_where', array( $this, 'filter_adjacent_post' ) );
+		add_filter( 'comment_feed_where', array( $this, 'filter_comment_feed' ) );
+		add_filter( 'oembed_response_data', array( $this, 'filter_oembed' ), 10, 2 );
+	}
+
+	public function register_rest_filters(): void {
 		// rest_prepare_{$post_type} is per type. Registering only
 		// rest_prepare_post leaves every page and custom post type returning
 		// its full content from the REST API regardless of its access rule.
 		foreach ( $this->rules->gated_post_types() as $post_type ) {
 			add_filter( "rest_prepare_{$post_type}", array( $this, 'filter_rest_response' ), 10, 2 );
 		}
-
-		// Titles and URLs leak through these even when the body does not.
-		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'filter_sitemap_query' ), 10, 2 );
-		add_filter( 'get_previous_post_where', array( $this, 'filter_adjacent_post' ) );
-		add_filter( 'get_next_post_where', array( $this, 'filter_adjacent_post' ) );
-		add_filter( 'oembed_response_data', array( $this, 'filter_oembed' ), 10, 2 );
 	}
 
 	public function exclude_restricted( WP_Query $query ): void {
-		if ( is_admin() || $query->is_singular() ) {
+		if ( ( is_admin() && ! wp_doing_ajax() ) || $query->is_singular() ) {
 			return;
 		}
 
@@ -66,6 +75,26 @@ final class QueryFilter {
 		$existing = is_array( $existing ) ? $existing : array();
 
 		$query->set( 'post__not_in', array_merge( $existing, $excluded ) );
+	}
+
+	/**
+	 * Keeps comments on restricted posts out of REST, feeds and widgets.
+	 */
+	public function exclude_restricted_comments( WP_Comment_Query $query ): void {
+		if ( is_admin() && ! wp_doing_ajax() ) {
+			return;
+		}
+
+		$excluded = $this->excluded_ids();
+
+		if ( empty( $excluded ) ) {
+			return;
+		}
+
+		$existing = $query->query_vars['post__not_in'] ?? array();
+		$existing = is_array( $existing ) ? $existing : array();
+
+		$query->query_vars['post__not_in'] = array_merge( $existing, $excluded );
 	}
 
 	/**
@@ -105,42 +134,39 @@ final class QueryFilter {
 	}
 
 	/**
+	 * Posts assigned to a term that carries an access rule, in any taxonomy.
+	 *
+	 * Plain SQL rather than WP_Query: a query here would fire pre_get_posts
+	 * and land back in exclude_restricted() with the cache still cold.
+	 *
 	 * @return list<int>
 	 */
 	private function posts_in_restricted_terms(): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$term_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT term_id FROM {$wpdb->termmeta} WHERE meta_key = %s AND meta_value != ''",
-				Rules::TERM_META_TAGS
-			)
-		);
+		$types = $this->rules->gated_post_types();
 
-		if ( empty( $term_ids ) ) {
+		if ( empty( $types ) ) {
 			return array();
 		}
 
-		$posts = get_posts(
-			array(
-				'post_type'      => $this->rules->gated_post_types(),
-				'posts_per_page' => 500,
-				'fields'         => 'ids',
-				'post_status'    => 'publish',
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- result is cached in a transient.
-				'tax_query'      => array(
-					array(
-						'taxonomy'         => 'category',
-						'field'            => 'term_id',
-						'terms'            => array_map( 'intval', $term_ids ),
-						'include_children' => true,
-					),
-				),
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT tr.object_id
+				FROM {$wpdb->termmeta} tm
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = tm.term_id
+				INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id
+				WHERE tm.meta_key = %s AND tm.meta_value != '' AND p.post_status = 'publish' AND p.post_type IN ({$placeholders})",
+				array_merge( array( Rules::TERM_META_TAGS ), $types )
 			)
 		);
+		// phpcs:enable
 
-		return array_map( 'intval', is_array( $posts ) ? $posts : array() );
+		return array_map( 'intval', $ids );
 	}
 
 	/**
@@ -188,6 +214,21 @@ final class QueryFilter {
 		$list = implode( ',', array_map( 'absint', $excluded ) );
 
 		return $where . " AND p.ID NOT IN ({$list})";
+	}
+
+	/**
+	 * The site-wide comment feed builds its own SQL, outside WP_Comment_Query.
+	 */
+	public function filter_comment_feed( string $where ): string {
+		$excluded = $this->excluded_ids();
+
+		if ( empty( $excluded ) ) {
+			return $where;
+		}
+
+		$list = implode( ',', array_map( 'absint', $excluded ) );
+
+		return $where . " AND comment_post_ID NOT IN ({$list})";
 	}
 
 	/**
@@ -255,7 +296,7 @@ final class QueryFilter {
 	 * @return array<int, WP_Post>
 	 */
 	public function filter_pages( array $pages ): array {
-		if ( is_admin() ) {
+		if ( is_admin() && ! wp_doing_ajax() ) {
 			return $pages;
 		}
 

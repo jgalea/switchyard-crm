@@ -4,6 +4,7 @@ declare( strict_types=1 );
 
 namespace Switchyard\Access;
 
+use Switchyard\Sync\FieldMap;
 use Switchyard\Sync\TagEngine;
 
 /**
@@ -19,8 +20,10 @@ use Switchyard\Sync\TagEngine;
 final class Shortcodes {
 
 	private TagEngine $tags;
-	public function __construct( TagEngine $tags ) {
-		$this->tags = $tags;
+	private FieldMap $fields;
+	public function __construct( TagEngine $tags, FieldMap $fields ) {
+		$this->tags   = $tags;
+		$this->fields = $fields;
 	}
 
 	public function register_hooks(): void {
@@ -115,7 +118,7 @@ final class Shortcodes {
 				$value = $user ? $user->user_login : '';
 				break;
 			default:
-				$value = get_user_meta( $user_id, $atts['key'], true );
+				$value = $this->fields->allows( $atts['key'] ) ? get_user_meta( $user_id, $atts['key'], true ) : '';
 				break;
 		}
 

@@ -20,35 +20,38 @@ final class GuestSync {
 
 	private ProviderRegistry $registry;
 	private ContactResolver $resolver;
+	private FieldMap $field_map;
 	private Settings $settings;
 	private Logger $logger;
 	public const HOOK = 'switchyard_push_guest';
 
-	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, Settings $settings, Logger $logger ) {
-		$this->registry = $registry;
-		$this->resolver = $resolver;
-		$this->settings = $settings;
-		$this->logger   = $logger;
+	public function __construct( ProviderRegistry $registry, ContactResolver $resolver, FieldMap $field_map, Settings $settings, Logger $logger ) {
+		$this->registry  = $registry;
+		$this->resolver  = $resolver;
+		$this->field_map = $field_map;
+		$this->settings  = $settings;
+		$this->logger    = $logger;
 	}
 
 	public function register_hooks(): void {
 		add_action(
 			self::HOOK,
-			function ( string $email, array $fields = array(), array $tags = array() ): void {
-				$this->push( $email, $fields, $tags );
+			function ( string $email, array $fields = array(), array $tags = array(), bool $update_existing = true ): void {
+				$this->push( $email, $fields, $tags, $update_existing );
 			},
 			10,
-			3
+			4
 		);
 	}
 
 	/**
 	 * @param array<string, mixed> $fields Keyed by CRM field identifier.
 	 * @param list<string>         $tags
+	 * @param bool                 $update_existing Whether fields may overwrite a contact that already exists.
 	 *
 	 * @return string|null The contact ID, or null when nothing was written.
 	 */
-	public function push( string $email, array $fields = array(), array $tags = array() ): ?string {
+	public function push( string $email, array $fields = array(), array $tags = array(), bool $update_existing = true ): ?string {
 		if ( ! is_email( $email ) ) {
 			return null;
 		}
@@ -73,12 +76,27 @@ final class GuestSync {
 			$contact_id = $this->resolver->resolve_by_email( $email, $user_id );
 
 			if ( null === $contact_id ) {
-				$contact_id = $provider->add_contact( $fields );
+				$email_field = $this->field_map->email_field( $provider );
 
-				if ( null !== $user_id ) {
+				if ( null === $email_field ) {
+					$this->logger->warning( 'Could not create a guest contact because the CRM has no email field to fill.' );
+
+					return null;
+				}
+
+				// An unauthenticated submission must not seed the profile of a
+				// registered user, so a user's contact gets the email and nothing
+				// else, and isn't linked to the account.
+				$unverified = null !== $user_id && ! $update_existing;
+				$fields     = $unverified ? array() : $fields;
+
+				$fields[ $email_field ] = $email;
+				$contact_id             = $provider->add_contact( $fields );
+
+				if ( null !== $user_id && ! $unverified ) {
 					$this->resolver->store_id( $user_id, $contact_id );
 				}
-			} elseif ( ! empty( $fields ) ) {
+			} elseif ( $update_existing && ! empty( $fields ) ) {
 				$provider->update_contact( $contact_id, $fields );
 			}
 		} catch ( CrmException $e ) {
@@ -90,7 +108,7 @@ final class GuestSync {
 			return null;
 		}
 
-		if ( ! empty( $tags ) ) {
+		if ( ! empty( $tags ) && ( null === $user_id || $update_existing ) ) {
 			$this->apply_guest_tags( $contact_id, $tags );
 		}
 
