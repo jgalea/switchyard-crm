@@ -15,6 +15,7 @@ use Switchyard\Admin\IntegrationSettings;
 use Switchyard\Admin\PostMetaBox;
 use Switchyard\Admin\RuleFields;
 use Switchyard\Admin\TagPicker;
+use Switchyard\Admin\UserPanel;
 use Switchyard\Crm\Http\Client;
 use Switchyard\Crm\ProviderRegistry;
 use Switchyard\Integration\Ecommerce\EasyDigitalDownloads;
@@ -229,6 +230,17 @@ final class Plugin {
 		);
 
 		$c->set(
+			UserPanel::class,
+			static fn ( Container $c ): UserPanel => new UserPanel(
+				$c->get( UserSync::class ),
+				$c->get( ContactResolver::class ),
+				$c->get( TagEngine::class ),
+				$c->get( TagPicker::class ),
+				$c->get( ProviderRegistry::class )
+			)
+		);
+
+		$c->set(
 			TagPicker::class,
 			static fn ( Container $c ): TagPicker => new TagPicker( $c->get( TagEngine::class ) )
 		);
@@ -277,6 +289,7 @@ final class Plugin {
 			$this->get( AdminPages::class )->register_hooks();
 			$this->get( PostMetaBox::class )->register_hooks();
 			$this->get( RuleFields::class )->register_hooks();
+			$this->get( UserPanel::class )->register_hooks();
 		}
 
 		$this->register_async_handlers();
