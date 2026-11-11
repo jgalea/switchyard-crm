@@ -70,8 +70,9 @@ final class PostMetaBox {
 	 * @param array<string, string> $choices
 	 * @param list<string>          $stored
 	 */
-	private function render_tag_select( string $name, array $choices, array $stored ): void {
-		printf( '<select name="%s[]" multiple size="8" style="width:100%%;">', esc_attr( $name ) );
+	private function render_tag_select( string $name, string $label, array $choices, array $stored ): void {
+		printf( '<label for="%1$s" class="screen-reader-text">%2$s</label>', esc_attr( $name ), esc_html( $label ) );
+		printf( '<select id="%1$s" name="%1$s[]" multiple size="8" style="width:100%%;">', esc_attr( $name ) );
 
 		foreach ( $choices as $id => $label ) {
 			printf(
@@ -137,7 +138,7 @@ final class PostMetaBox {
 
 		printf( '<p><strong>%s</strong></p>', esc_html( $adapter->label() ) );
 
-		$this->render_tag_select( 'switchyard_purchase_tags', $choices, $stored );
+		$this->render_tag_select( 'switchyard_purchase_tags', __( 'Purchase tags', 'switchyard-crm' ), $choices, $stored );
 
 		echo '<p class="description">' . esc_html__( 'Applied to the customer when they buy this. Separate from the access tags above.', 'switchyard-crm' ) . '</p>';
 	}
@@ -184,12 +185,6 @@ final class PostMetaBox {
 
 		if ( null !== $adapter && $adapter->supported() ) {
 			$choices = $this->tag_choices( $adapter, $stored );
-
-			if ( null === $choices ) {
-				$this->render_tags_unavailable();
-
-				return;
-			}
 		}
 
 		wp_nonce_field( 'switchyard_access_' . $post->ID, 'switchyard_access_nonce' );
@@ -199,6 +194,12 @@ final class PostMetaBox {
 			checked( $enabled, true, false ),
 			esc_html__( 'Restrict access', 'switchyard-crm' )
 		);
+
+		if ( null !== $adapter && $adapter->supported() && null === $choices ) {
+			$this->render_tags_unavailable();
+
+			return;
+		}
 
 		if ( null === $adapter || null === $choices ) {
 			echo '<p class="description">' . esc_html__( 'Connect a CRM to restrict by tag. Without tags this restricts to logged-in users.', 'switchyard-crm' ) . '</p>';
@@ -210,7 +211,7 @@ final class PostMetaBox {
 
 		echo '<input type="hidden" name="switchyard_tags_present" value="1">';
 
-		$this->render_tag_select( 'switchyard_tags', $choices, $stored );
+		$this->render_tag_select( 'switchyard_tags', __( 'Access tags', 'switchyard-crm' ), $choices, $stored );
 
 		echo '<p><label>' . esc_html__( 'Requires', 'switchyard-crm' ) . ' ';
 		echo '<select name="switchyard_match">';
@@ -251,8 +252,13 @@ final class PostMetaBox {
 
 		if ( empty( $_POST['switchyard_restrict'] ) ) {
 			delete_post_meta( $post_id, Rules::META_ENABLED );
-			delete_post_meta( $post_id, Rules::META_TAGS );
-			delete_post_meta( $post_id, Rules::META_MATCH );
+
+			// Without the tag field the CRM was unreachable when the box
+			// rendered, so the stored tags are not this save's to clear.
+			if ( ! empty( $_POST['switchyard_tags_present'] ) ) {
+				delete_post_meta( $post_id, Rules::META_TAGS );
+				delete_post_meta( $post_id, Rules::META_MATCH );
+			}
 		} else {
 			update_post_meta( $post_id, Rules::META_ENABLED, 1 );
 
