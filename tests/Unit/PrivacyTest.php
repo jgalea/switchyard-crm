@@ -67,7 +67,7 @@ final class PrivacyTest extends TestCase {
 			}
 
 			public function get_var( string $query ): ?string {
-				return null;
+				return 'wp_actionscheduler_actions';
 			}
 
 			public function query( string $query ): int {
@@ -106,5 +106,12 @@ final class PrivacyTest extends TestCase {
 		$this->assertSame( array(), $this->meta[4] );
 		$this->assertTrue( $result['items_removed'] );
 		$this->assertStringContainsString( "DELETE FROM", $GLOBALS['wpdb']->queries[0] );
+	}
+
+	public function test_the_eraser_also_matches_url_encoded_log_rows_and_extended_job_args(): void {
+		$this->privacy()->erase( 'alice@example.com' );
+
+		$this->assertStringContainsString( 'alice%40example.com', $GLOBALS['wpdb']->queries[0] );
+		$this->assertStringContainsString( 'extended_args LIKE', $GLOBALS['wpdb']->queries[1] );
 	}
 }

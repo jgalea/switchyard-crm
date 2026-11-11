@@ -121,6 +121,7 @@ final class Privacy {
 
 		$table = LogTable::name();
 		$like  = '%' . $wpdb->esc_like( $email ) . '%';
+		$enc   = '%' . $wpdb->esc_like( rawurlencode( $email ) ) . '%';
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$logs = $wpdb->get_results( $wpdb->prepare( "SELECT id, created_at, level, message FROM {$table} WHERE message LIKE %s OR context LIKE %s", $like, $like ) );
@@ -174,9 +175,10 @@ final class Privacy {
 
 		$table = LogTable::name();
 		$like  = '%' . $wpdb->esc_like( $email ) . '%';
+		$enc   = '%' . $wpdb->esc_like( rawurlencode( $email ) ) . '%';
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$logs = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE message LIKE %s OR context LIKE %s", $like, $like ) );
+		$logs = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE message LIKE %s OR context LIKE %s OR message LIKE %s OR context LIKE %s", $like, $like, $enc, $enc ) );
 
 		// Queued guest jobs carry the email in their arguments.
 		$actions = $wpdb->prefix . 'actionscheduler_actions';
@@ -186,8 +188,9 @@ final class Privacy {
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $actions ) ) === $actions ) {
 			$queued = $wpdb->query(
 				$wpdb->prepare(
-					"DELETE a FROM {$actions} a INNER JOIN {$groups} g ON g.group_id = a.group_id WHERE g.slug = %s AND a.args LIKE %s",
+					"DELETE a FROM {$actions} a INNER JOIN {$groups} g ON g.group_id = a.group_id WHERE g.slug = %s AND ( a.args LIKE %s OR a.extended_args LIKE %s )",
 					Sync\Queue::GROUP,
+					$like,
 					$like
 				)
 			);

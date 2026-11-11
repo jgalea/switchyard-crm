@@ -288,4 +288,52 @@ final class HttpClientTest extends TestCase {
 		$this->assertStringNotContainsString( '555 0100', (string) $logged );
 		$this->assertStringContainsString( 'phone', (string) $logged );
 	}
+
+	public function test_an_email_in_the_url_path_is_redacted_from_failure_and_transport_logs(): void {
+		$entries = array();
+		$logger  = $this->createMock( Logger::class );
+		$logger->method( 'log' )->willReturnCallback(
+			static function ( string $level, string $message, array $context = array() ) use ( &$entries ): void {
+				$entries[] = array( $message, $context );
+			}
+		);
+		$logger->method( 'error' )->willReturnCallback(
+			static function ( string $message, array $context = array() ) use ( &$entries ): void {
+				$entries[] = array( $message, $context );
+			}
+		);
+
+		$this->stub_responses(
+			array(
+				array(
+					'response' => array( 'code' => 404 ),
+					'body'     => '{}',
+					'headers'  => array(),
+				),
+			)
+		);
+
+		$client = ( new Client( $logger ) )->for_provider( 'test' )->base_url( 'https://api.test' );
+
+		try {
+			$client->get( '/contacts/' . rawurlencode( 'carol@example.org' ) );
+		} catch ( \Throwable $e ) {
+			$this->assertTrue( true );
+		}
+
+		Functions\when( 'wp_safe_remote_request' )->justReturn( new \WP_Error( 'http_request_failed', 'cURL error 28 for https://api.test/contacts/carol%40example.org' ) );
+		Functions\when( 'is_wp_error' )->alias( static fn( $v ): bool => $v instanceof \WP_Error );
+
+		try {
+			$client->get( '/contacts/' . rawurlencode( 'carol@example.org' ) );
+		} catch ( \Throwable $e ) {
+			$this->assertTrue( true );
+		}
+
+		$logged = (string) json_encode( $entries );
+
+		$this->assertNotSame( array(), $entries );
+		$this->assertStringNotContainsString( 'carol', $logged );
+		$this->assertStringNotContainsString( 'example.org', $logged );
+	}
 }

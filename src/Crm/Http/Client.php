@@ -156,9 +156,9 @@ final class Client {
 				$this->logger->error(
 					'Transport failure contacting the CRM.',
 					array(
-						'url'     => $url,
+						'url'     => $this->redact_url( $url ),
 						'method'  => $method,
-						'error'   => $raw->get_error_message(),
+						'error'   => $this->redact_url( $raw->get_error_message() ),
 						'attempt' => $attempt,
 					),
 					$this->provider_slug
@@ -167,7 +167,7 @@ final class Client {
 				// The message is escaped; the context array is logged, never
 				// printed, so escaping it would corrupt the stored value.
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-				throw new ConnectionException( esc_html( $raw->get_error_message() ), array( 'url' => $url ) );
+				throw new ConnectionException( esc_html( $raw->get_error_message() ), array( 'url' => $this->redact_url( $url ) ) );
 			}
 
 			$response = $this->to_response( $raw );
@@ -387,7 +387,7 @@ final class Client {
 		// Failures are logged at the default level, so they carry the shape of
 		// the exchange but not the personal data in it. Debug keeps everything.
 		if ( 'debug' !== $level ) {
-			$url     = (string) strtok( $url, '?' );
+			$url     = $this->redact_url( $url );
 			$body    = null === $body ? null : array_keys( $body );
 			$excerpt = (string) preg_replace( '/[^\s"\'<>@,;]+@[^\s"\'<>@,;]+/', '[email]', $excerpt );
 		}
@@ -401,6 +401,12 @@ final class Client {
 			),
 			$this->provider_slug
 		);
+	}
+
+	private function redact_url( string $url ): string {
+		$path = rawurldecode( (string) strtok( $url, '?' ) );
+
+		return (string) preg_replace( '/[^\s"\'<>@,;\/]+@[^\s"\'<>@,;\/]+/', '[email]', $path );
 	}
 
 	private function circuit_key(): string {
