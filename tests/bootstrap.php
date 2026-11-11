@@ -65,3 +65,28 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public int $ID = 0;
 	}
 }
+
+if ( ! class_exists( 'WP_Query' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_Query {
+
+		/** @var array<string, mixed> */
+		public array $query_vars = array();
+
+		public bool $singular = false;
+
+		public function is_singular(): bool {
+			return $this->singular;
+		}
+
+		/** @return mixed */
+		public function get( string $key, $fallback = '' ) {
+			return $this->query_vars[ $key ] ?? $fallback;
+		}
+
+		/** @param mixed $value */
+		public function set( string $key, $value ): void {
+			$this->query_vars[ $key ] = $value;
+		}
+	}
+}

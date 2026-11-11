@@ -21,6 +21,8 @@ final class QueryFilter {
 
 	private Rules $rules;
 	private Settings $settings;
+	private bool $building = false;
+
 	public function __construct( Rules $rules, Settings $settings ) {
 		$this->rules    = $rules;
 		$this->settings = $settings;
@@ -83,21 +85,33 @@ final class QueryFilter {
 			return $cached;
 		}
 
+		// The term lookup runs a WP_Query, which fires pre_get_posts and lands
+		// back here with the transient still cold.
+		if ( $this->building ) {
+			return array();
+		}
+
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
-				Rules::META_ENABLED,
-				'1'
-			)
-		);
+		$this->building = true;
 
-		$ids = array_map( 'intval', $ids );
+		try {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+					Rules::META_ENABLED,
+					'1'
+				)
+			);
 
-		$ids = array_merge( $ids, $this->posts_in_restricted_terms() );
-		$ids = array_values( array_unique( $ids ) );
+			$ids = array_map( 'intval', $ids );
+
+			$ids = array_merge( $ids, $this->posts_in_restricted_terms() );
+			$ids = array_values( array_unique( $ids ) );
+		} finally {
+			$this->building = false;
+		}
 
 		set_transient( 'switchyard_restricted_ids', $ids, HOUR_IN_SECONDS );
 
