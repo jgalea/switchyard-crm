@@ -36,7 +36,7 @@ final class HttpClientTest extends TestCase {
 		$this->requests = array();
 		$queue          = $responses;
 
-		Functions\when( 'wp_remote_request' )->alias(
+		Functions\when( 'wp_safe_remote_request' )->alias(
 			function ( string $url, array $args ) use ( &$queue ) {
 				$this->requests[] = array(
 					'url'  => $url,
@@ -252,5 +252,40 @@ final class HttpClientTest extends TestCase {
 		$this->assertSame( 'https://two.test/x', $this->requests[1]['url'] );
 		$this->assertArrayHasKey( 'A', $this->requests[0]['args']['headers'] );
 		$this->assertArrayNotHasKey( 'A', $this->requests[1]['args']['headers'] );
+	}
+
+	public function test_a_failed_request_logs_field_names_and_not_the_personal_data_in_them(): void {
+		$entries = array();
+		$logger  = $this->createMock( Logger::class );
+		$logger->method( 'log' )->willReturnCallback(
+			static function ( string $level, string $message, array $context = array() ) use ( &$entries ): void {
+				$entries[] = array( $message, $context );
+			}
+		);
+
+		$this->stub_responses(
+			array(
+				array(
+					'response' => array( 'code' => 400 ),
+					'body'     => '{"detail":"bad address jane@example.com"}',
+					'headers'  => array(),
+				),
+			)
+		);
+
+		$client = ( new Client( $logger ) )->for_provider( 'test' )->base_url( 'https://api.test' );
+
+		try {
+			$client->post( '/contacts', array( 'email' => 'jane@example.com', 'phone' => '555 0100' ) );
+			$this->fail( 'Expected an exception.' );
+		} catch ( ApiException $e ) {
+			$this->assertTrue( true );
+		}
+
+		$logged = json_encode( $entries );
+
+		$this->assertStringNotContainsString( 'jane@example.com', (string) $logged );
+		$this->assertStringNotContainsString( '555 0100', (string) $logged );
+		$this->assertStringContainsString( 'phone', (string) $logged );
 	}
 }

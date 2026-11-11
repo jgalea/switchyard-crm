@@ -140,7 +140,7 @@ final class Client {
 		while ( true ) {
 			++$attempt;
 
-			$raw = wp_remote_request( $url, $args );
+			$raw = wp_safe_remote_request( $url, $args );
 
 			if ( $raw instanceof WP_Error ) {
 				if ( $attempt < self::MAX_ATTEMPTS ) {
@@ -382,12 +382,22 @@ final class Client {
 
 	/** @param array<mixed>|null $body */
 	private function log_exchange( string $method, string $url, ?array $body, Response $response, string $level ): void {
+		$excerpt = substr( $response->body, 0, 1000 );
+
+		// Failures are logged at the default level, so they carry the shape of
+		// the exchange but not the personal data in it. Debug keeps everything.
+		if ( 'debug' !== $level ) {
+			$url     = (string) strtok( $url, '?' );
+			$body    = null === $body ? null : array_keys( $body );
+			$excerpt = (string) preg_replace( '/[^\s"\'<>@,;]+@[^\s"\'<>@,;]+/', '[email]', $excerpt );
+		}
+
 		$this->logger->log(
 			$level,
 			sprintf( '%s %s responded %d.', $method, $url, $response->status ),
 			array(
 				'request'  => $body,
-				'response' => substr( $response->body, 0, 1000 ),
+				'response' => $excerpt,
 			),
 			$this->provider_slug
 		);

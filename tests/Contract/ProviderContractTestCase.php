@@ -74,7 +74,7 @@ abstract class ProviderContractTestCase extends TestCase {
 	 * @param array<string, array{status?: int, body: string, headers?: array<string, string>}> $fixtures
 	 */
 	protected function install_transport( array $fixtures ): void {
-		Functions\when( 'wp_remote_request' )->alias(
+		Functions\when( 'wp_safe_remote_request' )->alias(
 			function ( string $url, array $args ) use ( $fixtures ) {
 				$method = (string) ( $args['method'] ?? 'GET' );
 				$body   = isset( $args['body'] ) && is_string( $args['body'] )
