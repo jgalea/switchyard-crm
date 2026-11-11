@@ -37,6 +37,7 @@ final class AccessSurfaceTest extends TestCase {
 			'previous post link' => array( 'get_previous_post_where' ),
 			'next post link'     => array( 'get_next_post_where' ),
 			'oembed'             => array( 'oembed_response_data' ),
+			'comment feed'       => array( 'comment_feed_where' ),
 		);
 	}
 

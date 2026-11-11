@@ -43,6 +43,7 @@ final class QueryFilter {
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'filter_sitemap_query' ), 10, 2 );
 		add_filter( 'get_previous_post_where', array( $this, 'filter_adjacent_post' ) );
 		add_filter( 'get_next_post_where', array( $this, 'filter_adjacent_post' ) );
+		add_filter( 'comment_feed_where', array( $this, 'filter_comment_feed' ) );
 		add_filter( 'oembed_response_data', array( $this, 'filter_oembed' ), 10, 2 );
 	}
 
@@ -213,6 +214,21 @@ final class QueryFilter {
 		$list = implode( ',', array_map( 'absint', $excluded ) );
 
 		return $where . " AND p.ID NOT IN ({$list})";
+	}
+
+	/**
+	 * The site-wide comment feed builds its own SQL, outside WP_Comment_Query.
+	 */
+	public function filter_comment_feed( string $where ): string {
+		$excluded = $this->excluded_ids();
+
+		if ( empty( $excluded ) ) {
+			return $where;
+		}
+
+		$list = implode( ',', array_map( 'absint', $excluded ) );
+
+		return $where . " AND comment_post_ID NOT IN ({$list})";
 	}
 
 	/**

@@ -143,4 +143,39 @@ final class QueryFilterTest extends TestCase {
 
 		$this->assertSame( array( 3 ), $query->query_vars['post__not_in'] );
 	}
+
+	public function test_the_site_wide_comment_feed_excludes_comments_on_restricted_posts(): void {
+		$GLOBALS['wpdb'] = new class() {
+			public string $postmeta = 'wp_postmeta';
+
+			/** @param mixed ...$args */
+			public function prepare( string $query, ...$args ): string {
+				return $query;
+			}
+
+			/** @return list<string> */
+			public function get_col( string $query ): array {
+				return array( '3' );
+			}
+		};
+
+		$logger   = $this->createMock( Logger::class );
+		$settings = new Settings();
+		$registry = new ProviderRegistry( new Client( $logger ), $settings, $logger );
+		$tags     = new TagEngine( $registry, new ContactResolver( $registry, $logger ), $settings, $logger );
+		$filter   = new QueryFilter( new Rules( $tags ), $settings );
+		
+		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'get_post_types' )->justReturn( array() );
+		Functions\when( 'is_admin' )->justReturn( false );
+		Functions\when( 'get_current_user_id' )->justReturn( 0 );
+		Functions\when( 'get_post_meta' )->justReturn( '1' );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'get_post' )->justReturn( null );
+
+		$this->assertSame(
+			' AND x AND comment_post_ID NOT IN (3)',
+			$filter->filter_comment_feed( ' AND x' )
+		);
+	}
 }
