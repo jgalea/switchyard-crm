@@ -667,11 +667,13 @@ final class AdminPages {
 			'refresh_catalogues' => __( 'Refresh tags and fields from the CRM', 'switchyard-crm' ),
 			'resync_users'       => __( 'Resync all users to the CRM', 'switchyard-crm' ),
 			'refresh_all_tags'   => __( 'Pull tags for all users from the CRM', 'switchyard-crm' ),
+			'pull_users'         => __( 'Pull mapped fields and tags for all users from the CRM', 'switchyard-crm' ),
 		);
 
 		$confirm = array(
 			'resync_users'     => __( 'Queue every user for a push to the CRM?', 'switchyard-crm' ),
 			'refresh_all_tags' => __( 'Queue every user for a tag refresh from the CRM?', 'switchyard-crm' ),
+			'pull_users'       => __( 'Queue every user for a field and tag pull from the CRM?', 'switchyard-crm' ),
 		);
 
 		echo '<table class="widefat striped"><tbody>';
@@ -968,6 +970,11 @@ final class AdminPages {
 
 			case 'refresh_all_tags':
 				$count  = Batch::queue_all( 'switchyard_refresh_user_tags' );
+				$notice = 'queued';
+				break;
+
+			case 'pull_users':
+				$count  = Batch::queue_all( 'switchyard_pull_user' );
 				$notice = 'queued';
 				break;
 		}

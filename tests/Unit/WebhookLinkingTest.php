@@ -30,7 +30,11 @@ final class WebhookLinkingTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'get_option' )->alias(
+			static fn ( string $name, $fallback = false ) => FieldMap::OPTION === $name
+				? array( 'first_name' => array( 'crm_field' => 'FNAME', 'type' => 'text', 'active' => true ) )
+				: $fallback
+		);
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 		Functions\when( 'get_user_meta' )->alias( fn ( int $id, string $key ) => $this->user_meta[ $id ][ $key ] ?? '' );
@@ -83,6 +87,16 @@ final class WebhookLinkingTest extends TestCase {
 
 		$this->assertSame( 'C1', $this->user_meta[4]['switchyard_contact_id'] );
 		$this->assertSame( array( 'basic' ), $this->user_meta[4]['switchyard_tags'] );
+	}
+
+	public function test_a_webhook_pulls_mapped_fields_onto_the_user(): void {
+		$crm                                = new FakeCrm();
+		$crm->contacts['alice@example.com'] = 'C1';
+		$crm->records['C1']                 = array( 'FNAME' => 'Alicia' );
+
+		$this->handle( $crm, new Payload( 'alice@example.com', 'C1' ) );
+
+		$this->assertSame( 'Alicia', $this->user_meta[4]['first_name'] );
 	}
 
 	public function test_the_response_does_not_reveal_which_user_matched(): void {

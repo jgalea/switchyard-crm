@@ -145,8 +145,9 @@ final class Listener {
 			$this->resolver->resolve_by_email( $payload->email, $user_id );
 		}
 
-		// Authoritative read, rather than trusting the request body.
-		$this->tags->load_tags( $user_id );
+		// Authoritative read of the contact, rather than trusting the request
+		// body: mapped fields and tags both come from the CRM's own record.
+		$this->sync->pull( $user_id );
 
 		do_action( 'switchyard_webhook_received', $payload, $user_id );
 
