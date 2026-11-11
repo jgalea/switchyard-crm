@@ -14,6 +14,8 @@ final class Settings {
 
 	public const OPTION = 'switchyard_settings';
 
+	public const CREDENTIALS_OPTION = 'switchyard_credentials';
+
 	/** @var array<string, mixed>|null */
 	private ?array $data = null;
 
@@ -54,6 +56,17 @@ final class Settings {
 			$this->data = is_array( $stored )
 				? array_merge( self::defaults(), $stored )
 				: self::defaults();
+
+			// Credentials live in their own option so they aren't loaded with
+			// every request. Older installs kept them in the main option, and
+			// move on the first read.
+			$credentials = get_option( self::CREDENTIALS_OPTION, false );
+
+			if ( is_array( $credentials ) ) {
+				$this->data['credentials'] = $credentials;
+			} elseif ( ! empty( $this->data['credentials'] ) ) {
+				$this->persist( $this->data );
+			}
 		}
 
 		return $this->data;
@@ -96,7 +109,7 @@ final class Settings {
 		$data[ $key ] = $value;
 		$this->data   = $data;
 
-		update_option( self::OPTION, $data );
+		$this->persist( $data );
 	}
 
 	/** @param array<string, mixed> $values */
@@ -104,7 +117,17 @@ final class Settings {
 		$data       = array_merge( $this->data(), $values );
 		$this->data = $data;
 
+		$this->persist( $data );
+	}
+
+	/** @param array<string, mixed> $data */
+	private function persist( array $data ): void {
+		$credentials = $data['credentials'] ?? array();
+
+		unset( $data['credentials'] );
+
 		update_option( self::OPTION, $data );
+		update_option( self::CREDENTIALS_OPTION, $credentials, false );
 	}
 
 	/**

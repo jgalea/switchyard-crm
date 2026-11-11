@@ -15,6 +15,7 @@ global $wpdb;
 
 $switchyard_options = array(
 	'switchyard_settings',
+	'switchyard_credentials',
 	'switchyard_field_map',
 	'switchyard_webhook_secret',
 	'switchyard_db_version',
