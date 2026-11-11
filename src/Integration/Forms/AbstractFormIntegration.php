@@ -114,7 +114,12 @@ abstract class AbstractFormIntegration extends AbstractIntegration {
 
 		// Deferred, because a form plugin's submit handler is on the critical
 		// path of a user waiting for a thank-you page.
-		$this->queue->dispatch( GuestSync::HOOK, array( $email, $fields, $tags ) );
+		// A form can't overwrite the CRM record of a registered user unless that
+		// user is the one submitting it.
+		$owner  = get_user_by( 'email', $email );
+		$update = ! $owner instanceof \WP_User || get_current_user_id() === $owner->ID;
+
+		$this->queue->dispatch( GuestSync::HOOK, array( $email, $fields, $tags, $update ) );
 
 		do_action( 'switchyard_form_submitted', $form_id, $email, $fields, $tags, $this->get_slug() );
 	}

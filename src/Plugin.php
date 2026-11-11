@@ -134,6 +134,7 @@ final class Plugin {
 			static fn ( Container $c ): GuestSync => new GuestSync(
 				$c->get( ProviderRegistry::class ),
 				$c->get( ContactResolver::class ),
+				$c->get( FieldMap::class ),
 				$c->get( Settings::class ),
 				$c->get( Logger::class )
 			)

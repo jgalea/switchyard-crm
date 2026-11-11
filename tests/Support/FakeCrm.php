@@ -60,7 +60,12 @@ final class FakeCrm implements Provider, SupportsTags, SupportsWebhooks {
 	}
 
 	public function get_available_fields(): array {
-		return array();
+		return array(
+			'email' => array(
+				'label' => 'Email',
+				'type'  => 'email',
+			),
+		);
 	}
 
 	public function get_available_tags(): array {
@@ -71,7 +76,12 @@ final class FakeCrm implements Provider, SupportsTags, SupportsWebhooks {
 		return $this->tags[ $contact_id ] ?? array();
 	}
 
-	public function apply_tags( string $contact_id, array $tag_ids ): void {}
+	/** @var array<string, list<string>> */
+	public array $applied = array();
+
+	public function apply_tags( string $contact_id, array $tag_ids ): void {
+		$this->applied[ $contact_id ] = $tag_ids;
+	}
 
 	public function remove_tags( string $contact_id, array $tag_ids ): void {}
 
