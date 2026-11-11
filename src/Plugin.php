@@ -5,6 +5,7 @@ declare( strict_types=1 );
 namespace Switchyard;
 
 use Switchyard\Access\ContentGate;
+use Switchyard\Access\BlockVisibility;
 use Switchyard\Access\MenuFilter;
 use Switchyard\Access\QueryFilter;
 use Switchyard\Access\Rules;
@@ -12,6 +13,7 @@ use Switchyard\Access\Shortcodes;
 use Switchyard\Admin\AdminPages;
 use Switchyard\Admin\IntegrationSettings;
 use Switchyard\Admin\PostMetaBox;
+use Switchyard\Admin\RuleFields;
 use Switchyard\Admin\TagPicker;
 use Switchyard\Crm\Http\Client;
 use Switchyard\Crm\ProviderRegistry;
@@ -217,6 +219,16 @@ final class Plugin {
 		);
 
 		$c->set(
+			BlockVisibility::class,
+			static fn ( Container $c ): BlockVisibility => new BlockVisibility( $c->get( TagEngine::class ), $c->get( TagPicker::class ) )
+		);
+
+		$c->set(
+			RuleFields::class,
+			static fn ( Container $c ): RuleFields => new RuleFields( $c->get( Rules::class ), $c->get( TagPicker::class ) )
+		);
+
+		$c->set(
 			TagPicker::class,
 			static fn ( Container $c ): TagPicker => new TagPicker( $c->get( TagEngine::class ) )
 		);
@@ -257,12 +269,14 @@ final class Plugin {
 		$this->get( QueryFilter::class )->register_hooks();
 		$this->get( MenuFilter::class )->register_hooks();
 		$this->get( Shortcodes::class )->register_hooks();
+		$this->get( BlockVisibility::class )->register_hooks();
 		$this->get( Listener::class )->register_hooks();
 		$this->get( SiteTracking::class )->register_hooks();
 
 		if ( is_admin() ) {
 			$this->get( AdminPages::class )->register_hooks();
 			$this->get( PostMetaBox::class )->register_hooks();
+			$this->get( RuleFields::class )->register_hooks();
 		}
 
 		$this->register_async_handlers();

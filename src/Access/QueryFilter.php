@@ -36,18 +36,23 @@ final class QueryFilter {
 		add_filter( 'get_pages', array( $this, 'filter_pages' ) );
 		add_action( 'pre_get_comments', array( $this, 'exclude_restricted_comments' ) );
 
-		// rest_prepare_{$post_type} is per type. Registering only
-		// rest_prepare_post leaves every page and custom post type returning
-		// its full content from the REST API regardless of its access rule.
-		foreach ( $this->rules->gated_post_types() as $post_type ) {
-			add_filter( "rest_prepare_{$post_type}", array( $this, 'filter_rest_response' ), 10, 2 );
-		}
+		// Custom post types are registered on init, after this runs.
+		add_action( 'init', array( $this, 'register_rest_filters' ), 20 );
 
 		// Titles and URLs leak through these even when the body does not.
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'filter_sitemap_query' ), 10, 2 );
 		add_filter( 'get_previous_post_where', array( $this, 'filter_adjacent_post' ) );
 		add_filter( 'get_next_post_where', array( $this, 'filter_adjacent_post' ) );
 		add_filter( 'oembed_response_data', array( $this, 'filter_oembed' ), 10, 2 );
+	}
+
+	public function register_rest_filters(): void {
+		// rest_prepare_{$post_type} is per type. Registering only
+		// rest_prepare_post leaves every page and custom post type returning
+		// its full content from the REST API regardless of its access rule.
+		foreach ( $this->rules->gated_post_types() as $post_type ) {
+			add_filter( "rest_prepare_{$post_type}", array( $this, 'filter_rest_response' ), 10, 2 );
+		}
 	}
 
 	public function exclude_restricted( WP_Query $query ): void {
