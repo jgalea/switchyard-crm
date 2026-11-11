@@ -278,8 +278,6 @@ final class Plugin {
 
 		Installer::maybe_upgrade();
 
-		$this->boot_action_scheduler();
-
 		$this->get( UserSync::class )->register_hooks();
 		$this->get( GuestSync::class )->register_hooks();
 		$this->get( ContentGate::class )->register_hooks();
@@ -309,23 +307,6 @@ final class Plugin {
 		// Companion plugins register their features and integrations here.
 		do_action( 'switchyard_register_features', $this->get( Features::class ) );
 		do_action( 'switchyard_loaded', $this );
-	}
-
-	/**
-	 * Action Scheduler is bundled, but WooCommerce and several other plugins
-	 * ship their own copy. Loading it unconditionally would define its
-	 * functions twice, so only load ours when nothing else has.
-	 */
-	private function boot_action_scheduler(): void {
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			return;
-		}
-
-		$bundled = SWITCHYARD_DIR . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
-
-		if ( is_readable( $bundled ) ) {
-			require_once $bundled;
-		}
 	}
 
 	private function register_async_handlers(): void {
