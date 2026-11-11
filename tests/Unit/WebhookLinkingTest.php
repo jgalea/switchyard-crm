@@ -51,7 +51,7 @@ final class WebhookLinkingTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 	}
 
-	private function handle( FakeCrm $crm, Payload $payload ): void {
+	private function handle( FakeCrm $crm, Payload $payload ): \WP_REST_Response {
 		$crm->payload = $payload;
 
 		$logger   = $this->createMock( Logger::class );
@@ -68,7 +68,7 @@ final class WebhookLinkingTest extends TestCase {
 
 		$request->params['provider'] = 'fakecrm';
 
-		( new Listener( $registry, $resolver, $tags, $sync, $settings, $logger ) )->handle( $request );
+		return $this->listener( $registry, $resolver, $tags, $sync, $settings, $logger )->handle( $request );
 	}
 
 	public function test_a_body_contact_id_cannot_relink_a_user_to_another_contact(): void {
@@ -83,5 +83,39 @@ final class WebhookLinkingTest extends TestCase {
 
 		$this->assertSame( 'C1', $this->user_meta[4]['switchyard_contact_id'] );
 		$this->assertSame( array( 'basic' ), $this->user_meta[4]['switchyard_tags'] );
+	}
+
+	public function test_the_response_does_not_reveal_which_user_matched(): void {
+		$crm                                = new FakeCrm();
+		$crm->contacts['alice@example.com'] = 'C1';
+
+		$response = $this->handle( $crm, new Payload( 'alice@example.com', 'C1' ) );
+
+		$this->assertSame( array( 'message' => 'ok' ), $response->get_data() );
+	}
+
+	public function test_the_route_only_accepts_post(): void {
+		$registered = array();
+
+		Functions\when( 'register_rest_route' )->alias(
+			function ( string $ns, string $route, array $args ) use ( &$registered ): void {
+				$registered = $args;
+			}
+		);
+
+		$logger   = $this->createMock( Logger::class );
+		$settings = new Settings();
+		$registry = new ProviderRegistry( new Client( $logger ), $settings, $logger );
+		$resolver = new ContactResolver( $registry, $logger );
+		$tags     = new TagEngine( $registry, $resolver, $settings, $logger );
+		$sync     = new UserSync( $registry, $resolver, new FieldMap(), $tags, new Queue( $settings, $logger ), $settings, $logger );
+
+		$this->listener( $registry, $resolver, $tags, $sync, $settings, $logger )->register_routes();
+
+		$this->assertSame( 'POST', $registered['methods'] );
+	}
+
+	private function listener( ProviderRegistry $registry, ContactResolver $resolver, TagEngine $tags, UserSync $sync, Settings $settings, Logger $logger ): Listener {
+		return new Listener( $registry, $resolver, $tags, $sync, $settings, $logger );
 	}
 }

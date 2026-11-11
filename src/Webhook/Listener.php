@@ -48,7 +48,7 @@ final class Listener {
 			'switchyard/v1',
 			'/webhook/(?P<provider>[a-z0-9\-]+)',
 			array(
-				'methods'             => array( WP_REST_Server::CREATABLE, WP_REST_Server::READABLE ),
+				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'handle' ),
 				'permission_callback' => array( $this, 'authorise' ),
 				'args'                => array(
@@ -159,13 +159,7 @@ final class Listener {
 			$slug
 		);
 
-		return new WP_REST_Response(
-			array(
-				'message' => 'ok',
-				'user_id' => $user_id,
-			),
-			200
-		);
+		return new WP_REST_Response( array( 'message' => 'ok' ), 200 );
 	}
 
 	private function resolve_user( Payload $payload ): ?int {
