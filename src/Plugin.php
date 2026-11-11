@@ -10,6 +10,7 @@ use Switchyard\Access\QueryFilter;
 use Switchyard\Access\Rules;
 use Switchyard\Access\Shortcodes;
 use Switchyard\Admin\AdminPages;
+use Switchyard\Admin\IntegrationSettings;
 use Switchyard\Admin\PostMetaBox;
 use Switchyard\Crm\Http\Client;
 use Switchyard\Crm\ProviderRegistry;
@@ -210,6 +211,17 @@ final class Plugin {
 				$c->get( Settings::class ),
 				$c->get( ProviderRegistry::class ),
 				$c->get( FieldMap::class ),
+				$c->get( IntegrationRegistry::class ),
+				$c->get( IntegrationSettings::class )
+			)
+		);
+
+		$c->set(
+			IntegrationSettings::class,
+			static fn ( Container $c ): IntegrationSettings => new IntegrationSettings(
+				$c->get( Settings::class ),
+				$c->get( TagEngine::class ),
+				$c->get( ProviderRegistry::class ),
 				$c->get( IntegrationRegistry::class )
 			)
 		);
