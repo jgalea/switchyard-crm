@@ -5,6 +5,7 @@ declare( strict_types=1 );
 namespace Switchyard\Access;
 
 use Switchyard\Settings;
+use WP_Comment_Query;
 use WP_Post;
 use WP_Query;
 use WP_REST_Response;
@@ -33,6 +34,7 @@ final class QueryFilter {
 
 		add_action( 'pre_get_posts', array( $this, 'exclude_restricted' ) );
 		add_filter( 'get_pages', array( $this, 'filter_pages' ) );
+		add_action( 'pre_get_comments', array( $this, 'exclude_restricted_comments' ) );
 
 		// rest_prepare_{$post_type} is per type. Registering only
 		// rest_prepare_post leaves every page and custom post type returning
@@ -49,7 +51,7 @@ final class QueryFilter {
 	}
 
 	public function exclude_restricted( WP_Query $query ): void {
-		if ( is_admin() || $query->is_singular() ) {
+		if ( ( is_admin() && ! wp_doing_ajax() ) || $query->is_singular() ) {
 			return;
 		}
 
@@ -67,6 +69,26 @@ final class QueryFilter {
 		$existing = is_array( $existing ) ? $existing : array();
 
 		$query->set( 'post__not_in', array_merge( $existing, $excluded ) );
+	}
+
+	/**
+	 * Keeps comments on restricted posts out of REST, feeds and widgets.
+	 */
+	public function exclude_restricted_comments( WP_Comment_Query $query ): void {
+		if ( is_admin() && ! wp_doing_ajax() ) {
+			return;
+		}
+
+		$excluded = $this->excluded_ids();
+
+		if ( empty( $excluded ) ) {
+			return;
+		}
+
+		$existing = $query->query_vars['post__not_in'] ?? array();
+		$existing = is_array( $existing ) ? $existing : array();
+
+		$query->query_vars['post__not_in'] = array_merge( $existing, $excluded );
 	}
 
 	/**
@@ -253,7 +275,7 @@ final class QueryFilter {
 	 * @return array<int, WP_Post>
 	 */
 	public function filter_pages( array $pages ): array {
-		if ( is_admin() ) {
+		if ( is_admin() && ! wp_doing_ajax() ) {
 			return $pages;
 		}
 

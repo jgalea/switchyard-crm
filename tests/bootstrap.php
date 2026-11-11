@@ -180,3 +180,12 @@ if ( ! class_exists( 'WP_REST_Response' ) ) {
 		}
 	}
 }
+
+if ( ! class_exists( 'WP_Comment_Query' ) ) {
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile
+	class WP_Comment_Query {
+
+		/** @var array<string, mixed> */
+		public array $query_vars = array();
+	}
+}
